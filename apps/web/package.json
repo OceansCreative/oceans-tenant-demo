@@ -1,0 +1,19 @@
+{
+  "name": "@oceans-tenant/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OceansTenant Web (Next.js 15 App Router)",
+  "scripts": {
+    "dev": "echo \"dev: Issue #9 以降で Next.js を導入予定\"",
+    "build": "echo \"build: Issue #9 以降で Next.js を導入予定\"",
+    "start": "echo \"start: Issue #9 以降で Next.js を導入予定\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"test: Issue #9 以降で Vitest を導入予定\""
+  },
+  "dependencies": {
+    "@oceans-tenant/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
