@@ -13,13 +13,26 @@
     "build": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" run build",
     "dev": "pnpm --filter @oceans-tenant/web dev",
     "studio": "pnpm --filter @oceans-tenant/studio dev",
-    "lint": "echo \"lint: Issue #2 で Biome を導入予定\"",
-    "format": "echo \"format: Issue #2 で Biome を導入予定\"",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "typecheck": "pnpm -r --parallel run typecheck",
     "test": "pnpm -r --parallel run test",
-    "test:coverage": "pnpm -r --parallel run test:coverage"
+    "test:coverage": "pnpm -r --parallel run test:coverage",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,jsonc,css}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "typescript": "^5.6.3"
   }
 }
