@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    name: セットアップと依存関係インストール
+  lint:
+    name: Lint (Biome)
     runs-on: ubuntu-latest
     steps:
       - name: ソース取得
@@ -31,3 +31,6 @@ jobs:
 
       - name: 依存関係をインストール
         run: pnpm install --frozen-lockfile
+
+      - name: Biome lint
+        run: pnpm lint
