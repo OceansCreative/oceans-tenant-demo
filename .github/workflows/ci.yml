@@ -82,7 +82,15 @@ jobs:
       - name: 依存関係をインストール
         run: pnpm install --frozen-lockfile
 
-      - name: テスト実行
-        run: pnpm test
+      - name: テスト実行（カバレッジ付き）
+        run: pnpm test:coverage
         # NOTE: 各ワークスペースの実テストは Issue #5 以降で順次追加する。
         # この段階では placeholder テストのみが走るため CI は green になる。
+
+      - name: カバレッジを Codecov にアップロード
+        if: hashFiles('**/coverage/lcov.info') != ''
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          files: ./coverage/lcov.info,./apps/web/coverage/lcov.info,./apps/studio/coverage/lcov.info,./packages/shared/coverage/lcov.info
