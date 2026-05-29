@@ -1,3 +1,8 @@
-// Sanity スキーマのエントリポイント。
-// 各ドキュメントタイプは Issue #5〜#7 で順次追加し、ここから export する。
-export const schemaTypes: ReadonlyArray<unknown> = [];
+import type { SchemaTypeDefinition } from "sanity";
+import { propertyType } from "./property.js";
+
+/**
+ * Sanity スキーマのエントリポイント。
+ * Issue #5〜#7 で各ドキュメントタイプを順次追加する。
+ */
+export const schemaTypes: ReadonlyArray<SchemaTypeDefinition> = [propertyType];
