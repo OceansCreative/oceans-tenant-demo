@@ -1,3 +1,7 @@
-// @oceans-tenant/shared - 共有型定義・GROQ・Zod スキーマのエントリポイント
-// 各ドキュメントタイプの Zod スキーマと TypeScript 型は後続 Issue で順次追加する。
-export {};
+// @oceans-tenant/shared - 共有型定義・Zod スキーマのエントリポイント
+// 各ドキュメントタイプは src/<domain>/ 配下に定義し、ここから re-export する。
+
+export * from "./property/address.js";
+export * from "./property/enums.js";
+export * from "./property/schema.js";
+export * from "./tsubo.js";
