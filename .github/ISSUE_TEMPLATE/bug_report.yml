@@ -1,0 +1,75 @@
+name: バグ報告
+description: 既存機能の不具合を報告する
+title: "fix: <概要を簡潔に>"
+labels:
+  - bug
+  - fix
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ご報告ありがとうございます。再現に必要な情報をできるだけ詳しく記入してください。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 不具合の概要
+      description: どのような問題が発生しているか 1〜2 文で説明してください。
+      placeholder: 例) 検索結果が0件のとき、地図ビューが白画面になる
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 不具合を再現するための具体的な手順を番号付きで記入してください。
+      placeholder: |
+        1. `/search?q=...` を開く
+        2. 地図ビューに切り替える
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の挙動
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重大度
+      options:
+        - 低（ワークアラウンドあり）
+        - 中（特定操作で常に再現）
+        - 高（主要機能が使えない）
+        - 致命的（データ損失や情報漏洩の恐れ）
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境
+      description: ブラウザ / OS / Node バージョン / 該当コミット SHA など
+      placeholder: |
+        - ブラウザ: Chrome 124
+        - OS: macOS 14.5
+        - Node: 20.12.0
+        - commit: abcdef1
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ / スクリーンショット
+      description: 関連するコンソール出力やネットワークログ、スクリーンショットがあれば貼ってください。
