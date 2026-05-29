@@ -1,0 +1,63 @@
+name: 機能要望
+description: 新機能や改善の提案を起票する
+title: "feat: <概要を簡潔に>"
+labels:
+  - feat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提案ありがとうございます。背景と価値を明確に書くと採否判断がスムーズです。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題 / ユースケース
+      description: 誰がどのような場面で困っていて、それを解決すると何が嬉しいかを書いてください。
+      placeholder: 例) 不動産会社担当者がマイソク PDF を毎回手で打ち直しており、登録に 10 分かかる。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する機能
+      description: どのような振る舞いを期待するかを書いてください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案
+      description: 別アプローチがあれば書いてください（任意）。
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 対象範囲
+      multiple: true
+      options:
+        - web (apps/web)
+        - studio (apps/studio)
+        - shared (packages/shared)
+        - scripts/python
+        - infra / CI
+        - docs
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ条件
+      description: 完了の判断基準を箇条書きで書いてください。
+      placeholder: |
+        - [ ] /agent にマイソクアップロード UI が出ている
+        - [ ] AI 抽出結果がドラフトとして保存される
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 関連ドキュメント / 参考リンク
+      description: docs/spec.md の該当節や設計参考にしたリンクがあれば。
