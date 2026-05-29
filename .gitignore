@@ -49,6 +49,9 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Claude Code (local-only settings)
+.claude/settings.local.json
+
 # Misc
 *.tsbuildinfo
 .turbo/
