@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans JP", system-ui, sans-serif;
+  --color-brand-50: oklch(0.97 0.02 240);
+  --color-brand-100: oklch(0.93 0.04 240);
+  --color-brand-500: oklch(0.55 0.14 240);
+  --color-brand-600: oklch(0.48 0.16 240);
+  --color-brand-700: oklch(0.4 0.18 240);
+  --color-brand-900: oklch(0.22 0.1 240);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+    line-height: 1.7;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}

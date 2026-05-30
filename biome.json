@@ -23,7 +23,8 @@
       "!**/test-results",
       "!**/.sanity",
       "!**/.vercel",
-      "!**/pnpm-lock.yaml"
+      "!**/pnpm-lock.yaml",
+      "!**/globals.css"
     ]
   },
   "formatter": {
