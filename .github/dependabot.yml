@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # ルート pnpm モノレポ
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "chore"
+      - "deps"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # Python 補助スクリプト
+  - package-ecosystem: "pip"
+    directory: "/scripts/python"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    labels:
+      - "chore"
+      - "deps"
+      - "python"
+    commit-message:
+      prefix: "chore(deps-py)"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "chore"
+      - "deps"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci-deps)"
+      include: "scope"
