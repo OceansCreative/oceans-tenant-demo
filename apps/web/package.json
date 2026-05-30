@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@oceans-tenant/shared": "workspace:*",
+    "@vis.gl/react-google-maps": "^1.8.3",
     "next": "^15",
     "react": "^19",
     "react-dom": "^19"
