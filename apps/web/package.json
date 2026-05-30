@@ -15,11 +15,15 @@
     "e2e:install": "playwright install --with-deps chromium webkit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "@mozilla/readability": "^0.6.0",
     "@oceans-tenant/shared": "workspace:*",
     "@vis.gl/react-google-maps": "^1.8.3",
+    "cheerio": "^1.2.0",
     "next": "^15",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "zod": "^3"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -27,12 +31,13 @@
     "@testing-library/jest-dom": "^6",
     "@testing-library/react": "^16",
     "@testing-library/user-event": "^14",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^2",
     "happy-dom": "^15",
-    "jsdom": "^25",
+    "jsdom": "^25.0.1",
     "postcss": "^8",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
