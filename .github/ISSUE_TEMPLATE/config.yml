@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: セキュリティ脆弱性の報告
+    url: https://github.com/OceansCreative/oceans-tenant-demo/security/advisories/new
+    about: 脆弱性は Issue ではなく Security Advisory として private に報告してください。
+  - name: 質問・ディスカッション
+    url: https://github.com/OceansCreative/oceans-tenant-demo/discussions
+    about: 機能要望以外の議論や使い方の質問はこちらへ。

@@ -1,0 +1,28 @@
+# CODEOWNERS — レビュー自動アサインのルール
+# https://docs.github.com/ja/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# 公開 OSS リファレンス実装のため、現状は全変更をオーナーがレビューする方針。
+
+# デフォルトオーナー
+*                                @OceansCreative
+
+# モノレポ設定
+/.github/                        @OceansCreative
+/pnpm-workspace.yaml             @OceansCreative
+/biome.json                      @OceansCreative
+/commitlint.config.mjs           @OceansCreative
+
+# ドキュメント
+/docs/                           @OceansCreative
+/README.md                       @OceansCreative
+/CLAUDE.md                       @OceansCreative
+
+# Web アプリ
+/apps/web/                       @OceansCreative
+
+# Sanity Studio / スキーマ
+/apps/studio/                    @OceansCreative
+/packages/shared/                @OceansCreative
+
+# Python 補助スクリプト
+/scripts/python/                 @OceansCreative
