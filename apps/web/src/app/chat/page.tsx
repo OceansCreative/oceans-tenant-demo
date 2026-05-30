@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export const metadata: Metadata = {
   title: "対話で物件を探す",
   description: "自然言語の対話で店舗物件を絞り込みます。",
 };
+
+export const dynamic = "force-dynamic";
 
 const ChatPage = (): React.JSX.Element => {
   return (
@@ -16,15 +17,7 @@ const ChatPage = (): React.JSX.Element => {
           自然言語で条件を伝えると、AI が条件を抽出してリアルタイムに結果を更新します。
         </p>
       </header>
-      <Suspense
-        fallback={
-          <div className="rounded-2xl border border-neutral-200 bg-white p-12 text-center text-sm text-neutral-500">
-            読み込み中…
-          </div>
-        }
-      >
-        <ChatPanel />
-      </Suspense>
+      <ChatPanel />
     </div>
   );
 };
