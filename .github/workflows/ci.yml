@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ソース取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: pnpm をセットアップ
         uses: pnpm/action-setup@v4
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ソース取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: pnpm をセットアップ
         uses: pnpm/action-setup@v4
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ソース取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: pnpm をセットアップ
         uses: pnpm/action-setup@v4
@@ -103,7 +103,7 @@ jobs:
         working-directory: scripts/python
     steps:
       - name: ソース取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Python をセットアップ
         uses: actions/setup-python@v5

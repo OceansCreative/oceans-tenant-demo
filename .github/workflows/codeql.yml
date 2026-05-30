@@ -23,7 +23,7 @@ jobs:
         language: ["javascript-typescript"]
     steps:
       - name: ソース取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: CodeQL を初期化
         uses: github/codeql-action/init@v3
