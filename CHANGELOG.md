@@ -9,6 +9,43 @@
 
 ### Added
 - スクリーンショット / GIF の正式撮影（docs/images）
+- Turbopack 移行に備えた `extensionAlias` 二重化（#65）
+- `sanity_client.py` のリトライ・タイムアウト戦略（#66）
+
+## [0.1.3] — 2026-05-31
+
+外部レビューで指摘された SSRF 対策の残存 2 件をまとめて修正したセキュリティ hardening リリース。
+
+### Security / Hardening
+
+- **#63 DNS リバインディング (TOCTOU) を遮断** (`/api/ingest-url`)
+  - v0.1.1 では `assertPublicIp` が検証した IP は捨てられ、続く `fetch` が独立して DNS を引いていた。攻撃者が低 TTL の権威 DNS を握れば「validate 時は public・connect 時は private」と切り替えてバイパス可能だった
+  - `undici` の `Agent({ connect: { lookup } })` で検証済み IP を強制注入し、各ホップの fetch を pinned IP に接続
+  - HTTPS の SNI / 証明書検証は元の hostname を維持（URL 書き換えなし）
+  - Agent はホップごとに close
+  - `dns.lookup(host, { all: true })` で全 A/AAAA を取得して全 IP を検査
+
+- **#64 IPv6 アロウリスト化 + 16進 IPv4-mapped 取りこぼし**
+  - v0.1.1 の `fc00::/7` 等の blocklist 方式は `::ffff:a9fe:a9fe`（169.254.169.254 の hex 表記）を取りこぼしていた
+  - `node:net` の `BlockList` を採用、IPv4 は blocklist、**IPv6 は `2000::/3` allowlist + 内部 block**（`2001:db8::/32`, `2001::/32` Teredo, `2002::/16` 6to4）の二段構え
+  - IPv4-mapped IPv6 をドット形式と 16 進形式の両方で IPv4 に展開して再検査
+  - IPv4-mapped IPv6 自体は public 値でも一律拒否（攻撃面最小化）
+
+### Changed
+
+- `apps/web` に `undici@^6` を依存追加（Node 20 同梱と整合、jsdom 互換のため v6 固定）
+- `package.json` version を 0.1.3 に
+
+### Tests
+
+- apps/web: 128 → **151**（+23: IPv4/IPv6 拒否レンジ網羅、IPv6 hex mapped、複数 A レコード混在、per-hop pinning、DNS rebinding 遮断シナリオ）
+
+### Docs
+
+- `docs/AI_INTEGRATION.md` の SSRF 防御セクションを刷新:
+  - IPv6 アロウリスト方式の説明
+  - 16 進 IPv4-mapped 対応の明記
+  - DNS リバインディング遮断（dispatcher pinning）の項目を新設
 
 ## [0.1.2] — 2026-05-31
 
