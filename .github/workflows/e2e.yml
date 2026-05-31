@@ -48,10 +48,16 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm --filter @oceans-tenant/web exec playwright install-deps chromium webkit
 
+      - name: Next.js を本番ビルド
+        run: pnpm --filter @oceans-tenant/web build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
       - name: Playwright テスト
         run: pnpm --filter @oceans-tenant/web exec playwright test
         env:
           CI: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
 
       - name: テスト結果をアップロード
         if: always() && hashFiles('apps/web/playwright-report/**') != ''
