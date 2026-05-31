@@ -41,10 +41,31 @@ flowchart LR
 | ケース | ステータス | 対応 |
 |---|---|---|
 | URL 形式不正 | 400 | 早期 return |
-| 本文抽出失敗 | 422 | text < 50 |
+| SSRF 防御で拒否 (内部レンジ) | 400 | `SsrfDeniedError` → 定型文のみ返す |
+| 不正な URL スキーム | 400 | `FetchSafetyError(invalid_scheme)` |
+| 本文抽出失敗 | 422 | text < 50 もしくは upstream 4xx |
+| 応答サイズ上限超過 (5MB) | 413 | `FetchSafetyError(size_exceeded)` |
+| リダイレクト 3 ホップ超過 | 421 | `FetchSafetyError(too_many_redirects)` |
+| リダイレクト Location 欠落 | 502 | `FetchSafetyError(invalid_redirect)` |
+| AI 応答にテキストなし | 502 | content blocks に text なし |
 | Claude API 未設定 | 503 | "ANTHROPIC_API_KEY" を含むメッセージ |
 | Claude タイムアウト | 504 | abort signal |
-| Zod 検証失敗 | 500 | エラーメッセージを `details` に |
+| Zod 検証失敗 / その他 | 500 | クライアントには定型文、詳細は `console.error` |
+
+**SSRF 防御**（[`apps/web/src/lib/ai/url-safety.ts`](../apps/web/src/lib/ai/url-safety.ts)）:
+
+- ホスト名を DNS 解決し、得られた IP がインターネット公開レンジに含まれることを確認
+- 拒否レンジ（IPv4）: `0.0.0.0/8`, `10.0.0.0/8`, `100.64.0.0/10`, `127.0.0.0/8`,
+  `169.254.0.0/16`（クラウドメタデータ）, `172.16.0.0/12`, `192.0.0.0/24`,
+  `192.0.2.0/24`, `192.88.99.0/24`, `192.168.0.0/16`, `198.18.0.0/15`,
+  `198.51.100.0/24`, `203.0.113.0/24`, `224.0.0.0/4`, `255.255.255.255/32`, `240.0.0.0/4`
+- 拒否レンジ（IPv6）: `::1`, `::`, `fc00::/7` (ULA), `fe80::/10` (link-local),
+  `ff00::/8` (multicast), `100::/64` (discard), `2001:db8::/32` (documentation),
+  IPv4-mapped IPv6 で埋め込まれた IPv4 も再検査
+- `redirect: "manual"` で per-hop に上記検証を実施（最大 3 ホップ）
+- レスポンスは `Content-Length` 早期検査 + ストリーミングで 5MB を超えたら abort
+- タイムアウトは 12 秒
+- 500 応答に内部エラー詳細を載せない（`console.error` のみ）
 
 ### `POST /api/query-build`（内部 API）
 
