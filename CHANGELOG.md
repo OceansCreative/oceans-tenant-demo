@@ -10,6 +10,27 @@
 ### Added
 - スクリーンショット / GIF の正式撮影（docs/images）
 
+### Pending Security Hardening (`#55` / `#56` / `#57`)
+- SSE エラーメッセージのサニタイズ（`/api/chat-search`）
+- ChatPanel 自動スクロールの依存配列修正
+- `chat-search` の Claude 出力を `criteriaSchema.safeParse` で再バリデーション
+
+## [0.1.1] — 2026-05-31
+
+### Security (Critical)
+
+- **SSRF (Server-Side Request Forgery) を修正** [`#54`](https://github.com/OceansCreative/oceans-tenant-demo/issues/54) — `/api/ingest-url` が任意の URL を `fetch(url, { redirect: "follow" })` していたため、クラウドメタデータ (`169.254.169.254`) / プライベートレンジ / ループバック / リダイレクト経由のバイパスで内部リソースを取得可能だった。
+  - 新規 `apps/web/src/lib/ai/url-safety.ts` で `assertPublicIp` / `fetchHtmlSafe` を実装
+  - DNS 解決後の IP を IPv4/IPv6 公開レンジ判定（17 拒否レンジ）
+  - `redirect: "manual"` で per-hop に URL → DNS → IP を再検証（最大 3 ホップ）
+  - レスポンスサイズは Content-Length 早期判定 + ストリーミングで 5MB 上限
+  - 500 応答から `details: error.message` を削除し、詳細は `console.error` でサーバー側ログのみ
+  - 36 ケースの新規 Vitest テスト（IPv4/IPv6 レンジ / リダイレクトバイパス / サイズ超過 / スキーム拒否）
+- `docs/AI_INTEGRATION.md` のエラーハンドリング表に SSRF 関連 6 ステータスを追加、SSRF 防御セクションを新設
+
+### Changed
+- `package.json` の version を 0.1.1 に
+
 ## [0.1.0] — 2026-05-30
 
 OceansTenant 初回リリース。Phase 1〜4 全 32 Issue を完了。
