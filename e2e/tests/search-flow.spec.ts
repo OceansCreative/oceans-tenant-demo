@@ -47,9 +47,17 @@ test.describe("検索フロー", () => {
 
   test("地図ビューに切り替えても遷移はクライアント遷移で完結", async ({ page }) => {
     await page.goto("/search");
-    await page.getByRole("button", { name: /地図/ }).click();
+    // ViewModeToggle 内の「地図」ボタンを明示的に取得（ヘッダーリンクと区別）
+    const viewToggle = page
+      .getByRole("group", { name: "表示モード" })
+      .or(page.locator('fieldset[aria-label="表示モード"]'));
+    await viewToggle.getByRole("button", { name: /地図/ }).click();
     await expect(page).toHaveURL(/view=map/);
-    // Google Maps API キーがないため、フォールバック UI が表示される
-    await expect(page.getByText(/地図ビューは無効化されています|Google Maps/)).toBeVisible();
+    // Google Maps API キーがないため、フォールバック UI のセクションが表示される
+    await expect(
+      page
+        .getByRole("region", { name: "地図ビュー（無効化）" })
+        .or(page.locator('section[aria-label="地図ビュー（無効化）"]')),
+    ).toBeVisible();
   });
 });
