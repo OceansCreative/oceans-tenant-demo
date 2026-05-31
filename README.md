@@ -155,6 +155,8 @@ oceans-tenant-demo/
 - 📐 [アーキテクチャ](docs/ARCHITECTURE.md)
 - 🤖 [AI 連携設計](docs/AI_INTEGRATION.md)
 - 📜 [仕様書](docs/spec.md)
+- 🚀 [デプロイ手順](docs/DEPLOY.md)
+- 🧐 [レビューガイド](docs/REVIEW_GUIDE.md)（コードレビュー入口）
 - 🛠 [コントリビュート](CONTRIBUTING.md)
 - 🔐 [セキュリティ](SECURITY.md)
 - 🤝 [行動規範](CODE_OF_CONDUCT.md)
