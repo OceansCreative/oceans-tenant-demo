@@ -5,6 +5,7 @@ import {
   conditionValues,
   type Prefecture,
   prefectureValues,
+  type SearchCriteria as SharedSearchCriteria,
 } from "@oceans-tenant/shared";
 
 /**
@@ -13,20 +14,13 @@ import {
  * - URLSearchParams ↔ SearchCriteria の双方向変換
  * - 不正値は黙って除外（壊れた URL を踏んでも安全に動作）
  * - Server Component / Client Component の両方から参照される pure 関数群
+ *
+ * 型本体は `@oceans-tenant/shared` の `searchCriteriaSchema` から推論された
+ * `SharedSearchCriteria` を再エクスポートする。これにより API レイヤと URL
+ * レイヤが同じ型を共有し、Claude 出力経路にも同一の検証が効く。
  */
 
-export type SearchCriteria = {
-  readonly prefecture?: Prefecture;
-  readonly city?: string;
-  readonly minRent?: number;
-  readonly maxRent?: number;
-  readonly minArea?: number;
-  readonly maxArea?: number;
-  readonly buildingTypes: ReadonlyArray<BuildingType>;
-  readonly conditions: ReadonlyArray<Condition>;
-  readonly businessCategoryRefs: ReadonlyArray<string>;
-  readonly q?: string;
-};
+export type SearchCriteria = SharedSearchCriteria;
 
 const PREFECTURE_SET = new Set<string>(prefectureValues);
 const BUILDING_TYPE_SET = new Set<string>(buildingTypeValues);

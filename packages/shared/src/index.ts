@@ -7,5 +7,6 @@ export * from "./property/address.js";
 export * from "./property/enums.js";
 export * from "./property/schema.js";
 export * from "./realEstateCompany/schema.js";
+export * from "./searchCriteria/schema.js";
 export * from "./searchSession/schema.js";
 export * from "./tsubo.js";
