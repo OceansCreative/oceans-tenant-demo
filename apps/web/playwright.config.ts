@@ -3,6 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? "3000", 10);
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 
+// CI では build → start で動かす（dev の初回コンパイルでタイムアウトしないため）。
+// ローカルではホットリロードを活かしたいので dev のまま。
+const webServerCommand = process.env.CI
+  ? `pnpm --filter @oceans-tenant/web exec next start --port ${PORT}`
+  : `pnpm --filter @oceans-tenant/web exec next dev --port ${PORT}`;
+
 export default defineConfig({
   testDir: "../../e2e/tests",
   fullyParallel: true,
@@ -12,8 +18,8 @@ export default defineConfig({
   reporter: process.env.CI
     ? [["html", { outputFolder: "playwright-report", open: "never" }], ["list"]]
     : "list",
-  timeout: 30_000,
-  expect: { timeout: 7_000 },
+  timeout: 45_000,
+  expect: { timeout: 10_000 },
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
@@ -30,10 +36,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm --filter @oceans-tenant/web exec next dev --port ${PORT}`,
+    command: webServerCommand,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
     cwd: "../../",
   },
 });
