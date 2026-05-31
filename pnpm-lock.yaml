@@ -87,6 +87,9 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.2.6(react@19.2.6)
+      undici:
+        specifier: ^6
+        version: 6.26.0
       zod:
         specifier: ^3
         version: 3.25.76

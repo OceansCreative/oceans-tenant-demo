@@ -5,17 +5,25 @@
  *
  * 提供するのは:
  * - `assertPublicIp(hostname)`: DNS 解決した IP がインターネット公開レンジに
- *   含まれることを検査。private / loopback / link-local / multicast /
- *   予約レンジは拒否する（IPv4 / IPv6 両対応）。
- * - `fetchHtmlSafe(url, opts)`: per-hop で URL → DNS → IP 検証を行いつつ
- *   redirect を手動追跡し、レスポンスサイズも上限で打ち切る安全な fetch。
+ *   含まれることを検査。
+ *   - IPv4: `node:net` の `BlockList` で 17 の予約レンジを拒否
+ *   - IPv6: `2000::/3`（グローバルユニキャスト）の **アロウリスト** に
+ *     `2001:db8::/32`（documentation）等の **二段ブロック** を組み合わせ
+ *   - `lookup(host, { all: true })` で全 A/AAAA を検査（攻撃者が複数応答で
+ *     片方だけ public を混ぜる手口を遮断）
+ * - `fetchHtmlSafe(url, opts)`: per-hop で URL → DNS → IP 検証を行い、
+ *   さらに検証した IP に **undici Agent の lookup を固定**して接続。
+ *   これにより DNS リバインディング (TOCTOU) で「検証時は public・接続時は
+ *   private」になる攻撃を遮断する（Issue #63）。
  *
  * 参考:
  * - OWASP SSRF Prevention Cheat Sheet
+ * - IANA IPv6 Special-Purpose Address Registry
  * - https://en.wikipedia.org/wiki/Reserved_IP_addresses
  */
 import { lookup } from "node:dns/promises";
-import { isIP, isIPv4, isIPv6 } from "node:net";
+import { BlockList, isIP, isIPv4, isIPv6 } from "node:net";
+import { Agent } from "undici";
 
 export class SsrfDeniedError extends Error {
   constructor(message: string) {
@@ -39,117 +47,153 @@ export class FetchSafetyError extends Error {
   }
 }
 
-const ipv4ToInt = (ip: string): number => {
-  const parts = ip.split(".").map((p) => Number.parseInt(p, 10));
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
-    throw new SsrfDeniedError(`不正な IPv4 アドレス: ${ip}`);
-  }
-  // 4 オクテットを 32-bit 符号無し整数として連結
-  // biome-ignore lint/style/noNonNullAssertion: 上で parts.length === 4 を確認済み
-  return ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0;
+// ------------------------------------------------------------
+// IPv4: BlockList ベースの拒否リスト
+// ------------------------------------------------------------
+
+type SubnetEntry = {
+  readonly network: string;
+  readonly prefix: number;
+  readonly reason: string;
 };
 
-const inIpv4Range = (ip: string, network: string, prefix: number): boolean => {
-  const ipInt = ipv4ToInt(ip);
-  const netInt = ipv4ToInt(network);
-  const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
-  return (ipInt & mask) === (netInt & mask);
-};
-
-/**
- * IPv4 の private/reserved レンジ判定。
- * 参考: https://en.wikipedia.org/wiki/Reserved_IP_addresses
- */
-const FORBIDDEN_IPV4_RANGES: ReadonlyArray<readonly [string, number, string]> = [
-  ["0.0.0.0", 8, "this network"],
-  ["10.0.0.0", 8, "private"],
-  ["100.64.0.0", 10, "CGNAT"],
-  ["127.0.0.0", 8, "loopback"],
-  ["169.254.0.0", 16, "link-local (cloud metadata)"],
-  ["172.16.0.0", 12, "private"],
-  ["192.0.0.0", 24, "IETF protocol"],
-  ["192.0.2.0", 24, "TEST-NET-1"],
-  ["192.88.99.0", 24, "6to4 anycast"],
-  ["192.168.0.0", 16, "private"],
-  ["198.18.0.0", 15, "benchmark"],
-  ["198.51.100.0", 24, "TEST-NET-2"],
-  ["203.0.113.0", 24, "TEST-NET-3"],
-  ["224.0.0.0", 4, "multicast"],
+const IPV4_FORBIDDEN: ReadonlyArray<SubnetEntry> = [
+  { network: "0.0.0.0", prefix: 8, reason: "this network" },
+  { network: "10.0.0.0", prefix: 8, reason: "private" },
+  { network: "100.64.0.0", prefix: 10, reason: "CGNAT" },
+  { network: "127.0.0.0", prefix: 8, reason: "loopback" },
+  { network: "169.254.0.0", prefix: 16, reason: "link-local (cloud metadata)" },
+  { network: "172.16.0.0", prefix: 12, reason: "private" },
+  { network: "192.0.0.0", prefix: 24, reason: "IETF protocol" },
+  { network: "192.0.2.0", prefix: 24, reason: "TEST-NET-1" },
+  { network: "192.88.99.0", prefix: 24, reason: "6to4 anycast" },
+  { network: "192.168.0.0", prefix: 16, reason: "private" },
+  { network: "198.18.0.0", prefix: 15, reason: "benchmark" },
+  { network: "198.51.100.0", prefix: 24, reason: "TEST-NET-2" },
+  { network: "203.0.113.0", prefix: 24, reason: "TEST-NET-3" },
+  { network: "224.0.0.0", prefix: 4, reason: "multicast" },
   // broadcast (/32) を reserved (/4) より前に置いて、より具体的な reason を返す
-  ["255.255.255.255", 32, "broadcast"],
-  ["240.0.0.0", 4, "reserved"],
+  { network: "255.255.255.255", prefix: 32, reason: "broadcast" },
+  { network: "240.0.0.0", prefix: 4, reason: "reserved" },
 ];
 
+const IPV4_BLOCKLIST: ReadonlyArray<{ list: BlockList; reason: string }> = IPV4_FORBIDDEN.map(
+  ({ network, prefix, reason }) => {
+    const list = new BlockList();
+    list.addSubnet(network, prefix, "ipv4");
+    return { list, reason };
+  },
+);
+
 export const isForbiddenIpv4 = (ip: string): { forbidden: boolean; reason?: string } => {
-  for (const [network, prefix, reason] of FORBIDDEN_IPV4_RANGES) {
-    if (inIpv4Range(ip, network, prefix)) {
+  for (const { list, reason } of IPV4_BLOCKLIST) {
+    if (list.check(ip, "ipv4")) {
       return { forbidden: true, reason };
     }
   }
   return { forbidden: false };
 };
 
+// ------------------------------------------------------------
+// IPv6: 2000::/3 アロウリスト + 内部ブロックリスト
+// ------------------------------------------------------------
+
+// グローバルユニキャストは 2000::/3 のみ。これ以外は private/reserved/multicast/...
+const IPV6_GLOBAL_UNICAST = new BlockList();
+IPV6_GLOBAL_UNICAST.addSubnet("2000::", 3, "ipv6");
+
+const IPV6_GLOBAL_BLOCKS: ReadonlyArray<SubnetEntry> = [
+  // 2000::/3 内に存在する特殊用途レンジ
+  { network: "2001:db8::", prefix: 32, reason: "documentation" },
+  { network: "2002::", prefix: 16, reason: "6to4" },
+  { network: "2001::", prefix: 32, reason: "Teredo" },
+];
+
+const IPV6_BLOCKLIST: ReadonlyArray<{ list: BlockList; reason: string }> = IPV6_GLOBAL_BLOCKS.map(
+  ({ network, prefix, reason }) => {
+    const list = new BlockList();
+    list.addSubnet(network, prefix, "ipv6");
+    return { list, reason };
+  },
+);
+
 /**
- * IPv6 の private/reserved 判定。
+ * IPv4-mapped IPv6 (`::ffff:a.b.c.d` または `::ffff:XXXX:XXXX`) を IPv4 に展開する。
+ * 該当しなければ null を返す。
+ */
+const extractIpv4Mapped = (ipv6: string): string | null => {
+  const normalized = ipv6.toLowerCase();
+  // ドット記法: `::ffff:169.254.169.254`
+  const dotMatch = normalized.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (dotMatch?.[1]) return dotMatch[1];
+  // 16進記法: `::ffff:a9fe:a9fe` → 169.254.169.254
+  const hexMatch = normalized.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (hexMatch?.[1] && hexMatch?.[2]) {
+    const hi = Number.parseInt(hexMatch[1], 16);
+    const lo = Number.parseInt(hexMatch[2], 16);
+    if (!Number.isFinite(hi) || !Number.isFinite(lo)) return null;
+    return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+  }
+  return null;
+};
+
+/**
+ * IPv6 の禁止判定。
+ *
+ * 1. IPv4-mapped (ドット / 16進両形式) を IPv4 に展開して再検査
+ * 2. グローバルユニキャスト 2000::/3 に **含まれなければ拒否**（アロウリスト）
+ * 3. 2000::/3 内でも documentation / 6to4 / Teredo 等の特殊用途は拒否
  */
 export const isForbiddenIpv6 = (ip: string): { forbidden: boolean; reason?: string } => {
-  const normalized = ip.toLowerCase();
-  if (normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") {
-    return { forbidden: true, reason: "loopback" };
-  }
-  if (normalized === "::" || normalized === "0:0:0:0:0:0:0:0") {
-    return { forbidden: true, reason: "unspecified" };
-  }
-  // IPv4-mapped IPv6 (::ffff:a.b.c.d) — 埋め込まれた IPv4 を再検査
-  const mappedMatch = normalized.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
-  if (mappedMatch?.[1]) {
-    const inner = isForbiddenIpv4(mappedMatch[1]);
+  // IPv4-mapped を IPv4 に展開
+  const mappedIpv4 = extractIpv4Mapped(ip);
+  if (mappedIpv4) {
+    const inner = isForbiddenIpv4(mappedIpv4);
     if (inner.forbidden) {
       return { forbidden: true, reason: `IPv4-mapped (${inner.reason})` };
     }
+    // IPv4 として公開レンジでも、IPv4-mapped IPv6 自体を許可するかは要判断。
+    // 既存の Node 実装では `lookup` がドット形式で返すため到達経路は限定的だが、
+    // 念のため IPv4-mapped 自体を非公開扱いとして拒否する（攻撃面を最小化）。
+    return { forbidden: true, reason: "IPv4-mapped IPv6 (use IPv4 directly)" };
   }
-  // Unique Local Address: fc00::/7（fc00〜fdff）
-  if (/^f[cd][0-9a-f]{2}:/.test(normalized)) {
-    return { forbidden: true, reason: "ULA (private)" };
+  // アロウリスト: 2000::/3 グローバルユニキャストのみ通す
+  if (!IPV6_GLOBAL_UNICAST.check(ip, "ipv6")) {
+    return { forbidden: true, reason: "outside 2000::/3 global unicast" };
   }
-  // Link-local: fe80::/10（fe80〜febf）
-  if (/^fe[89ab][0-9a-f]:/.test(normalized)) {
-    return { forbidden: true, reason: "link-local" };
-  }
-  // Multicast: ff00::/8
-  if (/^ff[0-9a-f]{2}:/.test(normalized)) {
-    return { forbidden: true, reason: "multicast" };
-  }
-  // Discard: 100::/64
-  if (/^100:[0]{0,4}:/.test(normalized)) {
-    return { forbidden: true, reason: "discard" };
-  }
-  // Documentation: 2001:db8::/32
-  if (/^2001:db8:/.test(normalized)) {
-    return { forbidden: true, reason: "documentation" };
+  // 2000::/3 内の特殊用途
+  for (const { list, reason } of IPV6_BLOCKLIST) {
+    if (list.check(ip, "ipv6")) {
+      return { forbidden: true, reason };
+    }
   }
   return { forbidden: false };
 };
 
-/**
- * DNS 解決の差し替えを可能にするインターフェース（テスト用）。
- */
-export type ResolveHostname = (hostname: string) => Promise<string>;
+// ------------------------------------------------------------
+// assertPublicIp: ホスト名 → 全 A/AAAA → 公開レンジ判定
+// ------------------------------------------------------------
 
-const defaultResolveHostname: ResolveHostname = async (hostname) => {
-  // IP リテラルがそのまま渡された場合はそのまま返す（hostname は URL.host 由来）
-  if (isIP(hostname) !== 0) return hostname;
-  const result = await lookup(hostname);
-  return result.address;
+export type ResolveHostnameAll = (hostname: string) => Promise<ReadonlyArray<string>>;
+
+const defaultResolveHostnameAll: ResolveHostnameAll = async (hostname) => {
+  if (isIP(hostname) !== 0) return [hostname];
+  // `all: true` で複数 A/AAAA を全て取得。
+  // 攻撃者が「public + private」を混ぜて返した場合に片方だけ検証する事故を防ぐ。
+  const records = await lookup(hostname, { all: true });
+  return records.map((r) => r.address);
 };
 
 export type AssertPublicIpOptions = {
-  readonly resolve?: ResolveHostname;
+  /** テスト用の DI。指定がなければ `dns.lookup(host, { all: true })` を使う */
+  readonly resolveAll?: ResolveHostnameAll;
 };
 
 /**
  * ホスト名（または IP リテラル）が公開レンジに含まれることを保証する。
- * 違反したら `SsrfDeniedError` を投げる。
+ *
+ * 解決した **全 IP** が公開レンジでなければ `SsrfDeniedError` を投げる。
+ * 戻り値は接続に使うべき IP（最初の公開 IP）。
  */
 export const assertPublicIp = async (
   hostname: string,
@@ -160,35 +204,50 @@ export const assertPublicIp = async (
   }
   // URL.host が `[::1]` のように角括弧付きで来る可能性
   const cleaned = hostname.replace(/^\[|\]$/g, "");
-  const resolve = options.resolve ?? defaultResolveHostname;
-  const ip = await resolve(cleaned);
+  const resolveAll = options.resolveAll ?? defaultResolveHostnameAll;
+  const ips = await resolveAll(cleaned);
+  if (ips.length === 0) {
+    throw new SsrfDeniedError(`ホスト名を解決できませんでした: ${hostname}`);
+  }
 
-  if (isIPv4(ip)) {
-    const check = isForbiddenIpv4(ip);
-    if (check.forbidden) {
-      throw new SsrfDeniedError(`内部レンジへのアクセスは拒否されました (${check.reason}): ${ip}`);
+  for (const ip of ips) {
+    if (isIPv4(ip)) {
+      const check = isForbiddenIpv4(ip);
+      if (check.forbidden) {
+        throw new SsrfDeniedError(
+          `内部レンジへのアクセスは拒否されました (${check.reason}): ${ip}`,
+        );
+      }
+    } else if (isIPv6(ip)) {
+      const check = isForbiddenIpv6(ip);
+      if (check.forbidden) {
+        throw new SsrfDeniedError(
+          `内部レンジへのアクセスは拒否されました (${check.reason}): ${ip}`,
+        );
+      }
+    } else {
+      throw new SsrfDeniedError(`解決後の値が IP アドレスではありません: ${ip}`);
     }
-    return ip;
   }
-  if (isIPv6(ip)) {
-    const check = isForbiddenIpv6(ip);
-    if (check.forbidden) {
-      throw new SsrfDeniedError(`内部レンジへのアクセスは拒否されました (${check.reason}): ${ip}`);
-    }
-    return ip;
-  }
-  throw new SsrfDeniedError(`解決後の値が IP アドレスではありません: ${ip}`);
+  // 全 IP が公開レンジ。接続にはリストの先頭を使う。
+  return ips[0] as string;
 };
+
+// ------------------------------------------------------------
+// fetchHtmlSafe: per-hop SSRF 検証 + DNS ピン留めで TOCTOU 遮断
+// ------------------------------------------------------------
 
 export type FetchHtmlSafeOptions = {
   readonly maxBytes?: number;
   readonly maxRedirects?: number;
   readonly timeoutMs?: number;
   readonly userAgent?: string;
-  /** テスト用の依存性注入。指定がなければ DNS lookup を用いる。 */
-  readonly resolve?: ResolveHostname;
+  /** テスト用の依存性注入。指定がなければ `dns.lookup(host, { all: true })` を用いる。 */
+  readonly resolveAll?: ResolveHostnameAll;
   /** テスト用の依存性注入。指定がなければ globalThis.fetch を用いる。 */
   readonly fetchImpl?: typeof globalThis.fetch;
+  /** テスト用 hook。本番では undefined で良い。 */
+  readonly onValidatedIp?: (ip: string) => void;
 };
 
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -234,6 +293,24 @@ const readBodyWithLimit = async (response: Response, maxBytes: number): Promise<
   return text;
 };
 
+/**
+ * 検証済み IP を undici Agent の lookup に強制注入し、fetch の DNS 解決を
+ * 完全にバイパスする。これにより validated IP と connected IP の一致を保証する。
+ */
+const buildPinnedDispatcher = (ip: string): Agent => {
+  const family: 4 | 6 = ip.includes(":") ? 6 : 4;
+  return new Agent({
+    connect: {
+      // node:dns.lookup と同じシグネチャを満たす lookup を提供する。
+      // hostname / options は無視し、pinned IP を返す。
+      // biome-ignore lint/suspicious/noExplicitAny: undici LookupFunction の型をそのまま採用
+      lookup: (_hostname: string, _options: any, cb: any) => {
+        cb(null, ip, family);
+      },
+    },
+  });
+};
+
 export type FetchHtmlSafeResult = {
   readonly url: string;
   readonly status: number;
@@ -242,13 +319,18 @@ export type FetchHtmlSafeResult = {
 };
 
 /**
- * SSRF 対策込みの HTML 取得関数。
+ * SSRF + DNS リバインディング対策込みの HTML 取得関数。
  *
  * - http/https のみを許可
- * - 各ホップで URL → DNS → IP を検証
+ * - 各ホップで URL → DNS → 全 A/AAAA → IP 公開レンジ検証
+ * - 検証で得た IP を undici Agent の `connect.lookup` に強制注入し、
+ *   fetch 内部での独立 DNS 解決を遮断（TOCTOU 攻撃を遮断、Issue #63）
  * - 最大 `maxRedirects` ホップで打ち切る
  * - レスポンスは `maxBytes` で打ち切る
  * - タイムアウトは `timeoutMs`
+ *
+ * HTTPS の SNI / 証明書検証は元の hostname を保つため、IP リテラルへの
+ * URL 書き換えはしない（dispatcher 経由で接続先のみピン留め）。
  */
 export const fetchHtmlSafe = async (
   initialUrl: string,
@@ -272,14 +354,29 @@ export const fetchHtmlSafe = async (
       if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
         throw new FetchSafetyError(`不正なスキーム: ${parsed.protocol}`, "invalid_scheme");
       }
-      await assertPublicIp(parsed.hostname, { resolve: options.resolve });
-
-      const response = await fetchImpl(currentUrl, {
-        method: "GET",
-        headers: { "User-Agent": userAgent, Accept: "text/html" },
-        signal: controller.signal,
-        redirect: "manual",
+      const validatedIp = await assertPublicIp(parsed.hostname, {
+        resolveAll: options.resolveAll,
       });
+      options.onValidatedIp?.(validatedIp);
+
+      const dispatcher = buildPinnedDispatcher(validatedIp);
+      let response: Response;
+      try {
+        // dispatcher は標準 fetch の型に含まれないため unknown 経由でキャスト。
+        // Node.js (undici) ランタイムでのみ有効。
+        response = await fetchImpl(currentUrl, {
+          method: "GET",
+          headers: { "User-Agent": userAgent, Accept: "text/html" },
+          signal: controller.signal,
+          redirect: "manual",
+          // biome-ignore lint/suspicious/noExplicitAny: undici 拡張オプションを std fetch 型に注入
+          dispatcher,
+        } as RequestInit & { dispatcher: Agent });
+      } finally {
+        // Agent はホップごとに使い捨て。リソースリークを防ぐため close する。
+        // テストの fetchImpl モックでは dispatcher を無視する場合があるため、エラーを握りつぶす。
+        dispatcher.close().catch(() => {});
+      }
 
       // 30x: Location ヘッダで次のホップを決定
       if (response.status >= 300 && response.status < 400) {
