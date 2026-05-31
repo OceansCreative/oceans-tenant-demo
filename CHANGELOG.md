@@ -10,10 +10,44 @@
 ### Added
 - スクリーンショット / GIF の正式撮影（docs/images）
 
-### Pending Security Hardening (`#55` / `#56` / `#57`)
-- SSE エラーメッセージのサニタイズ（`/api/chat-search`）
-- ChatPanel 自動スクロールの依存配列修正
-- `chat-search` の Claude 出力を `criteriaSchema.safeParse` で再バリデーション
+## [0.1.2] — 2026-05-31
+
+外部レビュー指摘の medium 3 件をまとめて修正したセキュリティ hardening + UX リリース。
+
+### Security / Hardening
+
+- **#55 SSE エラーメッセージのサニタイズ** (`/api/chat-search`)
+  - `sanitizeErrorForClient()` を導入し、SDK 内部メッセージや想定外の例外が SSE 経由でクライアントに露出しないよう定型文に丸める
+  - `ANTHROPIC_API_KEY` 未設定のメッセージはホワイトリストで透過（運用者向けに必要）
+  - 詳細は `console.error` でサーバー側ログのみに
+
+- **#57 chat-search の Claude 出力を CriteriaSchema で再バリデーション**
+  - `packages/shared/src/searchCriteria/schema.ts` を新設し、検索条件の Zod スキーマと `SearchCriteria` 型を統合
+  - `/api/query-build` のローカル CriteriaSchema を shared 経由に置換
+  - `/api/chat-search` の `parseClaudeCriteriaResponse` で Claude 出力を必ず `searchCriteriaSchema.safeParse()` を通す
+  - 失敗時は現状の criteria を維持し、定型文でユーザーに通知
+  - 列挙値違反 / 範囲違反 / 不正な ref を後続経路（filter / 将来の GROQ）に到達させない
+
+### Fixed
+
+- **#56 ChatPanel の自動スクロールが新規メッセージで効かない**
+  - `useEffect` 依存を `[]` → `[messages.length, pending, results.length]`
+  - 新規メッセージ / 結果到着 / pending 切替で末尾に追従
+
+### Changed
+
+- `apps/web/src/lib/search-criteria.ts` は `@oceans-tenant/shared` の `SearchCriteria` 型を re-export
+- `package.json` version を 0.1.2 に
+
+### Tests
+
+- shared: 119 → **135**（+16）
+- web: 114 → **128**（+14）
+- 全 263 ケース pass、CI 全 green
+
+### Docs
+
+- `docs/AI_INTEGRATION.md`: Claude 出力の再バリデーション原則と SSE エラーサニタイズ仕様を追記
 
 ## [0.1.1] — 2026-05-31
 
