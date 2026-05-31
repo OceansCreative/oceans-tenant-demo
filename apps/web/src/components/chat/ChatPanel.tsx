@@ -42,12 +42,14 @@ export const ChatPanel = (): React.JSX.Element => {
     router.replace(`/chat?${next.toString()}` as never);
   }, [searchParams, router]);
 
+  // 新規メッセージ追加 / 結果到着 / pending 切替 のいずれでも末尾に追従
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pending と messages.length の遷移時に追従させたい
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, []);
+  }, [messages.length, pending, results.length]);
 
   const send = useCallback(async () => {
     if (!input.trim() || !sessionId || pending) return;

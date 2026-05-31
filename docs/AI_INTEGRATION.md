@@ -96,6 +96,28 @@ type SseEvent =
 
 クライアントは `EventSource` または `ReadableStream` で読み取り、UI を逐次更新する。
 
+### Claude 出力の再バリデーション原則
+
+Claude が返した `extractedCriteria` は、`packages/shared/src/searchCriteria/schema.ts` の `searchCriteriaSchema.safeParse()` を **必ず** 通してから後続経路（`filterProperties` や将来の GROQ 生成）に流す。
+
+- 列挙値違反（未知の都道府県・建物形態・物件状態など）は拒否
+- 範囲違反（`minRent > maxRent`、`minArea > maxArea`）は superRefine で拒否
+- `businessCategoryRefs` の不正な ID は正規表現で拒否
+- 失敗時はサーバー側 `console.error` でログ、クライアントには現状条件維持 + 「条件の更新ができませんでした」を返す
+
+同じ `searchCriteriaSchema` を `/api/query-build` のリクエスト検証にも使うことで、GROQ レイヤに到達する前にホワイトリスト検証が二重に効く。
+
+### SSE エラーメッセージのサニタイズ
+
+`/api/chat-search` の catch ブロックは `sanitizeErrorForClient()` を通して定型文に丸める。
+
+| 入力 | クライアントへの応答 |
+|---|---|
+| 一般 Error（SDK 内部 / 通信失敗 / 想定外） | 「処理中にエラーが発生しました。時間をおいて再度お試しください。」 |
+| `ANTHROPIC_API_KEY` を含むメッセージ | そのまま透過（運用者向けの設定案内として有効） |
+
+詳細はサーバー側 `console.error` のみに残し、SDK スタック断片等が SSE 経由で漏れないようにする。
+
 ## Zod ⇄ Claude tool use の対応
 
 現状は Claude の通常の messages API で JSON を返させる方式を採用しています。
