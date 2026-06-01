@@ -114,6 +114,10 @@ export const buildPropertyGroq = (criteria: SearchCriteria, limit = 60): BuildGr
   }
 
   const filterString = filters.join(" && ");
+  // 注意: tsubo を GROQ で計算しない。坪数換算は packages/shared の squareMeterToTsubo を
+  // 単一の真実とし、フロント側で derivePropertyTsubo(property) を通す（Issue #87）。
+  // GROQ で `area * 0.3025` を直接出すと丸めが効かず JS 側の Math.round 結果と食い違う。
+  // また、Sanity → shared Zod の橋渡しのため aiMeta / *Refs を projection で吸収する（Issue #86）。
   const groq = `*[${filterString}] | order(publishedAt desc) [0...${limit}]{
   _id,
   title,
@@ -122,13 +126,24 @@ export const buildPropertyGroq = (criteria: SearchCriteria, limit = 60): BuildGr
   nearestStations,
   rent,
   commonFee,
+  depositMonths,
+  keyMoneyMonths,
   area,
+  floor,
   buildingType,
   condition,
+  previousBusiness,
+  description,
   features,
   availability,
   publishedAt,
-  "tsubo": area * 0.3025
+  "suitableBusinessRefs": suitableBusinesses[]._ref,
+  "listedByRef": listedBy._ref,
+  "aiMeta": {
+    "aiExtracted": aiExtracted,
+    "aiConfidence": aiConfidence,
+    "sourceUrl": sourceUrl
+  }
 }`;
 
   return { groq, params };

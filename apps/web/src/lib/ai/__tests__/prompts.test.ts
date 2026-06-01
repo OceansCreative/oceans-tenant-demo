@@ -97,6 +97,34 @@ describe("buildPropertyGroq", () => {
       buildPropertyGroq({ buildingTypes: [], conditions: [], businessCategoryRefs: [] }, 300),
     ).toThrow(GroqInjectionError);
   });
+
+  // Issue #86 / #87: GROQ projection が shared Zod 形に橋渡しすることを契約として固定
+  it("projection は Sanity → shared Zod を橋渡しする（aiMeta ネスト / *Refs 文字列）", () => {
+    const result = buildPropertyGroq({
+      buildingTypes: [],
+      conditions: [],
+      businessCategoryRefs: [],
+    });
+    // aiMeta はネスト形で取得
+    expect(result.groq).toContain('"aiMeta"');
+    expect(result.groq).toContain('"aiExtracted": aiExtracted');
+    expect(result.groq).toContain('"aiConfidence": aiConfidence');
+    expect(result.groq).toContain('"sourceUrl": sourceUrl');
+    // reference は _ref 文字列に展開
+    expect(result.groq).toContain('"suitableBusinessRefs": suitableBusinesses[]._ref');
+    expect(result.groq).toContain('"listedByRef": listedBy._ref');
+  });
+
+  it("projection に tsubo は含めない（坪換算は shared squareMeterToTsubo を単一真実とする）", () => {
+    // Issue #87: GROQ で `area * 0.3025` を出すと丸めが効かず JS と食い違うため撤去
+    const result = buildPropertyGroq({
+      buildingTypes: [],
+      conditions: [],
+      businessCategoryRefs: [],
+    });
+    expect(result.groq).not.toContain("tsubo");
+    expect(result.groq).not.toContain("0.3025");
+  });
 });
 
 describe("buildChatSearchUserContext", () => {
