@@ -23,7 +23,7 @@ import type { AddressInfo } from "node:net";
 // 明示することで「結合テストである」意図を表現する）
 import { fetch as undiciFetch } from "undici";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildPinnedDispatcher } from "@/lib/ai/url-safety";
+import { buildPinnedDispatcher, pinnedLookup } from "@/lib/ai/url-safety";
 
 let server: http.Server;
 let port: number;
@@ -87,25 +87,37 @@ describe("buildPinnedDispatcher (実 undici 結合)", () => {
     }
   });
 
-  it("コールバックが配列形式である（Happy Eyeballs / autoSelectFamily=true 互換）", async () => {
-    // 別経路としても確認: dispatcher 内部の lookup を直接呼んで形式を観測
-    const dispatcher = buildPinnedDispatcher("203.0.113.1"); // TEST-NET-3
-    // @ts-expect-error - 内部 connect オプションへの直接アクセス（テスト用）
-    const lookup = dispatcher[Symbol.for("undici.agent.options")]?.connect?.lookup;
-    if (typeof lookup === "function") {
-      const result = await new Promise<unknown>((resolve, reject) => {
-        lookup("ignored.example.com", {}, (err: unknown, value: unknown) => {
-          if (err) reject(err);
-          else resolve(value);
-        });
+  it("pinnedLookup は配列形式 [{address, family}] を返す（IPv4）", () => {
+    // Issue #85 修正: 純関数を直接呼んでロックする
+    // （旧テストは Symbol.for("undici.agent.options") が undefined を返すため
+    //  if ブロックが空回りしていた dead assertion だった）
+    const lookup = pinnedLookup("203.0.113.1");
+    return new Promise<void>((resolve, reject) => {
+      lookup("ignored.example.com", {}, (err, value) => {
+        try {
+          expect(err).toBeNull();
+          expect(Array.isArray(value)).toBe(true);
+          expect(value).toEqual([{ address: "203.0.113.1", family: 4 }]);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
       });
-      // 配列形式: [{ address, family }]
-      expect(Array.isArray(result)).toBe(true);
-      expect((result as Array<{ address: string; family: number }>)[0]).toEqual({
-        address: "203.0.113.1",
-        family: 4,
+    });
+  });
+
+  it("pinnedLookup は IPv6 で family=6 を返す", () => {
+    const lookup = pinnedLookup("2606:4700:4700::1111");
+    return new Promise<void>((resolve, reject) => {
+      lookup("ignored.example.com", {}, (err, value) => {
+        try {
+          expect(err).toBeNull();
+          expect(value).toEqual([{ address: "2606:4700:4700::1111", family: 6 }]);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
       });
-    }
-    await dispatcher.close();
+    });
   });
 });

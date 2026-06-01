@@ -294,31 +294,46 @@ const readBodyWithLimit = async (response: Response, maxBytes: number): Promise<
 };
 
 /**
+ * pinned IP を返す lookup 関数を純関数として生成する。
+ *
+ * **コールバックは配列形式** `cb(null, [{ address, family }])` を返す。
+ * Node 20+ では `net.createConnection` の `autoSelectFamily` が既定 true で、
+ * 内部で `lookup(host, { all: true }, cb)` を呼び `[{address, family}, ...]` の
+ * 配列を期待する（Happy Eyeballs RFC 8305）。単一形式 `cb(null, ip, family)` を
+ * 返すと `ERR_INVALID_IP_ADDRESS` で接続前に弾かれる（v0.1.3 リグレッションの原因、Issue #81）。
+ *
+ * 関数として export することで、`buildPinnedDispatcher` の組み立てを経由せずに
+ * 配列形式の戻り値を直接ユニットテストできる（Issue #85 の dead assertion 対策）。
+ */
+export type PinnedLookup = (
+  hostname: string,
+  options: unknown,
+  // 配列形式は [{address, family}, ...]
+  callback: (
+    error: NodeJS.ErrnoException | null,
+    addresses: ReadonlyArray<{ address: string; family: 4 | 6 }>,
+  ) => void,
+) => void;
+
+export const pinnedLookup =
+  (ip: string): PinnedLookup =>
+  (_hostname, _options, callback) => {
+    const family: 4 | 6 = ip.includes(":") ? 6 : 4;
+    callback(null, [{ address: ip, family }]);
+  };
+
+/**
  * 検証済み IP を undici Agent の lookup に強制注入し、fetch の DNS 解決を
  * 完全にバイパスする。これにより validated IP と connected IP の一致を保証する。
  *
- * **重要**: コールバックは **配列形式** `cb(null, [{ address, family }])` を採用する。
- *
- * Node 20+ では `net.createConnection` の `autoSelectFamily` が既定 true で、
- * 内部で `lookup(host, { all: true }, cb)` を呼び `[{address, family}, ...]` の
- * 配列を期待する（Happy Eyeballs RFC 8305 の複数アドレス試行のため）。
- * 単一形式 `cb(null, ip, family)` を返すと `ERR_INVALID_IP_ADDRESS` で
- * 接続前に弾かれる。これが v0.1.3 リグレッションの原因（Issue #81）。
- *
- * 実 undici + ローカルサーバの結合テスト（`url-safety.integration.test.ts`）で
- * このコールバック形式が実機で動作することを保証する。
+ * 実装は `pinnedLookup` を Agent に組み込むだけ。Lookup 形式の正しさは
+ * `pinnedLookup` 単体テスト + 実 undici + ローカルサーバの結合テストで保証する。
  */
 export const buildPinnedDispatcher = (ip: string): Agent => {
-  const family: 4 | 6 = ip.includes(":") ? 6 : 4;
   return new Agent({
     connect: {
-      // node:dns.lookup と同じシグネチャを満たす lookup を提供する。
-      // hostname / options は無視し、pinned IP を返す。
-      // 配列形式は autoSelectFamily=true 経路と互換。
-      // biome-ignore lint/suspicious/noExplicitAny: undici LookupFunction の型をそのまま採用
-      lookup: (_hostname: string, _options: any, cb: any) => {
-        cb(null, [{ address: ip, family }]);
-      },
+      // biome-ignore lint/suspicious/noExplicitAny: undici LookupFunction の型を吸収
+      lookup: pinnedLookup(ip) as any,
     },
   });
 };
