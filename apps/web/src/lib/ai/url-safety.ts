@@ -296,16 +296,28 @@ const readBodyWithLimit = async (response: Response, maxBytes: number): Promise<
 /**
  * 検証済み IP を undici Agent の lookup に強制注入し、fetch の DNS 解決を
  * 完全にバイパスする。これにより validated IP と connected IP の一致を保証する。
+ *
+ * **重要**: コールバックは **配列形式** `cb(null, [{ address, family }])` を採用する。
+ *
+ * Node 20+ では `net.createConnection` の `autoSelectFamily` が既定 true で、
+ * 内部で `lookup(host, { all: true }, cb)` を呼び `[{address, family}, ...]` の
+ * 配列を期待する（Happy Eyeballs RFC 8305 の複数アドレス試行のため）。
+ * 単一形式 `cb(null, ip, family)` を返すと `ERR_INVALID_IP_ADDRESS` で
+ * 接続前に弾かれる。これが v0.1.3 リグレッションの原因（Issue #81）。
+ *
+ * 実 undici + ローカルサーバの結合テスト（`url-safety.integration.test.ts`）で
+ * このコールバック形式が実機で動作することを保証する。
  */
-const buildPinnedDispatcher = (ip: string): Agent => {
+export const buildPinnedDispatcher = (ip: string): Agent => {
   const family: 4 | 6 = ip.includes(":") ? 6 : 4;
   return new Agent({
     connect: {
       // node:dns.lookup と同じシグネチャを満たす lookup を提供する。
       // hostname / options は無視し、pinned IP を返す。
+      // 配列形式は autoSelectFamily=true 経路と互換。
       // biome-ignore lint/suspicious/noExplicitAny: undici LookupFunction の型をそのまま採用
       lookup: (_hostname: string, _options: any, cb: any) => {
-        cb(null, ip, family);
+        cb(null, [{ address: ip, family }]);
       },
     },
   });
