@@ -23,7 +23,12 @@ import type { AddressInfo } from "node:net";
 // 明示することで「結合テストである」意図を表現する）
 import { fetch as undiciFetch } from "undici";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildPinnedDispatcher } from "@/lib/ai/url-safety";
+import {
+  buildPinnedDispatcher,
+  fetchHtmlSafe,
+  pinnedLookup,
+  SsrfDeniedError,
+} from "@/lib/ai/url-safety";
 
 let server: http.Server;
 let port: number;
@@ -87,25 +92,87 @@ describe("buildPinnedDispatcher (実 undici 結合)", () => {
     }
   });
 
-  it("コールバックが配列形式である（Happy Eyeballs / autoSelectFamily=true 互換）", async () => {
-    // 別経路としても確認: dispatcher 内部の lookup を直接呼んで形式を観測
-    const dispatcher = buildPinnedDispatcher("203.0.113.1"); // TEST-NET-3
-    // @ts-expect-error - 内部 connect オプションへの直接アクセス（テスト用）
-    const lookup = dispatcher[Symbol.for("undici.agent.options")]?.connect?.lookup;
-    if (typeof lookup === "function") {
-      const result = await new Promise<unknown>((resolve, reject) => {
-        lookup("ignored.example.com", {}, (err: unknown, value: unknown) => {
-          if (err) reject(err);
-          else resolve(value);
-        });
+  it("pinnedLookup は配列形式 [{address, family}] を返す（IPv4）", () => {
+    // Issue #85 修正: 純関数を直接呼んでロックする
+    // （旧テストは Symbol.for("undici.agent.options") が undefined を返すため
+    //  if ブロックが空回りしていた dead assertion だった）
+    const lookup = pinnedLookup("203.0.113.1");
+    return new Promise<void>((resolve, reject) => {
+      lookup("ignored.example.com", {}, (err, value) => {
+        try {
+          expect(err).toBeNull();
+          expect(Array.isArray(value)).toBe(true);
+          expect(value).toEqual([{ address: "203.0.113.1", family: 4 }]);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
       });
-      // 配列形式: [{ address, family }]
-      expect(Array.isArray(result)).toBe(true);
-      expect((result as Array<{ address: string; family: number }>)[0]).toEqual({
-        address: "203.0.113.1",
-        family: 4,
-      });
-    }
-    await dispatcher.close();
+    });
   });
+
+  it("pinnedLookup は IPv6 で family=6 を返す", () => {
+    const lookup = pinnedLookup("2606:4700:4700::1111");
+    return new Promise<void>((resolve, reject) => {
+      lookup("ignored.example.com", {}, (err, value) => {
+        try {
+          expect(err).toBeNull();
+          expect(value).toEqual([{ address: "2606:4700:4700::1111", family: 6 }]);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+  });
+});
+
+// ---------- fetchHtmlSafe を実 undici 環境（node 実行系）でリジェクト経路だけ検証（Issue #88） ----------
+//
+// 設計上の制約:
+// - assertPublicIp が 127.0.0.1 を弾くため、ローカルサーバへ実 undici で
+//   接続する成功パスはテスト不可能（bypass mechanism は assertPublicIp 自体の
+//   存在意義を壊すので入れない）
+// - インターネット越しの公開サーバへの接続は CI 環境では現実的でない
+//
+// よってここでは「実 undici 環境（node runtime + 実 globalThis.fetch 経由）で
+// リジェクト判定が確実に発火する」ことを実証する。これは fetchImpl モックの
+// jsdom 単体テストでは保証できなかった層（実 undici のロード / 実 Agent 構築 /
+// 実 dns.lookup へのリーチが正しく走るか）を埋める。
+//
+// 成功パスの「実 undici での dispatcher ピン留め」は前段の buildPinnedDispatcher
+// 結合テストで個別に実証済（pinnedLookup 戻り値 + 実 fetch での Host 維持）。
+
+describe("fetchHtmlSafe (実 undici / リジェクト経路の E2E)", () => {
+  it("解決後 IP が private なら、実 undici 環境でも fetch 前に SsrfDeniedError", async () => {
+    // 169.254.169.254 (cloud metadata) を返す resolveAll。
+    // 実装は assertPublicIp 内で同期的に弾くため、undici fetch には一切到達しない。
+    // この経路が node + 実 undici ロード下でも壊れていないことを実証。
+    await expect(
+      fetchHtmlSafe("http://attacker.example.invalid/leak", {
+        resolveAll: async () => ["169.254.169.254"],
+      }),
+    ).rejects.toThrow(SsrfDeniedError);
+  });
+
+  it("複数 A レコードで public+private 混在は、実 undici 環境でも拒否", async () => {
+    await expect(
+      fetchHtmlSafe("http://multi.example.invalid/", {
+        resolveAll: async () => ["93.184.216.34", "10.0.0.1"],
+      }),
+    ).rejects.toThrow(SsrfDeniedError);
+  });
+
+  it("不正なスキーム (file://) は、実 undici 環境でも拒否", async () => {
+    await expect(
+      fetchHtmlSafe("file:///etc/passwd", {
+        resolveAll: async () => ["127.0.0.1"],
+      }),
+    ).rejects.toMatchObject({ code: "invalid_scheme" });
+  });
+
+  // NOTE: 「リダイレクト先 private で拒否」「サイズ上限超過」「Host 維持」は
+  // jsdom 単体テスト + buildPinnedDispatcher 結合テストの組み合わせでカバー済。
+  // ここで実 undici 接続まで踏み込むには assertPublicIp の bypass が必要だが、
+  // それは本来テストすべきガードを壊すため採用しない。
 });
