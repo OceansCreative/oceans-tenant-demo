@@ -1,13 +1,13 @@
 # レビューガイド（次セッション用）
 
-本ドキュメントは v0.1.3 完成後のコードレビューを別セッションで効率的に進めるための入口です。
+本ドキュメントは v0.1.4 完成後のコードレビューを別セッションで効率的に進めるための入口です。
 レビュアー（Claude / 人間）はまずこのファイルから読むことを想定しています。
 
 ---
 
 ## TL;DR
 
-- **完了状態**: Phase 1〜4 全 32 Issue + レビュー指摘 6 件（SSRF + medium 3 + DNS rebinding + IPv6 allowlist）を解消、`v0.1.0`〜`v0.1.3` の 4 タグ作成、CI 全 green
+- **完了状態**: Phase 1〜4 全 32 Issue + レビュー指摘 7 件（SSRF + medium 3 + DNS rebinding + IPv6 allowlist + DNS pinning lookup 配列形式リグレッション）を解消、`v0.1.0`〜`v0.1.4` の 5 タグ作成、CI 全 green
 - **未完**: 実 Vercel デプロイ / 実 Sanity 接続 / スクリーンショット撮影（v0.2.0 で実施予定）
 - **既知の意図的な妥協**: 認証なし（仕様）、ANTHROPIC_API_KEY なしでも UI は動作（フォールバック）、TS 6 系は未追従
 
@@ -19,6 +19,7 @@
 | v0.1.1 | SSRF 修正（CWE-918） | [#54](https://github.com/OceansCreative/oceans-tenant-demo/issues/54) |
 | v0.1.2 | medium hardening バンドル | [#55](https://github.com/OceansCreative/oceans-tenant-demo/issues/55) [#56](https://github.com/OceansCreative/oceans-tenant-demo/issues/56) [#57](https://github.com/OceansCreative/oceans-tenant-demo/issues/57) |
 | v0.1.3 | DNS rebinding 遮断 + IPv6 アロウリスト化 | [#63](https://github.com/OceansCreative/oceans-tenant-demo/issues/63) [#64](https://github.com/OceansCreative/oceans-tenant-demo/issues/64) |
+| v0.1.4 | DNS ピン留め lookup 配列形式リグレッション修正 + 実 undici 結合テスト | [#81](https://github.com/OceansCreative/oceans-tenant-demo/issues/81) |
 
 **前回レビューで指摘された 4 件は全て対応済**。詳細は [CHANGELOG.md](../CHANGELOG.md) を参照。
 今回のレビューは **新規の指摘** を探すフェーズです。
@@ -95,7 +96,7 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 ### 3. テストと CI
 
 - [ ] Vitest: `apps/web/tests/` と `apps/web/src/**/__tests__/` を `vitest.config.ts` で拾えている
-- [ ] shared 135 / web **151** / pytest 40 / Playwright 5 シナリオ × 2 ブラウザ
+- [ ] shared 135 / web **154** / pytest 40 / Playwright 5 シナリオ × 2 ブラウザ
 - [ ] CI: `.github/workflows/ci.yml` で Lint / typecheck / Vitest / pytest が並列実行
 - [ ] CI: `.github/workflows/e2e.yml` で `next build && next start` + Playwright
 - [ ] CodeQL: 週次 + PR で TypeScript / JavaScript を解析
@@ -124,7 +125,7 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 - [ ] [docs/ARCHITECTURE.md](ARCHITECTURE.md): mermaid 全体図 + ER 図
 - [ ] [docs/AI_INTEGRATION.md](AI_INTEGRATION.md): プロンプト、SSE イベント、SSRF 防御、Claude 出力再バリデーション
 - [ ] [docs/DEPLOY.md](DEPLOY.md): Vercel + DNS + 環境変数
-- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 全て記載
+- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.1.4 全て記載
 - [ ] CONTRIBUTING / SECURITY / CODE_OF_CONDUCT が揃っている
 
 ## 起動・検証手順
@@ -182,6 +183,8 @@ pnpm --filter @oceans-tenant/web exec playwright test
 | **IPv6 16進 IPv4-mapped 取りこぼし** | ドット形式と 16 進形式を両方展開して再検査 | **v0.1.3 / #64** |
 | **IPv6 blocklist の構造的弱さ** | `2000::/3` allowlist + 内部 block の二段構えに変更 | **v0.1.3 / #64** |
 | IPv6 短縮形（`fc0:` 等）取りこぼし懸念 | allowlist 化で自動解決（`2000::/3` 外はすべて拒否） | v0.1.3 / #64 |
+| **DNS ピン留め lookup 配列形式リグレッション** | `cb(null, [{address, family}])` に修正、実 undici 結合テスト追加 | **v0.1.4 / #81** |
+| **モック専用テストで dispatcher 経路が一切未検証だった構造的穴** | `url-safety.integration.test.ts` で実 undici + ローカル HTTP サーバ結合テスト | **v0.1.4 / #81** |
 | `escapeString` の妥当性議論 | パラメータ化で注入遮断済、二重防御として残置で合意 | discussion |
 | SSE 境界判定 `buffer.split("\n\n")` | 仕様通りで適切と合意 | discussion |
 | `aiExtractionMetaSchema.superRefine` の相互制約 | 現状で十分と合意 | discussion |
@@ -196,7 +199,8 @@ pnpm --filter @oceans-tenant/web exec playwright test
 ### 既知の残課題（Issue 起票済、v0.2.0 backlog）
 
 - [#65](https://github.com/OceansCreative/oceans-tenant-demo/issues/65) **`apps/web/next.config.ts`** の `webpack.resolve.extensionAlias` — Turbopack 移行時に壊れる。`turbopack.resolveAlias` 二重化が未対応
-- [#66](https://github.com/OceansCreative/oceans-tenant-demo/issues/66) **Python `scripts/python/oceans_tenant_seed/sanity_client.py`** — リトライ・タイムアウト戦略が未実装
+- [#66](https://github.com/OceansCreative/oceans-tenant-demo/issues/66) **Python `sanity_client.py`** — `timeout=60` は設定済だがリトライ・バックオフ・429 ハンドリング・チャンク分割が未実装
+- [#82](https://github.com/OceansCreative/oceans-tenant-demo/issues/82) **`/api/chat-search`** — クライアント切断時に `client.messages.create` を中断しない（signal 未伝播）
 
 ### 新規深掘り候補
 
