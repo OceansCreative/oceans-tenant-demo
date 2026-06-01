@@ -11,6 +11,37 @@
 - スクリーンショット / GIF の正式撮影（docs/images）
 - Turbopack 移行に備えた `extensionAlias` 二重化（#65）
 - `sanity_client.py` のリトライ・タイムアウト戦略（#66）
+- chat-search のクライアント切断時に Anthropic 呼び出しを中断（#82）
+
+## [0.1.4] — 2026-06-01
+
+v0.1.3 で導入した DNS リバインディング遮断が **本番 undici で動作しない** リグレッションを修正。
+
+### Security / Fixed
+
+- **#81 DNS ピン留め lookup を配列形式に修正**
+  - v0.1.3 の `buildPinnedDispatcher` は単一形式 `cb(null, ip, family)` を返していたため、Node 20+ の `autoSelectFamily=true` (Happy Eyeballs RFC 8305) と非互換で、実 undici では `ERR_INVALID_IP_ADDRESS` で接続前に弾かれていた
+  - 結果として `/api/ingest-url` は常に 500 を返すデッドエンドポイント状態だった（fail-closed のため SSRF 発火ではないが、目玉機能の DNS リバインディング遮断は実証されていなかった）
+  - 配列形式 `cb(null, [{ address, family }])` に修正
+
+### Tests
+
+- 実 undici + ローカル HTTP サーバの **結合テスト** 3 件を新設（`url-safety.integration.test.ts`）
+  - pinned IP への接続成功 + Host ヘッダー維持
+  - 複数 Host への同一 dispatcher 接続
+  - lookup コールバックが配列形式であることの直接観測
+- 既存 80 ケースの単体テストが全て `fetchImpl` モックで dispatcher 経路を一切実行していなかった構造的な穴を埋める
+- apps/web: 151 → **154** ケース pass
+- format-only revert で結合テスト 2 件が確実に fail することをローカルで確認（回帰防止の実証）
+
+### Docs
+
+- `docs/AI_INTEGRATION.md` の SSRF 防御セクションに「lookup コールバックの形式（Issue #81）」節を追加
+
+### Changed
+
+- `apps/web/src/lib/ai/url-safety.ts`: `buildPinnedDispatcher` を `export` 化（結合テストから直接呼ぶため）
+- `package.json` version を 0.1.4 に
 
 ## [0.1.3] — 2026-05-31
 
