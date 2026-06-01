@@ -1,13 +1,13 @@
 # レビューガイド（次セッション用）
 
-本ドキュメントは v0.1.4 完成後のコードレビューを別セッションで効率的に進めるための入口です。
+本ドキュメントは v0.1.5 完成後のコードレビューを別セッションで効率的に進めるための入口です。
 レビュアー（Claude / 人間）はまずこのファイルから読むことを想定しています。
 
 ---
 
 ## TL;DR
 
-- **完了状態**: Phase 1〜4 全 32 Issue + レビュー指摘 7 件（SSRF + medium 3 + DNS rebinding + IPv6 allowlist + DNS pinning lookup 配列形式リグレッション）を解消、`v0.1.0`〜`v0.1.4` の 5 タグ作成、CI 全 green
+- **完了状態**: Phase 1〜4 全 32 Issue + レビュー指摘 11 件（SSRF + medium 3 + DNS rebinding + IPv6 allowlist + DNS pinning 配列形式 + dead assertion + projection 整合 + tsubo 単一真実化 + fetchHtmlSafe E2E）を解消、`v0.1.0`〜`v0.1.5` の 6 タグ作成、CI 全 green
 - **未完**: 実 Vercel デプロイ / 実 Sanity 接続 / スクリーンショット撮影（v0.2.0 で実施予定）
 - **既知の意図的な妥協**: 認証なし（仕様）、ANTHROPIC_API_KEY なしでも UI は動作（フォールバック）、TS 6 系は未追従
 
@@ -20,6 +20,7 @@
 | v0.1.2 | medium hardening バンドル | [#55](https://github.com/OceansCreative/oceans-tenant-demo/issues/55) [#56](https://github.com/OceansCreative/oceans-tenant-demo/issues/56) [#57](https://github.com/OceansCreative/oceans-tenant-demo/issues/57) |
 | v0.1.3 | DNS rebinding 遮断 + IPv6 アロウリスト化 | [#63](https://github.com/OceansCreative/oceans-tenant-demo/issues/63) [#64](https://github.com/OceansCreative/oceans-tenant-demo/issues/64) |
 | v0.1.4 | DNS ピン留め lookup 配列形式リグレッション修正 + 実 undici 結合テスト | [#81](https://github.com/OceansCreative/oceans-tenant-demo/issues/81) |
+| v0.1.5 | dead assertion 是正 + projection 整合 + tsubo 単一真実 + fetchHtmlSafe E2E | [#85](https://github.com/OceansCreative/oceans-tenant-demo/issues/85) [#86](https://github.com/OceansCreative/oceans-tenant-demo/issues/86) [#87](https://github.com/OceansCreative/oceans-tenant-demo/issues/87) [#88](https://github.com/OceansCreative/oceans-tenant-demo/issues/88) |
 
 **前回レビューで指摘された 4 件は全て対応済**。詳細は [CHANGELOG.md](../CHANGELOG.md) を参照。
 今回のレビューは **新規の指摘** を探すフェーズです。
@@ -74,8 +75,8 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 
 ### 1. 仕様適合性
 
-- [ ] `docs/spec.md` の §6（スキーマ）と `packages/shared/src/*/schema.ts` が 1:1 で対応している
-- [ ] `apps/studio/schemas/*.ts` が同様に対応している
+- [ ] `docs/spec.md` の §6（スキーマ）と `packages/shared/src/*/schema.ts` が対応している
+- [ ] `apps/studio/schemas/*.ts` は **Sanity 固有の表現**（reference / flat AI fields）を使う。GROQ projection で shared Zod 形（`*Refs` 文字列 / `aiMeta` ネスト）に橋渡しする設計（v0.1.5 #86 で明確化）。`apps/web/src/lib/ai/prompts/query-build.ts` の projection と `packages/shared/src/property/schema.ts` の `propertySchema` が整合しているか
 - [ ] 禁止事項（`CLAUDE.md` 末尾）に違反していない:
   - localStorage / sessionStorage 不使用
   - 認証実装なし
@@ -96,7 +97,7 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 ### 3. テストと CI
 
 - [ ] Vitest: `apps/web/tests/` と `apps/web/src/**/__tests__/` を `vitest.config.ts` で拾えている
-- [ ] shared 135 / web **154** / pytest 40 / Playwright 5 シナリオ × 2 ブラウザ
+- [ ] shared 135 / web **160** / pytest 40 / Playwright 5 シナリオ × 2 ブラウザ
 - [ ] CI: `.github/workflows/ci.yml` で Lint / typecheck / Vitest / pytest が並列実行
 - [ ] CI: `.github/workflows/e2e.yml` で `next build && next start` + Playwright
 - [ ] CodeQL: 週次 + PR で TypeScript / JavaScript を解析
@@ -125,7 +126,7 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 - [ ] [docs/ARCHITECTURE.md](ARCHITECTURE.md): mermaid 全体図 + ER 図
 - [ ] [docs/AI_INTEGRATION.md](AI_INTEGRATION.md): プロンプト、SSE イベント、SSRF 防御、Claude 出力再バリデーション
 - [ ] [docs/DEPLOY.md](DEPLOY.md): Vercel + DNS + 環境変数
-- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.1.4 全て記載
+- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.1.5 全て記載
 - [ ] CONTRIBUTING / SECURITY / CODE_OF_CONDUCT が揃っている
 
 ## 起動・検証手順
@@ -185,6 +186,10 @@ pnpm --filter @oceans-tenant/web exec playwright test
 | IPv6 短縮形（`fc0:` 等）取りこぼし懸念 | allowlist 化で自動解決（`2000::/3` 外はすべて拒否） | v0.1.3 / #64 |
 | **DNS ピン留め lookup 配列形式リグレッション** | `cb(null, [{address, family}])` に修正、実 undici 結合テスト追加 | **v0.1.4 / #81** |
 | **モック専用テストで dispatcher 経路が一切未検証だった構造的穴** | `url-safety.integration.test.ts` で実 undici + ローカル HTTP サーバ結合テスト | **v0.1.4 / #81** |
+| **結合テスト 3 本目の dead assertion (`Symbol.for(...)` が undefined)** | `pinnedLookup` を純関数として export し、Agent 内部に依存せず直接アサート | **v0.1.5 / #85** |
+| **shared Zod ↔ Sanity の表現差（v0.2.0 ブロッカー）** | GROQ projection で `*Refs` / `aiMeta` ネストへ橋渡し、テストで契約ロック | **v0.1.5 / #86** |
+| **坪数の二重管理 (GROQ raw vs JS rounded)** | GROQ から `tsubo` 撤去、`derivePropertyTsubo` を単一真実化 | **v0.1.5 / #87** |
+| **fetchHtmlSafe 組み立て全体が実 undici 未検証** | リジェクト経路 3 件を node 環境で結合テスト | **v0.1.5 / #88** |
 | `escapeString` の妥当性議論 | パラメータ化で注入遮断済、二重防御として残置で合意 | discussion |
 | SSE 境界判定 `buffer.split("\n\n")` | 仕様通りで適切と合意 | discussion |
 | `aiExtractionMetaSchema.superRefine` の相互制約 | 現状で十分と合意 | discussion |

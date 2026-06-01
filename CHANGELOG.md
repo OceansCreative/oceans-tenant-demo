@@ -13,6 +13,43 @@
 - `sanity_client.py` のリトライ・タイムアウト戦略（#66）
 - chat-search のクライアント切断時に Anthropic 呼び出しを中断（#82）
 
+## [0.1.5] — 2026-06-01
+
+外部レビュー第 5 弾の指摘 4 件をまとめて修正。v0.1.4 の dead assertion 是正と、v0.2.0「Sanity 実接続」着手前のデータモデル整合化が主軸。
+
+### Fixed
+
+- **#85 url-safety 結合テストの dead assertion を実アサートに置換**
+  - v0.1.4 で追加した「lookup が配列形式である」テストは `Symbol.for("undici.agent.options")` が undefined を返すため if ブロックが一度も実行されない空回り状態だった
+  - `pinnedLookup(ip): PinnedLookup` を純関数として export し、Agent 内部に依存せず戻り値を直接アサート
+  - IPv4 / IPv6 両方で family が正しいことを確認
+
+### Refactor
+
+- **#86 GROQ projection で shared Zod ↔ Sanity の表現差を吸収**
+  - shared Zod（web 側）は `aiMeta` ネスト + `*Refs` 文字列形だが、Sanity Studio は `aiExtracted` 等のフラット top-level + reference 形だった
+  - v0.2.0「Sanity 実接続」着手時に `propertySchema.parse()` が必ず失敗する遅延地雷
+  - GROQ projection を更新: `"suitableBusinessRefs": suitableBusinesses[]._ref` / `"listedByRef": listedBy._ref` / `"aiMeta": { aiExtracted, aiConfidence, sourceUrl }`
+  - depositMonths / keyMoneyMonths / floor / previousBusiness / description も projection に追加
+  - prompts.test.ts に契約ロックテストを 2 件追加
+
+- **#87 坪数を単一真実化（GROQ から `tsubo` を撤去）**
+  - GROQ の `area * 0.3025`（丸めなし）と JS の `squareMeterToTsubo`（小数 2 桁丸め）が食い違っていた
+  - `derivePropertyTsubo(property)` をフロントの単一真実として使う方針に統一
+
+### Tests
+
+- **#88 fetchHtmlSafe のリジェクト経路を実 undici 環境で実証**
+  - 既存はすべて `fetchImpl` モック注入で、組み立て済み関数が実 undici で一度も走っていなかった
+  - node runtime + 実 undici ロード下で 3 ケース追加: private IP / 複数 A レコード混在 / 不正スキーム
+  - 成功パスは `assertPublicIp` が 127.0.0.1 を弾く設計上テスト不可能 — その境界を JSDoc に明文化
+
+### Changed
+
+- `apps/web/src/lib/ai/url-safety.ts`: `pinnedLookup` を新規 export、`buildPinnedDispatcher` は組み立てのみに
+- `package.json` version を 0.1.5 に
+- apps/web: 154 → **160** ケース pass（+6: pinnedLookup 2 / projection 2 / fetchHtmlSafe E2E 3 − dead assertion 1）
+
 ## [0.1.4] — 2026-06-01
 
 v0.1.3 で導入した DNS リバインディング遮断が **本番 undici で動作しない** リグレッションを修正。
