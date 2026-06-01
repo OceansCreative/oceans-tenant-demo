@@ -66,6 +66,12 @@ flowchart LR
 
 `assertPublicIp` が返した検証済み IP を `undici` の `Agent({ connect: { lookup } })` に焼き込み、各ホップの `fetch` を強制的にその IP へ接続する。これにより「検証時は public・接続時は private」になる攻撃を遮断する。HTTPS の SNI / 証明書検証は元の hostname を維持するため、IP リテラルへの URL 書き換えは行わず、dispatcher 経由で接続先のみピン留めする。
 
+**lookup コールバックの形式（v0.1.4 で修正、Issue #81）**:
+
+custom `lookup` は **配列形式** `cb(null, [{ address, family }])` を返す。Node 20+ では `net.createConnection` の `autoSelectFamily` が既定 true で、内部は Happy Eyeballs (RFC 8305) のため `[{address, family}, ...]` の配列を期待する。単一形式 `cb(null, ip, family)` は `ERR_INVALID_IP_ADDRESS` で接続前に弾かれる。
+
+実 undici + ローカル HTTP サーバの結合テスト（`url-safety.integration.test.ts`）でこの形式が実機で動作することを保証する。モック `fetchImpl` のみの単体テストでは dispatcher 経路が一切実行されず、形式違反を検出できないため、結合テストは **必須** とする。
+
 - レスポンスは `Content-Length` 早期検査 + ストリーミングで 5MB を超えたら abort
 - タイムアウトは 12 秒
 - 500 応答に内部エラー詳細を載せない（`console.error` のみ）
