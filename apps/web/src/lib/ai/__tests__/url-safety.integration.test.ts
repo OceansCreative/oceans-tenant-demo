@@ -30,9 +30,11 @@ let port: number;
 
 beforeAll(async () => {
   server = http.createServer((req, res) => {
-    // hostname ヘッダーで「dispatcher が来た先」を確認できる
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(`<html><body>via=${req.headers.host} path=${req.url}</body></html>`);
+    // dispatcher が来た先を観測するためのテストフィクスチャ。
+    // text/plain + JSON で返すことで reflected XSS 表面を作らない
+    // （CodeQL js/reflected-xss 対策。実害ゼロだが構造的に消しておく）
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ host: req.headers.host, path: req.url }));
   });
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", () => resolve());
@@ -56,10 +58,10 @@ describe("buildPinnedDispatcher (実 undici 結合)", () => {
         dispatcher,
       });
       expect(response.status).toBe(200);
-      const body = await response.text();
+      const payload = (await response.json()) as { host: string; path: string };
       // Host ヘッダーは元の hostname を維持（SNI / 証明書互換性のため重要）
-      expect(body).toContain(`via=example.com:${port}`);
-      expect(body).toContain("path=/test");
+      expect(payload.host).toBe(`example.com:${port}`);
+      expect(payload.path).toBe("/test");
     } finally {
       await dispatcher.close();
     }
@@ -69,16 +71,16 @@ describe("buildPinnedDispatcher (実 undici 結合)", () => {
     const dispatcher = buildPinnedDispatcher("127.0.0.1");
     try {
       const hosts = ["a.example.com", "b.example.com", "c.example.com"];
-      const bodies = await Promise.all(
+      const payloads = await Promise.all(
         hosts.map(async (host) => {
           const response = await undiciFetch(`http://${host}:${port}/x`, {
             dispatcher,
           });
-          return response.text();
+          return (await response.json()) as { host: string; path: string };
         }),
       );
-      for (const [i, body] of bodies.entries()) {
-        expect(body).toContain(`via=${hosts[i]}:${port}`);
+      for (const [i, payload] of payloads.entries()) {
+        expect(payload.host).toBe(`${hosts[i]}:${port}`);
       }
     } finally {
       await dispatcher.close();
