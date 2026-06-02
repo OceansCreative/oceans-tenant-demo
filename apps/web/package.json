@@ -37,7 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^2",
-    "happy-dom": "^15",
+    "happy-dom": "^20",
     "jsdom": "^25.0.1",
     "postcss": "^8",
     "tailwindcss": "^4",
