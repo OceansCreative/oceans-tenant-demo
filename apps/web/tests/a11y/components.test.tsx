@@ -97,7 +97,7 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("IngestForm: URL 入力 + 送信が a11y 適合", async () => {
-    const { container } = render(<IngestForm />);
+    const { container } = renderWithI18n(<IngestForm />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
