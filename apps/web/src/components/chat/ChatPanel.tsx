@@ -2,6 +2,7 @@
 
 import type { PropertyWithTsubo } from "@oceans-tenant/shared";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { cn } from "@/lib/cn";
@@ -18,6 +19,8 @@ const isUuidV4 = (value: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export const ChatPanel = (): React.JSX.Element => {
+  const t = useTranslations("chat");
+  const tErrors = useTranslations("errors");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sessionId, setSessionId] = useState<string>("");
@@ -118,29 +121,27 @@ export const ChatPanel = (): React.JSX.Element => {
         }
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "通信エラー");
+      setErrorMessage(error instanceof Error ? error.message : tErrors("communication"));
     } finally {
       setPending(false);
     }
-  }, [input, sessionId, pending, messages, criteria]);
+  }, [input, sessionId, pending, messages, criteria, tErrors]);
 
   const criteriaJson = useMemo(() => JSON.stringify(criteria, null, 2), [criteria]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
       <section
-        aria-label="チャット履歴"
+        aria-label={t("historyAriaLabel")}
         className="flex h-[calc(100vh-12rem)] flex-col rounded-2xl border border-neutral-200 bg-white shadow-sm"
       >
         <header className="border-b border-neutral-200 p-4">
-          <p className="text-xs uppercase tracking-wider text-neutral-500">セッション ID</p>
-          <p className="font-mono text-xs text-neutral-700">{sessionId || "発行中…"}</p>
+          <p className="text-xs uppercase tracking-wider text-neutral-500">{t("sessionIdLabel")}</p>
+          <p className="font-mono text-xs text-neutral-700">{sessionId || t("sessionIdIssuing")}</p>
         </header>
         <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
           {messages.length === 0 && (
-            <p className="text-center text-xs text-neutral-500">
-              「新宿で 30 坪のカフェ向け物件」のように話しかけてみてください。
-            </p>
+            <p className="text-center text-xs text-neutral-500">{t("placeholderMessage")}</p>
           )}
           {messages.map((message) => (
             <div
@@ -157,7 +158,7 @@ export const ChatPanel = (): React.JSX.Element => {
           ))}
           {pending && (
             <div className="max-w-[85%] rounded-2xl bg-neutral-100 px-4 py-2 text-sm text-neutral-600">
-              考えています…
+              {t("thinking")}
             </div>
           )}
           {errorMessage && (
@@ -178,32 +179,36 @@ export const ChatPanel = (): React.JSX.Element => {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             disabled={pending}
-            placeholder="メッセージを入力"
+            placeholder={t("inputPlaceholder")}
             className="flex-1 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
-            aria-label="メッセージ"
+            aria-label={t("inputAriaLabel")}
           />
           <button
             type="submit"
             disabled={pending || !input.trim()}
             className="rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-60"
           >
-            送信
+            {t("send")}
           </button>
         </form>
       </section>
 
-      <section aria-label="ヒット物件" className="space-y-4">
+      <section aria-label={t("resultsAriaLabel")} className="space-y-4">
         <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-neutral-900">抽出された条件</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">
+            {t("extractedCriteriaHeading")}
+          </h2>
           <pre className="mt-2 max-h-40 overflow-auto rounded bg-neutral-50 p-3 text-[11px] leading-relaxed text-neutral-700">
             {criteriaJson}
           </pre>
         </div>
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-neutral-900">ヒット物件 ({results.length})</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">
+            {t("resultsHeading", { count: results.length })}
+          </h2>
           {results.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center text-xs text-neutral-500">
-              まだ結果がありません。条件を会話で伝えてください。
+              {t("noResults")}
             </div>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2">
