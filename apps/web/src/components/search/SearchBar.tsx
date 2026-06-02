@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 
@@ -15,6 +16,7 @@ type SearchBarProps = {
  * Phase 3 で /chat や /api/chat-search 連携を後付けする想定。
  */
 export const SearchBar = ({ className }: SearchBarProps): React.JSX.Element => {
+  const t = useTranslations("search.searchBar");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -53,16 +55,16 @@ export const SearchBar = ({ className }: SearchBarProps): React.JSX.Element => {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <title>検索</title>
+          <title>{t("iconTitle")}</title>
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.3-4.3" />
         </svg>
         <input
           type="search"
-          aria-label="物件をフリーテキストで検索"
+          aria-label={t("ariaLabel")}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="自然言語で検索（例: 新宿で 30 坪、カフェ向け）"
+          placeholder={t("placeholder")}
           maxLength={200}
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400"
         />
@@ -71,7 +73,7 @@ export const SearchBar = ({ className }: SearchBarProps): React.JSX.Element => {
           disabled={isPending}
           className="rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:opacity-50"
         >
-          検索
+          {t("submit")}
         </button>
       </form>
     </search>

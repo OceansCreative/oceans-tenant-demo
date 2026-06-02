@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 
 type SearchPaginationProps = {
@@ -14,7 +17,8 @@ type SearchPaginationProps = {
 /**
  * 検索結果ページネーション UI。
  *
- * - Server Component として `<Link>` を出力するため、JS なしでもナビゲート可能
+ * - `<Link>` を出力するため、JS なしでもナビゲート可能（v0.9.0 で Client 化したのは
+ *   `useTranslations()` 利用のため。リンク自体は引き続き <a> ベースで遷移する）
  * - 総件数が 0 のときは何も出さない（呼び出し側で 0 件 UI を出す前提）
  * - a11y: `<nav aria-label="ページネーション">` で囲み、現在ページに `aria-current="page"`
  *
@@ -48,6 +52,7 @@ export const SearchPagination = ({
   buildHref,
   className,
 }: SearchPaginationProps): React.JSX.Element | null => {
+  const t = useTranslations("search.pagination");
   // 0 件、または 1 ページに収まるときは UI を出さない。
   if (totalCount === 0 || totalPages <= 1) return null;
 
@@ -74,30 +79,36 @@ export const SearchPagination = ({
 
   return (
     <nav
-      aria-label="ページネーション"
+      aria-label={t("ariaLabel")}
       className={cn(
         "flex flex-col items-center gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:justify-between",
         className,
       )}
     >
       <p className="text-xs text-neutral-600">
-        {totalCount} 件中 {rangeStart} 〜 {rangeEnd} 件目（{currentPage} / {totalPages} ページ）
+        {t("summary", {
+          total: totalCount,
+          start: rangeStart,
+          end: rangeEnd,
+          current: currentPage,
+          pages: totalPages,
+        })}
       </p>
       <ul className="flex flex-wrap items-center gap-1.5">
         <li>
           {hasPrev ? (
             <Link
               href={buildHref(currentPage - 1) as never}
-              aria-label="前のページ"
+              aria-label={t("prevAriaLabel")}
               rel="prev"
               prefetch={false}
               className={navItem}
             >
-              前へ
+              {t("prev")}
             </Link>
           ) : (
             <span aria-disabled="true" className={navItemDisabled}>
-              前へ
+              {t("prev")}
             </span>
           )}
         </li>
@@ -112,7 +123,7 @@ export const SearchPagination = ({
               ) : (
                 <Link
                   href={buildHref(pageNumber) as never}
-                  aria-label={`${pageNumber} ページ目`}
+                  aria-label={t("pageAriaLabel", { page: pageNumber })}
                   prefetch={false}
                   className={navItem}
                 >
@@ -126,16 +137,16 @@ export const SearchPagination = ({
           {hasNext ? (
             <Link
               href={buildHref(currentPage + 1) as never}
-              aria-label="次のページ"
+              aria-label={t("nextAriaLabel")}
               rel="next"
               prefetch={false}
               className={navItem}
             >
-              次へ
+              {t("next")}
             </Link>
           ) : (
             <span aria-disabled="true" className={navItemDisabled}>
-              次へ
+              {t("next")}
             </span>
           )}
         </li>

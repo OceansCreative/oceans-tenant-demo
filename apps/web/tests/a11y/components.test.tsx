@@ -64,7 +64,7 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("SearchPagination: nav とリンクが識別可能", async () => {
-    const { container } = render(
+    const { container } = renderWithI18n(
       <SearchPagination
         currentPage={2}
         totalPages={5}
@@ -77,17 +77,17 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("SearchBar: search role + label が機能", async () => {
-    const { container } = render(<SearchBar />);
+    const { container } = renderWithI18n(<SearchBar />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("SearchFilter: フィルタの fieldset/legend/label が a11y 適合", async () => {
-    const { container } = render(<SearchFilter />);
+    const { container } = renderWithI18n(<SearchFilter />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("ViewModeToggle: 表示モード切替が a11y 適合", async () => {
-    const { container } = render(<ViewModeToggle current="list" />);
+    const { container } = renderWithI18n(<ViewModeToggle current="list" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -107,7 +107,7 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("FilterChips: 適用中フィルタ chip が a11y 適合", async () => {
-    const { container } = render(<FilterChips />);
+    const { container } = renderWithI18n(<FilterChips />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });
