@@ -310,10 +310,65 @@ pnpm --filter oceans-tenant-eval test
 
 詳細と fixture 追加手順は [`scripts/eval/README.md`](../scripts/eval/README.md) を参照。
 
-### CI 統合方針
+### CI 統合（v0.9.0〜）
 
-実 Claude 呼び出しを伴うため CI には常時組み込まず、将来的に PR ラベル `eval` 付与時 / 週次 cron での
-実行を想定（本リリースではコマンド整備のみ）。
+`.github/workflows/eval.yml` で実 Claude を叩く評価ワークフローを整備済み。
+
+**起動条件:**
+
+- `pull_request` (`labeled` / `synchronize`): PR に `eval` ラベルが付いている時のみ実行
+  （`if: contains(github.event.pull_request.labels.*.name, 'eval')` でガード）
+- `schedule`: 毎週月曜 09:00 JST (`cron: "0 0 * * 1"`)
+- `workflow_dispatch`: 手動起動
+
+**ジョブ構成:**
+
+1. Checkout + Node 20 + pnpm install
+2. コスト見積もり（5 fixtures × ~3000 tokens × Sonnet 4.5 ≒ ~$0.05）を `::notice::` で表示
+3. `node scripts/eval/run.mjs --output-json /tmp/eval-result.json`
+4. `node scripts/eval/ci-comment.mjs /tmp/eval-result.json > /tmp/eval-comment.md`
+5. PR の場合は `gh pr comment` で投稿、schedule の場合は artifact のみ保存
+6. `aggregate.overallScore < EVAL_SCORE_THRESHOLD (= 0.6)` で fail（精度急落検知）
+
+**コスト管理:**
+
+- ラベル必須でうっかり起動を防止
+- `concurrency` で同一 PR の重複実行を抑止
+- `timeout-minutes: 5` で暴走を防止
+- artifact は 30 日保存（履歴比較用）
+
+**Secrets:**
+
+- `ANTHROPIC_API_KEY` をリポジトリ Secrets に登録すれば自動で使われる。未設定時は自動でモックモードに
+  フォールバックして workflow 自体は通る（精度判定はスキップ）
+
+**PR コメント例（モック実行時）:**
+
+```markdown
+## extract_property 評価結果 (#42)
+
+| メトリクス | スコア |
+| --- | ---: |
+| 全体スコア | 99.1% |
+| Precision | 93.3% |
+| Recall | 93.3% |
+| F1 | 93.3% |
+
+### Fixture 別
+
+| Fixture | スコア |
+| --- | ---: |
+| bar-roppongi | 99.1% |
+| cafe-shibuya | 99.1% |
+| ... | ... |
+
+実行モード: **Claude Sonnet 4.5**
+
+推定コスト: `$0.05`
+```
+
+失敗フィールド diff はコメントには載せず Actions ログ側（`run.mjs` の Markdown 出力）で
+確認する方針（コメントが長くなりすぎないようにするため）。
 
 ## モックとテスト
 

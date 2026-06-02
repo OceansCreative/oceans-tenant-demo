@@ -96,12 +96,51 @@ scripts/eval/
 3. `pnpm --filter oceans-tenant-eval run eval:mock` で動作確認
 4. **実在企業名・実在物件情報を含めないこと**（CLAUDE.md 禁止事項）
 
-## CI 統合について
+## CI 統合（v0.9.0〜）
 
-このハーネスは **本 PR では CI に組み込んでいません**。理由は次の通り。
+`.github/workflows/eval.yml` で **PR ラベル `eval` 付与時** および **週次 cron** で
+実 Claude を叩いて評価する仕組みを整備済みです（v0.9.0 WS-2 で追加）。
 
-- 実 Claude 呼び出しが必要なため、CI 実行ごとに API コストが発生する
-- 主要ワークフローで毎回回すには重く、品質ゲートにする閾値設計も別途必要
+### 起動条件
 
-将来的には `.github/workflows/eval.yml` で **PR ラベル `eval` 付与時** または
-**weekly cron** で実行する方針を想定しています。
+| トリガ | 条件 | モード |
+|---|---|---|
+| `pull_request` (`labeled` / `synchronize`) | PR に `eval` ラベル付与 | 実 Claude |
+| `schedule` | 毎週月曜 09:00 JST（cron `0 0 * * 1`） | 実 Claude |
+| `workflow_dispatch` | 手動起動 | 実 Claude |
+
+`ANTHROPIC_API_KEY` シークレットが未設定の場合は自動でモックモードにフォールバックします
+（ハーネスが落ちないようにするため。精度評価としては無意味な点に注意）。
+
+### コスト管理
+
+- PR ラベル必須により誤起動を防止
+- `concurrency` で同一 PR 上の同時実行を 1 本に制限
+- `timeout-minutes: 5` でランナーを早期 abort
+- 1 ジョブあたりの推定コスト: 5 fixtures × ~3000 tokens × Sonnet 4.5 ≒ **~$0.05**
+
+### 品質ゲート
+
+実 Claude 実行時、`aggregate.overallScore < 0.6` で CI を fail させます
+（プロンプト変更や fixture 追加で精度が突然落ちた時の検知）。閾値は
+`.github/workflows/eval.yml` の `EVAL_SCORE_THRESHOLD` で調整可能。
+
+### PR コメント
+
+`scripts/eval/ci-comment.mjs` が `--output-json` の出力を PR コメント形式の Markdown に変換し、
+`gh pr comment` で投稿します。サマリ + Fixture 別スコア + 推定コスト + Actions ログ URL を含む
+構造で、ノイズを抑えるため失敗フィールド diff はコメントには載せず Actions ログ側で確認します。
+
+### Secrets 設定
+
+リポジトリ設定 → Secrets and variables → Actions で以下を登録:
+
+- `ANTHROPIC_API_KEY` — Anthropic コンソール発行の API キー。**Settings → Secrets → New repository secret**
+  から登録すれば PR ラベル付与時に自動で使われます。
+
+### ローカル動作確認
+
+```bash
+node scripts/eval/run.mjs --mock --output-json /tmp/eval-result.json
+EVAL_MODE=mock node scripts/eval/ci-comment.mjs /tmp/eval-result.json
+```
