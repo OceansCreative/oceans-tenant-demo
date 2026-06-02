@@ -46,6 +46,7 @@
     "postcss": "^8",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
-    "vitest": "^2"
+    "vitest": "^2",
+    "zod-to-json-schema": "^3.25.2"
   }
 }

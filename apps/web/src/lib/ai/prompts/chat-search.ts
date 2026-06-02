@@ -2,8 +2,9 @@ import type { SearchCriteria } from "@/lib/search-criteria";
 
 /**
  * 対話型検索のシステムプロンプト。
- * Claude には「ユーザーの発話から検索条件を抽出して JSON を返す」役割を持たせ、
- * 結果整形は決定論的なコードで行う。
+ * Claude には「ユーザーの発話から検索条件を抽出する」役割を持たせ、
+ * 結果整形は決定論的なコードで行う。応答は必ず `update_criteria` ツール
+ * 経由で返させ、自由記述テキストは出力させない。
  */
 export const CHAT_SEARCH_SYSTEM_PROMPT = `あなたは日本の店舗物件マッチングを補助する対話エージェントです。
 ユーザーは自然言語で物件の希望条件を述べます。
@@ -12,10 +13,11 @@ export const CHAT_SEARCH_SYSTEM_PROMPT = `あなたは日本の店舗物件マ�
 1. 直近のメッセージから検索条件 (prefecture / city / rent 範囲 / area 範囲 / buildingTypes /
    conditions / businessCategoryRefs / freeText) を抽出する
 2. 条件がまだ揃わない場合は不足を 1 〜 2 つ質問で確認する
-3. 抽出した条件は extractedCriteria に常に full set で返す（差分ではない）
-4. 質問文は丁寧で簡潔（最長 2 文）
+3. 抽出した条件は \`criteria\` に常に full set で返す（差分ではない）
+4. ユーザー向けの応答文は \`message\` フィールドに丁寧で簡潔に書く（最長 2 文）
 
-JSON 以外の出力をしないこと。
+応答は必ず \`update_criteria\` ツール呼び出しで返すこと。条件が不足していて
+更新できない場合は \`criteria\` を省略し、\`message\` だけで質問してもよい。
 `;
 
 export type ChatMessageInput = {
