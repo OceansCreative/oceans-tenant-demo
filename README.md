@@ -8,6 +8,7 @@
 [![CI](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/ci.yml)
 [![Lighthouse CI](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml)
 [![CodeQL](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/gh/OceansCreative/oceans-tenant-demo/graph/badge.svg)](https://codecov.io/gh/OceansCreative/oceans-tenant-demo)
 [![Release](https://img.shields.io/github/v/release/OceansCreative/oceans-tenant-demo?display_name=tag&sort=semver)](https://github.com/OceansCreative/oceans-tenant-demo/releases)
 
 [![License: MIT](https://img.shields.io/github/license/OceansCreative/oceans-tenant-demo?color=yellow)](LICENSE)
@@ -161,7 +162,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt 'pydantic[ema
 pnpm lint            # Biome
 pnpm typecheck       # tsc --noEmit（全ワークスペース）
 pnpm test            # Vitest（全ワークスペース）
-pnpm test:coverage   # カバレッジ付き
+pnpm test:coverage   # カバレッジ付き（apps/web と packages/shared）
 
 # E2E（Playwright、Phase 2 で導入）
 pnpm --filter @oceans-tenant/web exec playwright test
@@ -172,9 +173,32 @@ cd scripts/python && .venv/bin/pytest --cov
 
 CI（GitHub Actions）で以下が常時走ります:
 
-- `ci.yml`: Lint / 型 / ユニットテスト / Python pytest
+- `ci.yml`: Lint / 型 / ユニットテスト / Python pytest / カバレッジ Codecov 連携
 - `e2e.yml`: Playwright
 - `codeql.yml`: JS/TS 静的解析
+
+### カバレッジ
+
+`pnpm test:coverage` でワークスペース毎に `coverage/lcov.info` と `coverage/coverage-summary.json`
+が生成されます。CI では `apps/web` / `packages/shared` / `scripts/python` の 3 フラグで
+[Codecov](https://codecov.io/gh/OceansCreative/oceans-tenant-demo) にアップロードされ、PR には
+差分カバレッジのコメントが投稿されます。
+
+| ワークスペース | フラグ | 計測対象 | 除外 |
+|---|---|---|---|
+| `apps/web` | `web` | `src/**/*.{ts,tsx}` | テスト本体 / `app/**/page.tsx` / `app/**/layout.tsx` / `app/og/**` / `sitemap.ts` / `robots.ts` |
+| `packages/shared` | `shared` | `src/**/*.ts` | テスト本体 / `index.ts` |
+| `scripts/python` | `python` | `scripts/python/**` | `tests/**` |
+
+目標値（warning レベル運用、CI を fail させない設定）は次の通り。詳細は
+[docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) を参照。
+
+| 指標 | 目標 |
+|---|---|
+| Lines / Statements | 70% |
+| Branches | 65% |
+| Functions | 70% |
+| Patch（新規・変更行） | 70% |
 
 ## 🗂️ ディレクトリ構成
 
