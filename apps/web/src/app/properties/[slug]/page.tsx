@@ -6,11 +6,18 @@ import { PropertyMap } from "@/components/map/PropertyMap";
 import { AvailabilityBadge } from "@/components/property/AvailabilityBadge";
 import { formatAddressSummary, formatJpy, formatSquareMeter, formatTsubo } from "@/lib/format";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
+import { buildPropertyJsonLd, serializeJsonLd } from "@/lib/seo/jsonld";
 
 export const revalidate = 60;
 
 type PageProps = {
   readonly params: Promise<{ slug: string }>;
+};
+
+const getBaseUrl = (): string => {
+  const raw = process.env.NEXT_PUBLIC_APP_URL;
+  const base = raw && raw.length > 0 ? raw : "http://localhost:3000";
+  return base.replace(/\/$/, "");
 };
 
 export const generateStaticParams = async (): Promise<Array<{ slug: string }>> =>
@@ -20,12 +27,24 @@ export const generateMetadata = async ({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const property = MOCK_PROPERTIES.find((p) => p.slug === slug);
   if (!property) return { title: "物件が見つかりません" };
+  const ogImageUrl = `/og/property/${property.slug}`;
+  const canonicalUrl = `/properties/${property.slug}`;
   return {
     title: property.title,
     description: property.description ?? formatAddressSummary(property.address),
+    alternates: { canonical: canonicalUrl },
     openGraph: {
+      type: "website",
       title: property.title,
-      description: property.description ?? undefined,
+      description: property.description ?? formatAddressSummary(property.address),
+      url: canonicalUrl,
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: property.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: property.title,
+      description: property.description ?? formatAddressSummary(property.address),
+      images: [ogImageUrl],
     },
   };
 };
@@ -37,8 +56,19 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
     notFound();
   }
 
+  // JSON-LD は build / SSR 時に生成し、`safeParse` 失敗時は出力をスキップする。
+  // 検索エンジン側に壊れた構造化データを送らないための保険。
+  const jsonLd = buildPropertyJsonLd(property, getBaseUrl());
+
   return (
     <article className="container-page py-10">
+      {jsonLd !== null && (
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD 出力に必須（serializeJsonLd で `<` を Unicode エスケープ済み）。
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+        />
+      )}
       <nav aria-label="パンくず" className="mb-6 text-xs text-neutral-500">
         <ol className="flex items-center gap-1">
           <li>

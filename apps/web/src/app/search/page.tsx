@@ -16,6 +16,20 @@ import {
 export const metadata: Metadata = {
   title: "物件を探す",
   description: "店舗物件を地図またはカード一覧で検索します。",
+  alternates: { canonical: "/search" },
+  openGraph: {
+    type: "website",
+    url: "/search",
+    title: "物件を探す",
+    description: "店舗物件を地図またはカード一覧で検索します。",
+    images: [{ url: "/og/search", width: 1200, height: 630, alt: "物件検索" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "物件を探す",
+    description: "店舗物件を地図またはカード一覧で検索します。",
+    images: ["/og/search"],
+  },
 };
 
 type SearchPageProps = {

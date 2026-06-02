@@ -255,6 +255,33 @@ erDiagram
 - Tailwind v4 + Noto Sans JP `display: swap`
 - Lighthouse Performance 90+（目標）
 
+## SEO ベースライン
+
+v0.5.0 WS-2 で整備した SEO 周りの構成。OSS リファレンス実装として「Next.js App Router で
+SEO を一通り整える際の最小セット」を意図する。
+
+- **JSON-LD（構造化データ）**
+  - `apps/web/src/lib/seo/jsonld.ts` に `buildPropertyJsonLd` / `serializeJsonLd` を集約
+  - `Place` を主型として `Offer`（`priceCurrency: JPY`）/ `PostalAddress` / `QuantitativeValue` / `GeoCoordinates` を入れ子で構築
+  - Zod (`jsonLdPropertySchema`) で構造を強制、`safeParse` 失敗時は `<script>` 出力をスキップ
+  - `serializeJsonLd` で `<` を Unicode エスケープし `</script>` インジェクションを防止
+  - 物件詳細ページ（`/properties/[slug]`）の冒頭で `<script type="application/ld+json">` として埋め込み
+- **動的 OG 画像（`next/og`）**
+  - `/og` / `/og/search?q=...` / `/og/property/[slug]` の 3 ルート、いずれも edge runtime
+  - 共通レイアウトは `apps/web/src/lib/seo/og.tsx` の `renderOgImage` に集約
+  - Noto Sans JP を Google Fonts CSS API 経由で fetch → `ArrayBuffer` 化
+  - フォント取得失敗時はシステムフォントで描画する fallback（OG 1 枚の失敗で全体 500 を避ける保守設計）
+  - `metadata.openGraph.images` から `/og/...` を相対参照し、`metadataBase` が absolute URL に展開
+- **sitemap / robots**
+  - `apps/web/src/app/sitemap.ts` で静的 3 ページ + mock 物件 slug を `MetadataRoute.Sitemap` として列挙
+  - 物件の `lastModified` は `publishedAt` を採用、`changeFrequency` / `priority` は SEO 補助メタとして付与
+  - `apps/web/src/app/robots.ts` で全許可 + `/studio` 配下のみ disallow、`sitemap` URL を併記
+  - `NEXT_PUBLIC_APP_URL` の末尾スラッシュ / 空文字を正規化する `getBaseUrl()` を両ファイルで共有
+- **canonical / Open Graph 統合**
+  - `layout.tsx` で全ページ既定の `openGraph.images: /og` を指定
+  - 各ページの `generateMetadata` で `alternates.canonical` を明示
+  - 物件詳細は `openGraph.images: /og/property/[slug]` で個別画像に差し替え
+
 ## 拡張ポイント
 
 - Sanity Studio 埋め込み: `next-sanity` の `NextStudio` を `/studio` に統合
