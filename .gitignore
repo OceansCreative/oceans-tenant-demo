@@ -36,6 +36,9 @@ test-results/
 .nyc_output/
 **/playwright/.cache/
 
+# Lighthouse CI
+.lighthouseci/
+
 # Build
 dist/
 build/
