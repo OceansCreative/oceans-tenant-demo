@@ -20,6 +20,7 @@
     "@mozilla/readability": "^0.6.0",
     "@oceans-tenant/shared": "workspace:*",
     "@oceans-tenant/studio": "workspace:*",
+    "@sanity/client": "^7.22.1",
     "@vis.gl/react-google-maps": "^1.8.3",
     "cheerio": "^1.2.0",
     "next": "^15",
