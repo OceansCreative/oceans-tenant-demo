@@ -55,16 +55,20 @@ const InsightsPage = async (): Promise<React.JSX.Element> => {
   const conditionBuckets = aggregateByCondition(items);
 
   return (
-    <main className="container-page py-10">
+    // RootLayout 側で <main id="main-content"> が既にあるため、ここはネスト禁止。
+    // axe `landmark-main-is-top-level` 違反回避のため <section aria-labelledby> に変更。
+    <section aria-labelledby="insights-title" className="container-page py-10">
       <header className="mb-8 flex flex-col gap-3">
         <p className="text-xs font-medium uppercase tracking-wider text-brand-600">
           {t("dataSource")}
         </p>
-        <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{t("title")}</h1>
+        <h1 id="insights-title" className="text-2xl font-bold text-neutral-900 sm:text-3xl">
+          {t("title")}
+        </h1>
         <p className="max-w-3xl text-sm leading-relaxed text-neutral-600">{t("lead")}</p>
       </header>
 
-      <section aria-label={t("title")} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <KpiCards kpis={kpis} />
 
         <ChartsGrid
@@ -73,8 +77,8 @@ const InsightsPage = async (): Promise<React.JSX.Element> => {
           rentBins={rentBins}
           conditionBuckets={conditionBuckets}
         />
-      </section>
-    </main>
+      </div>
+    </section>
   );
 };
 
