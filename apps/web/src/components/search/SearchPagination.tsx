@@ -3,14 +3,22 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
+import { computeVisiblePages } from "@/lib/pagination";
 
 type SearchPaginationProps = {
   readonly currentPage: number;
   readonly totalPages: number;
   readonly totalCount: number;
   readonly pageSize: number;
-  /** `targetPage` を引数に取り、その遷移先 URL を返す関数 */
-  readonly buildHref: (targetPage: number) => string;
+  /**
+   * `[page, href]` のリスト。Server Component 側で `serializeSearchCriteria` の結果と
+   * view パラメータを織り込んだ最終 URL を事前計算しておく。
+   *
+   * v0.9.0 で `useTranslations()` を使うため Client Component 化した結果、
+   * 親 Server Component から関数 prop を渡せなくなったため、配列に変更した。
+   * 配列は必要なページ番号（前/次/可視ページ）のみを含む。
+   */
+  readonly hrefs: ReadonlyArray<readonly [page: number, href: string]>;
   readonly className?: string;
 };
 
@@ -22,45 +30,31 @@ type SearchPaginationProps = {
  * - 総件数が 0 のときは何も出さない（呼び出し側で 0 件 UI を出す前提）
  * - a11y: `<nav aria-label="ページネーション">` で囲み、現在ページに `aria-current="page"`
  *
- * Phase 3 で GROQ ベースに切り替わっても、`buildHref` を差し替えるだけで再利用できる。
+ * Phase 3 で GROQ ベースに切り替わっても、`hrefs` を差し替えるだけで再利用できる。
+ * 表示対象ページの計算ロジックは `@/lib/pagination` に切り出し、Server / Client
+ * の双方から呼び出せるようにしている（Server Component から事前計算するため）。
  */
-
-const MAX_VISIBLE_PAGE_NUMBERS = 5;
-
-/**
- * 表示するページ番号のリストを返す（現在ページを中央に最大 5 個）。
- * 例: 総 10 ページ・現在 7 → [5, 6, 7, 8, 9]
- *     総 10 ページ・現在 1 → [1, 2, 3, 4, 5]
- *     総 3 ページ・現在 2 → [1, 2, 3]
- */
-const computeVisiblePages = (currentPage: number, totalPages: number): ReadonlyArray<number> => {
-  if (totalPages <= MAX_VISIBLE_PAGE_NUMBERS) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-  const half = Math.floor(MAX_VISIBLE_PAGE_NUMBERS / 2);
-  let start = Math.max(1, currentPage - half);
-  const end = Math.min(totalPages, start + MAX_VISIBLE_PAGE_NUMBERS - 1);
-  start = Math.max(1, end - MAX_VISIBLE_PAGE_NUMBERS + 1);
-  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-};
 
 export const SearchPagination = ({
   currentPage,
   totalPages,
   totalCount,
   pageSize,
-  buildHref,
+  hrefs,
   className,
 }: SearchPaginationProps): React.JSX.Element | null => {
   const t = useTranslations("search.pagination");
   // 0 件、または 1 ページに収まるときは UI を出さない。
   if (totalCount === 0 || totalPages <= 1) return null;
 
+  const hrefMap = new Map(hrefs);
   const visiblePages = computeVisiblePages(currentPage, totalPages);
   const rangeStart = (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, totalCount);
   const hasPrev = currentPage > 1;
   const hasNext = currentPage < totalPages;
+  const prevHref = hrefMap.get(currentPage - 1);
+  const nextHref = hrefMap.get(currentPage + 1);
 
   const buttonBase =
     "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors";
@@ -96,9 +90,9 @@ export const SearchPagination = ({
       </p>
       <ul className="flex flex-wrap items-center gap-1.5">
         <li>
-          {hasPrev ? (
+          {hasPrev && prevHref ? (
             <Link
-              href={buildHref(currentPage - 1) as never}
+              href={prevHref as never}
               aria-label={t("prevAriaLabel")}
               rel="prev"
               prefetch={false}
@@ -114,15 +108,19 @@ export const SearchPagination = ({
         </li>
         {visiblePages.map((pageNumber) => {
           const isCurrent = pageNumber === currentPage;
+          const href = hrefMap.get(pageNumber);
           return (
             <li key={pageNumber}>
-              {isCurrent ? (
-                <span aria-current="page" className={navItemCurrent}>
+              {isCurrent || !href ? (
+                <span
+                  aria-current={isCurrent ? "page" : undefined}
+                  className={isCurrent ? navItemCurrent : navItemDisabled}
+                >
                   {pageNumber}
                 </span>
               ) : (
                 <Link
-                  href={buildHref(pageNumber) as never}
+                  href={href as never}
                   aria-label={t("pageAriaLabel", { page: pageNumber })}
                   prefetch={false}
                   className={navItem}
@@ -134,9 +132,9 @@ export const SearchPagination = ({
           );
         })}
         <li>
-          {hasNext ? (
+          {hasNext && nextHref ? (
             <Link
-              href={buildHref(currentPage + 1) as never}
+              href={nextHref as never}
               aria-label={t("nextAriaLabel")}
               rel="next"
               prefetch={false}

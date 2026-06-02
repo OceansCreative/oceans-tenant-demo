@@ -63,13 +63,14 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("SearchPagination: nav とリンクが識別可能", async () => {
+    const hrefs = Array.from({ length: 5 }, (_, i) => [i + 1, `/search?page=${i + 1}`] as const);
     const { container } = renderWithI18n(
       <SearchPagination
         currentPage={2}
         totalPages={5}
         totalCount={100}
         pageSize={20}
-        buildHref={(page) => `/search?page=${page}`}
+        hrefs={hrefs}
       />,
     );
     expect(await axe(container)).toHaveNoViolations();

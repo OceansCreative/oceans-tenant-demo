@@ -8,6 +8,7 @@ import { SearchFilter } from "@/components/search/SearchFilter";
 import { SearchPagination } from "@/components/search/SearchPagination";
 import { type ViewMode, ViewModeToggle } from "@/components/search/ViewModeToggle";
 import { filterProperties } from "@/lib/filter-properties";
+import { computeVisiblePages } from "@/lib/pagination";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 import {
   EMPTY_CRITERIA,
@@ -90,6 +91,13 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
     const query = params.toString();
     return query ? `/search?${query}` : "/search";
   };
+  // SearchPagination が Client Component のため、関数 prop は渡せない。
+  // 表示に必要なページ（前/次/可視 5 件）の href を Server 側で配列化する。
+  const visiblePages = computeVisiblePages(currentPage, totalPages);
+  const targetPages = new Set<number>([currentPage - 1, currentPage + 1, ...visiblePages]);
+  const paginationHrefs = Array.from(targetPages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .map((page) => [page, buildPageHref(page)] as const);
 
   return (
     <div className="container-page py-10">
@@ -134,7 +142,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
                 totalPages={totalPages}
                 totalCount={totalCount}
                 pageSize={criteria.pageSize}
-                buildHref={buildPageHref}
+                hrefs={paginationHrefs}
               />
             </>
           )}

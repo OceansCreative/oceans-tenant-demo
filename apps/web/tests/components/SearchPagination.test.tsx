@@ -4,20 +4,20 @@ import { SearchPagination } from "@/components/search/SearchPagination";
 import jaMessages from "../../messages/ja.json";
 import { renderWithI18n } from "../test-utils";
 
-const buildHref = (page: number): string => `/search?page=${page}`;
-
 const t = jaMessages.search.pagination;
+
+/**
+ * テスト用に「全ページの href を簡単に生成する」ヘルパ。
+ * Server Component 側では `computeVisiblePages` で必要な範囲のみを渡すが、
+ * テストでは API の振る舞いに集中するため全ページ分を投入する。
+ */
+const buildAllHrefs = (totalPages: number): ReadonlyArray<readonly [number, string]> =>
+  Array.from({ length: totalPages }, (_, i) => [i + 1, `/search?page=${i + 1}`] as const);
 
 describe("SearchPagination", () => {
   it("totalCount=0 のときは何もレンダリングしない", () => {
     const { container } = renderWithI18n(
-      <SearchPagination
-        currentPage={1}
-        totalPages={0}
-        totalCount={0}
-        pageSize={20}
-        buildHref={buildHref}
-      />,
+      <SearchPagination currentPage={1} totalPages={0} totalCount={0} pageSize={20} hrefs={[]} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -29,7 +29,7 @@ describe("SearchPagination", () => {
         totalPages={1}
         totalCount={5}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(1)}
       />,
     );
     expect(container.firstChild).toBeNull();
@@ -42,7 +42,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     expect(screen.getByRole("navigation", { name: t.ariaLabel })).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     expect(screen.getByText(/45 件中 1 〜 20 件目（1 \/ 3 ページ）/)).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     expect(screen.getByText(/45 件中 41 〜 45 件目（3 \/ 3 ページ）/)).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     const currentPageMarker = screen.getByText("2", { selector: "[aria-current='page']" });
@@ -95,7 +95,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     expect(screen.queryByRole("link", { name: t.prevAriaLabel })).toBeNull();
@@ -110,7 +110,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
     );
     expect(screen.queryByRole("link", { name: t.nextAriaLabel })).toBeNull();
@@ -118,14 +118,14 @@ describe("SearchPagination", () => {
     expect(next.getAttribute("aria-disabled")).toBe("true");
   });
 
-  it("「前へ」「次へ」リンクは buildHref(current ± 1) を href に持つ", () => {
+  it("「前へ」「次へ」リンクは hrefs から該当ページの URL を引く", () => {
     renderWithI18n(
       <SearchPagination
         currentPage={2}
         totalPages={5}
         totalCount={100}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(5)}
       />,
     );
     expect(screen.getByRole("link", { name: t.prevAriaLabel })).toHaveAttribute(
@@ -138,14 +138,14 @@ describe("SearchPagination", () => {
     );
   });
 
-  it("ページ番号リンクは buildHref(N) を href に持つ", () => {
+  it("ページ番号リンクは hrefs から該当 URL を引く", () => {
     renderWithI18n(
       <SearchPagination
         currentPage={2}
         totalPages={5}
         totalCount={100}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(5)}
       />,
     );
     expect(screen.getByRole("link", { name: "1 ページ目" })).toHaveAttribute(
@@ -165,7 +165,7 @@ describe("SearchPagination", () => {
         totalPages={20}
         totalCount={400}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(20)}
       />,
     );
     // 8, 9, 10, 11, 12 が表示される（現在ページ 10 を中心に 5 個）
@@ -185,7 +185,7 @@ describe("SearchPagination", () => {
         totalPages={3}
         totalCount={45}
         pageSize={20}
-        buildHref={buildHref}
+        hrefs={buildAllHrefs(3)}
       />,
       { locale: "en" },
     );
