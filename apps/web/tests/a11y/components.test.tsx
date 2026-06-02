@@ -1,4 +1,3 @@
-import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { IngestForm } from "@/components/agent/IngestForm";
@@ -44,22 +43,22 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("PropertyCard: タイトルリンク + バッジが a11y 適合", async () => {
-    const { container } = render(<PropertyCard property={firstProperty} />);
+    const { container } = renderWithI18n(<PropertyCard property={firstProperty} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (public): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="public" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="public" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (negotiating): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="negotiating" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="negotiating" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (closed): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="closed" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="closed" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -92,7 +91,7 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("PropertyMap (API キー未設定時): fallback UI が a11y 適合", async () => {
-    const { container } = render(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 3)} />);
+    const { container } = renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 3)} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -102,7 +101,9 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("RelatedProperties: 関連物件セクションが a11y 適合", async () => {
-    const { container } = render(<RelatedProperties properties={MOCK_PROPERTIES.slice(0, 3)} />);
+    const { container } = renderWithI18n(
+      <RelatedProperties properties={MOCK_PROPERTIES.slice(0, 3)} />,
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
 

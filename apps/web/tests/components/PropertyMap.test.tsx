@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
+import jaMessages from "../../messages/ja.json";
+import { renderWithI18n } from "../test-utils";
 
 // @vis.gl/react-google-maps を軽量モックして API キーありの分岐に到達できるようにする。
 // 実 SDK は jsdom 環境で動かないため、必要な named export を最小限のスタブに置き換える。
@@ -59,6 +61,8 @@ vi.mock("@googlemaps/markerclusterer", () => {
 
 const ORIGINAL_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+const tMap = jaMessages.property.map;
+
 beforeEach(() => {
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = undefined;
   clustererCalls.constructed = 0;
@@ -74,31 +78,31 @@ describe("PropertyMap", () => {
   it("API キー未設定のとき無効化メッセージを描画する", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    render(<PropertyMap properties={MOCK_PROPERTIES} />);
-    expect(screen.getByText("地図ビューは無効化されています")).toBeInTheDocument();
+    renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES} />);
+    expect(screen.getByText(tMap.disabledTitle)).toBeInTheDocument();
     expect(
-      screen.getByText(new RegExp(`現在 ${MOCK_PROPERTIES.length} 件の物件がマップ表示候補`)),
+      screen.getByText(new RegExp(`現在\\s*${MOCK_PROPERTIES.length}\\s*件の物件がマップ表示候補`)),
     ).toBeInTheDocument();
   });
 
   it("properties が空配列のとき件数 0 が表示される", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    render(<PropertyMap properties={[]} />);
-    expect(screen.getByText(/現在 0 件の物件がマップ表示候補/)).toBeInTheDocument();
+    renderWithI18n(<PropertyMap properties={[]} />);
+    expect(screen.getByText(/現在\s*0\s*件の物件がマップ表示候補/)).toBeInTheDocument();
   });
 
   it("aria-label が「地図ビュー（無効化）」", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    render(<PropertyMap properties={[]} />);
-    expect(screen.getByRole("region", { name: "地図ビュー（無効化）" })).toBeInTheDocument();
+    renderWithI18n(<PropertyMap properties={[]} />);
+    expect(screen.getByRole("region", { name: tMap.disabledAriaLabel })).toBeInTheDocument();
   });
 
   it("追加クラスを併合できる（無効化時）", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    const { container } = render(<PropertyMap properties={[]} className="custom-cls" />);
+    const { container } = renderWithI18n(<PropertyMap properties={[]} className="custom-cls" />);
     const section = container.querySelector("section");
     expect(section?.className).toMatch(/custom-cls/);
   });
@@ -106,7 +110,7 @@ describe("PropertyMap", () => {
   it("API キーあり時は GoogleMap と マーカーを描画する", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "dummy-key";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    render(<PropertyMap properties={MOCK_PROPERTIES} />);
+    renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES} />);
     expect(screen.getByTestId("api-provider")).toBeInTheDocument();
     expect(screen.getByTestId("google-map")).toBeInTheDocument();
     const markers = screen.getAllByTestId("marker");
@@ -118,7 +122,7 @@ describe("PropertyMap", () => {
     const { PropertyMap } = await import("@/components/map/PropertyMap");
     const userEvent = (await import("@testing-library/user-event")).default;
     const user = userEvent.setup();
-    render(<PropertyMap properties={MOCK_PROPERTIES} />);
+    renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES} />);
     const firstMarker = screen.getAllByTestId("marker")[0];
     if (!firstMarker) throw new Error("expected at least one marker");
     await user.click(firstMarker);
@@ -136,7 +140,7 @@ describe("PropertyMap", () => {
   it("物件数が 10 件未満のときクラスタリングは無効化される（data-clustering=disabled）", async () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "dummy-key";
     const { PropertyMap } = await import("@/components/map/PropertyMap");
-    const { container } = render(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 5)} />);
+    const { container } = renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 5)} />);
     const wrapper = container.querySelector("[data-clustering]");
     expect(wrapper?.getAttribute("data-clustering")).toBe("disabled");
     // MarkerClusterer は 1 回も生成されない
@@ -152,7 +156,7 @@ describe("PropertyMap", () => {
       slug: `${p.slug}-${i}`,
     }));
     expect(many.length).toBeGreaterThanOrEqual(10);
-    const { container } = render(<PropertyMap properties={many} />);
+    const { container } = renderWithI18n(<PropertyMap properties={many} />);
     const wrapper = container.querySelector("[data-clustering]");
     expect(wrapper?.getAttribute("data-clustering")).toBe("enabled");
     // MarkerClusterer が少なくとも 1 回生成される
@@ -166,7 +170,14 @@ describe("PropertyMap", () => {
       ...p,
       slug: `${p.slug}-${i}`,
     }));
-    render(<PropertyMap properties={many} />);
+    renderWithI18n(<PropertyMap properties={many} />);
     expect(screen.getAllByTestId("marker").length).toBe(many.length);
+  });
+
+  it("locale=en では英語の無効化メッセージになる", async () => {
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    const { PropertyMap } = await import("@/components/map/PropertyMap");
+    renderWithI18n(<PropertyMap properties={[]} />, { locale: "en" });
+    expect(screen.getByText("Map view is disabled")).toBeInTheDocument();
   });
 });
