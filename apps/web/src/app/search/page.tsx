@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PropertyMapLazy } from "@/components/map/PropertyMapLazy";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { FilterChips } from "@/components/search/FilterChips";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SearchFilter } from "@/components/search/SearchFilter";
 import { SearchPagination } from "@/components/search/SearchPagination";
@@ -97,6 +98,8 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
           <ViewModeToggle current={viewMode} />
         </div>
       </header>
+
+      <FilterChips className="mb-6" />
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <SearchFilter className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto" />
