@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { IngestForm } from "@/components/agent/IngestForm";
+import { KpiCards } from "@/components/insights/KpiCards";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { PropertyMap } from "@/components/map/PropertyMap";
@@ -108,6 +109,20 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
 
   it("FilterChips: 適用中フィルタ chip が a11y 適合", async () => {
     const { container } = render(<FilterChips />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("KpiCards (/insights): KPI カード 4 枚が a11y 適合", async () => {
+    const { container } = renderWithI18n(
+      <KpiCards kpis={{ total: 5, avgRent: 446_000, avgArea: 34.1, publishingCount: 4 }} />,
+    );
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("KpiCards (/insights): 全 0 件でも a11y 適合", async () => {
+    const { container } = renderWithI18n(
+      <KpiCards kpis={{ total: 0, avgRent: 0, avgArea: 0, publishingCount: 0 }} />,
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
 });
