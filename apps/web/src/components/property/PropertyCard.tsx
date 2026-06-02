@@ -45,6 +45,10 @@ export const PropertyCard = ({ property, className }: PropertyCardProps): React.
         <h3 className="text-base font-semibold text-neutral-900 line-clamp-2">
           <Link
             href={`/properties/${property.slug}` as Route}
+            // 検索結果 / チャット結果でカードが多数並ぶ画面では、初回 paint 時の RSC prefetch
+            // が CPU を奪い TBT を悪化させる。ホバー / クリック時に Next.js が必要な分だけ
+            // フェッチする挙動に切り替える（v0.6.0 WS-2）。
+            prefetch={false}
             className="after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:outline-none"
           >
             {property.title}

@@ -2,7 +2,7 @@ import { availabilityLabel, buildingTypeLabel, conditionLabel } from "@oceans-te
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PropertyMap } from "@/components/map/PropertyMap";
+import { PropertyMapLazy } from "@/components/map/PropertyMapLazy";
 import { AvailabilityBadge } from "@/components/property/AvailabilityBadge";
 import { formatAddressSummary, formatJpy, formatSquareMeter, formatTsubo } from "@/lib/format";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
@@ -279,7 +279,7 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
           位置
         </h2>
         <div className="mt-3">
-          <PropertyMap properties={[property]} className="min-h-[400px]" />
+          <PropertyMapLazy properties={[property]} className="min-h-[400px]" />
         </div>
       </section>
     </article>

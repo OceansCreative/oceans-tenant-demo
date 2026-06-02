@@ -35,7 +35,13 @@ export const Footer = ({ className }: FooterProps): React.JSX.Element => {
                           {link.label}
                         </a>
                       ) : (
-                        <Link href={link.href} className="transition-colors hover:text-brand-600">
+                        /* footer のリンクは画面外初期表示なので RSC ペイロード prefetch は不要。
+                           初回 paint で発生する競合を避け Lighthouse TBT を下げる（v0.6.0 WS-2）。 */
+                        <Link
+                          href={link.href}
+                          prefetch={false}
+                          className="transition-colors hover:text-brand-600"
+                        >
                           {link.label}
                         </Link>
                       )}

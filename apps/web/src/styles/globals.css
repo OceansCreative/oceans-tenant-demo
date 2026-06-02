@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Noto Sans JP", system-ui, sans-serif;
+  /*
+   * `next/font/google` で self-host した Noto Sans JP を、Tailwind の `font-sans` 経由で参照する。
+   * `--font-noto-sans-jp` は `apps/web/src/app/layout.tsx` の `<html className={notoSansJp.variable}>`
+   * で注入される CSS 変数で、display:swap・自動 subset で FOIT を抑える（v0.6.0 WS-2）。
+   * 変数未定義時は system-ui にフォールバックする。
+   */
+  --font-sans:
+    var(--font-noto-sans-jp), "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-brand-50: oklch(0.97 0.02 240);
   --color-brand-100: oklch(0.93 0.04 240);
   --color-brand-500: oklch(0.55 0.14 240);
