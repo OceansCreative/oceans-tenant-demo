@@ -68,7 +68,8 @@ export const IngestForm = (): React.JSX.Element => {
           {pending ? "AI で抽出中…" : "AI で抽出"}
         </button>
         <p className="text-xs text-neutral-500">
-          URL から本文を抽出し、Claude API で構造化します。実 API キーが未設定の場合は失敗します。
+          URL の本文を Claude API が読み取り、住所・賃料・面積などを自動で埋めます。実 API
+          キーが未設定の場合は失敗します。
         </p>
       </form>
 

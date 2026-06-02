@@ -9,12 +9,12 @@ const HomePage = (): React.JSX.Element => {
             AI × 店舗物件マッチング
           </p>
           <h1 className="text-balance text-4xl font-bold leading-tight text-neutral-900 sm:text-5xl">
-            URL をペーストするだけで、
+            URL を貼るだけで、
             <br className="hidden sm:block" />
-            AI が物件情報を構造化抽出します。
+            AI が物件情報を自動で読み取ります。
           </h1>
           <p className="text-pretty text-lg leading-relaxed text-neutral-600">
-            自然言語での対話型検索、地図ビュー、構造化データ管理を統合した
+            話しかけて絞り込む対話型検索、地図ビュー、整理されたデータ管理を統合した
             店舗物件マッチングのリファレンス実装です。
           </p>
           <div className="flex flex-wrap gap-3">
@@ -37,10 +37,10 @@ const HomePage = (): React.JSX.Element => {
           <div className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-brand-50 via-white to-brand-100 p-6 shadow-sm ring-1 ring-brand-100/60">
             <div className="grid h-full grid-cols-2 gap-4">
               {[
-                { title: "URL 抽出", body: "掲載 URL から AI で構造化" },
+                { title: "URL 抽出", body: "掲載 URL から AI が自動で読み取り" },
                 { title: "対話型検索", body: "条件を話しかけて絞り込む" },
                 { title: "地図ビュー", body: "Google Maps と連携" },
-                { title: "Sanity CMS", body: "構造化データ管理" },
+                { title: "Sanity CMS", body: "物件データを一元管理" },
               ].map((item) => (
                 <div
                   key={item.title}
@@ -58,8 +58,8 @@ const HomePage = (): React.JSX.Element => {
       <section className="mt-24 grid gap-8 sm:grid-cols-3">
         {[
           {
-            title: "URL → 構造化",
-            body: "物件掲載ページの URL を投入すると、AI が要素を抽出して Sanity のドラフトに保存します。",
+            title: "URL → 自動入力",
+            body: "物件掲載ページの URL を投入すると、AI が住所・賃料・面積などを読み取って Sanity のドラフトに保存します。",
           },
           {
             title: "対話で絞り込む",
