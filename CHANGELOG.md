@@ -11,6 +11,67 @@
 - Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
+- クライアントコンポーネント（SearchBar / SearchFilter / PropertyMap / IngestForm）への RTL テスト追加で apps/web Lines 70% 到達
+- Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
+
+## [0.5.0] — 2026-06-03
+
+Phase 6 マイナー継続。`/ship` 並列実装の **4 サイクル目** で、AI API ルートのレート制限（WS-1）/ SEO ベースライン確立（WS-2）/ vitest カバレッジ計測と Codecov 連携（WS-3）の 3 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "公開運用水準" を一段引き上げた。
+
+### Added
+
+- **AI API ルートに in-memory token bucket レート制限を導入 (#109)** — `/api/chat-search` と `/api/ingest-url` を DoS とコスト暴発から守る運用ガードを実装
+  - `src/lib/rate-limit.ts` を新規追加。lazy refill / 簡易 LRU evict（MAX 1000 件）/ 環境変数による容量・補充間隔の上書き対応。`nowMs` 注入によりピュア関数寄りでテスト容易な設計
+  - `src/lib/get-client-ip.ts` を新規追加。`x-forwarded-for` 最左 → `x-real-ip` → `host` の順で解釈し、IPv6 ブラケットや `IPv4:port` を正規化
+  - `/api/chat-search` は既定容量 20 / 6 秒補充（持続 10 req/min）。リクエスト形式検証より先にバケットを消費し、429 は SSE 開始前に通常 JSON `{ error: "rate_limited", retryAfterSeconds }` で返却
+  - `/api/ingest-url` は既定容量 10 / 12 秒補充（持続 5 req/min）。AI コスト（HTML 抽出 + Tool Use）が高めなため chat-search より持続レートを半分に抑制
+  - 成功・失敗いずれの応答にも `X-RateLimit-Limit/Remaining/Reset` を付与、429 時はさらに `Retry-After` を付加
+  - `RATE_LIMIT_CHAT_CAPACITY` / `RATE_LIMIT_CHAT_REFILL_INTERVAL_MS` / 同 `INGEST` 系で運用側から閾値変更可能
+- **SEO ベースラインを確立 — JSON-LD / next-og / sitemap / robots (#110)** — 公開検索面の構造化と OG 画像を整備し、Google Rich Results / SNS シェアに耐える状態に
+  - schema.org Place の JSON-LD を `buildPropertyJsonLd` で `PropertyWithTsubo` から生成し、`jsonLdPropertySchema`（Zod）で型強制。検証失敗時は `null` を返し `<script>` 出力をスキップする安全側設計
+  - `serializeJsonLd` で `<` を Unicode エスケープし、`dangerouslySetInnerHTML` 経由でも `</script>` インジェクションを遮断（OWASP 推奨パターン）
+  - 動的 OG 画像 3 ルート（`/og` 汎用 / `/og/search?q=...` 検索キーワード反映 / `/og/property/[slug]` 物件詳細）を `next/og` + edge runtime + Noto Sans JP で実装（1200×630）。Google Fonts 取得失敗時はシステムフォントで描画継続し OG 画像が 500 で落ちない fallback を装備
+  - `/sitemap.xml` / `/robots.txt` を整備。静的 3 ページ + mock 物件 5 件を列挙、物件 `lastModified` は `publishedAt` を使用。`/studio` 配下のみ disallow し sitemap URL を host とともに宣言
+  - `layout` / トップ / `/search` / `/properties/[slug]` の `generateMetadata` に canonical・`openGraph.images`・`twitter` card を統合
+- **vitest にカバレッジレポートを導入し Codecov に連携 (#108)** — テスト品質をワークスペース別の数値で可視化する基盤を整備
+  - `codecov.yml` を新規追加し、`project.default: auto` / `patch.default: 70%` / `informational: true` の warning レベル運用を定義
+  - `web` / `shared` / `python` の 3 フラグで Codecov にアップロードし、ワークスペース別の粒度で追跡可能に
+  - `actions/upload-artifact@v4` で `coverage-reports` を 14 日保管し、PR から lcov / json-summary を確認可能
+  - README の CI 行に Codecov バッジを追加し、「カバレッジ」サブセクションで計測対象・除外・目標値を表形式で明示
+  - `docs/REVIEW_GUIDE.md` に「カバレッジ運用」セクションを追加し、設定の所在 4 箇所・目標値・初期値・ローカル確認手順・段階的閾値強化のロードマップを記述
+  - `apps/web/vitest.config.ts` の reporter に `json-summary` を追加し、将来のスクリプト連携に備える
+
+### Changed
+
+- `package.json` version を 0.5.0 に
+- **ingest-url ルートの refactor** — `handleIngestError` がレート残量ヘッダを受け取れるよう変更し、全エラーパス（400/422/502）でも `X-RateLimit-*` を付与
+- **availability ステータスマッピング修正** — JSON-LD 出力で enum 値 `closed` に合わせて状態判定を補正
+- **`NEXT_PUBLIC_APP_URL` 正規化** — 末尾スラッシュ除去・空文字フォールバック（localhost:3000）を sitemap / robots / 物件詳細で共通化
+- **vitest exclude 見直し** — `apps/web` で Server Component 表面（`page.tsx` / `layout.tsx` / `sitemap` / `robots` / `og`）と型定義・テストヘルパを計測対象外に整理
+- **閾値運用の方針転換** — `packages/shared` の 80% 強制閾値を削除し、Codecov 側の patch target で段階的に底上げする warning レベル運用に統一
+- **Codecov アップロードステップ分割** — 単一ステップで複数 lcov を渡していた構成を、ワークスペース別 3 ステップに分割し `disable_search: true` で二重カウントを防止
+- **既存 lint 警告解消** — 不要な `biome-ignore` / optional chain 推奨の警告を整理
+
+### Process
+
+- `/ship` 並列実装の **4 サイクル目**。WS-1 (rate limit) / WS-2 (SEO) / WS-3 (coverage) を worktree 分離サブエージェントで同時着手し、PR #108 → #109 → #110 の順に CI green を確認しながらマージ
+- v0.5.0 リリースノート生成は Workflow（並列サーベイ 3 agent + 統合 1 agent）で自動化（**2 サイクル目**、v0.4.0 で確立したパターンを踏襲）
+
+### Tests
+
+- apps/web: 240 → **270** ケース pass（+30: rate-limit 16 / get-client-ip 10 / chat-search・ingest-url の 429 + `X-RateLimit-*` 各 2）
+- WS-2 で JSON-LD 8 件 + sitemap 5 件を新規追加（リポジトリ合計 +13）。mock 全件 Zod 通過 / 通貨 JPY / 面積 m² / 実在企業名混入なしを保証
+- packages/shared 144 / Python pytest / Playwright 5×2 / CodeQL / Lighthouse 全 green
+- 初期カバレッジは apps/web Lines **66.48%** / packages/shared Lines **99.57%**（apps/web は Server Component 表面を Playwright 側でカバーする方針）
+- WS-1 の in-memory バケットは `__resetRateLimitForTesting()` を `beforeEach` で呼び、テスト間の状態漏れを防止
+
+### Docs
+
+- `docs/AI_INTEGRATION.md` にレート制限の容量・補充間隔・`X-RateLimit-*` ヘッダ仕様・serverless 環境での Upstash Redis 置換指針を追記
+- `docs/ARCHITECTURE.md` に SEO レイヤ（JSON-LD / OG / sitemap / robots）と edge runtime 依存を追記
+- `docs/REVIEW_GUIDE.md` に「カバレッジ運用」セクション（設定の所在 4 箇所・目標値・ローカル確認手順・段階的閾値強化のロードマップ）を追加
+- `codecov.yml` を新設し、warning レベル運用と将来の閾値強化ステップを設定で明示
+- README に Codecov バッジ・カバレッジ表を追加
 
 ## [0.4.0] — 2026-06-02
 
