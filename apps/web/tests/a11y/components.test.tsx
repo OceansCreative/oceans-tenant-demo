@@ -14,6 +14,7 @@ import { SearchFilter } from "@/components/search/SearchFilter";
 import { SearchPagination } from "@/components/search/SearchPagination";
 import { ViewModeToggle } from "@/components/search/ViewModeToggle";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
+import { renderWithI18n } from "../test-utils";
 
 // next/navigation は jsdom 環境では未提供のため、最低限のフックを差し替える。
 // SearchBar / SearchFilter / ViewModeToggle / FilterChips で必要になるため一括で mock しておく。
@@ -33,12 +34,12 @@ if (!firstProperty) throw new Error("MOCK_PROPERTIES が空です");
 
 describe("a11y: 主要コンポーネントは axe 違反を出さない", () => {
   it("Header: ランドマークと aria 属性が適切", async () => {
-    const { container } = render(<Header />);
+    const { container } = renderWithI18n(<Header />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("Footer: 各セクションが nav として識別可能", async () => {
-    const { container } = render(<Footer />);
+    const { container } = renderWithI18n(<Footer />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
