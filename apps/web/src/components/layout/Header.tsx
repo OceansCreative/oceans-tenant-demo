@@ -1,12 +1,36 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { SITE_CONFIG } from "@/lib/site";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 type HeaderProps = {
   readonly className?: string;
 };
 
+/**
+ * 主要ナビゲーションの href と翻訳キーのペア定義。
+ * v0.8.1 で `/properties` や `/agent/dashboard` を追加する余地を残し、
+ * 文言は `messages/*.json` の `nav.*` 名前空間から引く。
+ */
+const NAV_ITEMS = [
+  { href: "/", key: "home" },
+  { href: "/search", key: "search" },
+  { href: "/chat", key: "chat" },
+  { href: "/agent", key: "agent" },
+] as const;
+
+/**
+ * グローバルヘッダー（Client Component）。
+ *
+ * v0.8.0 で next-intl 化。`useTranslations()` を使うため `"use client"` に切替え。
+ * 双方向の DOM 操作は LocaleSwitcher のみで、Header 本体は静的なリンク列なので
+ * クライアント化による hydration コストは低い（バンドル増は約 1KB 想定）。
+ */
 export const Header = ({ className }: HeaderProps): React.JSX.Element => {
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
   return (
     <header
       className={cn(
@@ -18,7 +42,7 @@ export const Header = ({ className }: HeaderProps): React.JSX.Element => {
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold text-neutral-900"
-          aria-label="OceansTenant トップへ"
+          aria-label={tNav("brandLabel")}
         >
           <span
             aria-hidden="true"
@@ -26,18 +50,18 @@ export const Header = ({ className }: HeaderProps): React.JSX.Element => {
           >
             OT
           </span>
-          <span className="text-lg tracking-wide">OceansTenant</span>
+          <span className="text-lg tracking-wide">{tCommon("siteName")}</span>
         </Link>
 
-        <nav aria-label="主要ナビゲーション" className="hidden md:block">
+        <nav aria-label={tNav("home")} className="hidden md:block">
           <ul className="flex items-center gap-6 text-sm text-neutral-700">
-            {SITE_CONFIG.navigation.map((item) => (
+            {NAV_ITEMS.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   className="transition-colors hover:text-brand-600 focus-visible:text-brand-600"
                 >
-                  {item.label}
+                  {tNav(item.key)}
                 </Link>
               </li>
             ))}
@@ -45,16 +69,17 @@ export const Header = ({ className }: HeaderProps): React.JSX.Element => {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LocaleSwitcher className="hidden md:flex" />
           <Link
             href="/agent/ingest"
             className="hidden rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 md:inline-flex"
           >
-            物件を登録
+            {tNav("registerCta")}
           </Link>
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 md:hidden"
-            aria-label="メニューを開く"
+            aria-label={tCommon("openMenu")}
             aria-expanded="false"
           >
             <svg
