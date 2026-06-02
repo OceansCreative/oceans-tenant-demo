@@ -7,6 +7,8 @@ import { Header } from "@/components/layout/Header";
 import { PropertyMap } from "@/components/map/PropertyMap";
 import { AvailabilityBadge } from "@/components/property/AvailabilityBadge";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { RelatedProperties } from "@/components/property/RelatedProperties";
+import { FilterChips } from "@/components/search/FilterChips";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SearchFilter } from "@/components/search/SearchFilter";
 import { SearchPagination } from "@/components/search/SearchPagination";
@@ -14,10 +16,15 @@ import { ViewModeToggle } from "@/components/search/ViewModeToggle";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 
 // next/navigation は jsdom 環境では未提供のため、最低限のフックを差し替える。
-// SearchBar / SearchFilter / ViewModeToggle で必要になるため一括で mock しておく。
+// SearchBar / SearchFilter / ViewModeToggle / FilterChips で必要になるため一括で mock しておく。
+// FilterChips の chip 描画分岐をカバーするため、適用中フィルタ付きの URL を返すバージョンも用意。
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
-  useSearchParams: () => ({ toString: () => "", get: () => null }),
+  useSearchParams: () => ({
+    toString: () => "prefecture=東京都&buildingType=street_level&minRent=300000",
+    get: (key: string) =>
+      new URLSearchParams("prefecture=東京都&buildingType=street_level&minRent=300000").get(key),
+  }),
   usePathname: () => "/",
 }));
 
@@ -90,6 +97,16 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
 
   it("IngestForm: URL 入力 + 送信が a11y 適合", async () => {
     const { container } = render(<IngestForm />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("RelatedProperties: 関連物件セクションが a11y 適合", async () => {
+    const { container } = render(<RelatedProperties properties={MOCK_PROPERTIES.slice(0, 3)} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("FilterChips: 適用中フィルタ chip が a11y 適合", async () => {
+    const { container } = render(<FilterChips />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

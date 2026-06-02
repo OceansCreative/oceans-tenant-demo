@@ -90,3 +90,71 @@ export const fetchProperties = async (criteria: SearchCriteria): Promise<FetchPr
     return fallbackToMock(criteria);
   }
 };
+
+/**
+ * 関連物件のスコアリングロジック。
+ *
+ * - 同じ都道府県 +3
+ * - buildingType が一致 +2
+ * - suitableBusinessRefs が 1 件でも重複 +1（重複数に応じて加点）
+ *
+ * スコアが 0 の物件は「同じエリア」や「同じ業態」など共通点が無いため候補から除外する。
+ * mock 5 件しかない場合、フォールバックとして prefecture だけ一致する物件、
+ * 最後は publishedAt 新しい物件を返すことで「関連 0 件」が頻発するのを避ける。
+ */
+const computeRelatedScore = (current: PropertyWithTsubo, candidate: PropertyWithTsubo): number => {
+  let score = 0;
+  if (current.address.prefecture === candidate.address.prefecture) score += 3;
+  if (
+    current.buildingType &&
+    candidate.buildingType &&
+    current.buildingType === candidate.buildingType
+  ) {
+    score += 2;
+  }
+  const overlapBusiness = current.suitableBusinessRefs.filter((ref) =>
+    candidate.suitableBusinessRefs.includes(ref),
+  ).length;
+  score += overlapBusiness;
+  return score;
+};
+
+/**
+ * 関連物件取得 helper。
+ *
+ * 現物件と同じ都道府県 + buildingType / suitableBusinessRefs 重複でスコアリングし、
+ * 上位 N 件を返す（現物件自身は除外）。同点の場合は publishedAt 降順（新しい順）で安定化させる。
+ *
+ * mock 5 件運用では母集団が小さく `limit` 件に届かないことが多いため、
+ * - スコア > 0 の候補を最優先
+ * - 不足分は publishedAt 降順で埋める（同じ都道府県の物件を優先）
+ *
+ * Sanity 実接続後は同じシグネチャで GROQ クエリ化を想定している。
+ */
+export const findRelatedProperties = (
+  current: PropertyWithTsubo,
+  pool: ReadonlyArray<PropertyWithTsubo>,
+  limit = 3,
+): ReadonlyArray<PropertyWithTsubo> => {
+  if (limit <= 0) return [];
+  const others = pool.filter((p) => p.slug !== current.slug);
+  if (others.length === 0) return [];
+
+  const scored = others
+    .map((property) => ({ property, score: computeRelatedScore(current, property) }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      // 同点は publishedAt 降順
+      return b.property.publishedAt.localeCompare(a.property.publishedAt);
+    });
+
+  const positive = scored.filter((entry) => entry.score > 0).map((entry) => entry.property);
+  if (positive.length >= limit) return positive.slice(0, limit);
+
+  // フォールバック: スコア 0 でも publishedAt 新しい物件で埋める
+  const fillers = scored
+    .filter((entry) => entry.score === 0)
+    .map((entry) => entry.property)
+    .filter((property) => !positive.includes(property));
+  return [...positive, ...fillers].slice(0, limit);
+};

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PropertyMapLazy } from "@/components/map/PropertyMapLazy";
 import { AvailabilityBadge } from "@/components/property/AvailabilityBadge";
+import { RelatedProperties } from "@/components/property/RelatedProperties";
 import { formatAddressSummary, formatJpy, formatSquareMeter, formatTsubo } from "@/lib/format";
+import { findRelatedProperties } from "@/lib/properties";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 import { buildPropertyJsonLd, serializeJsonLd } from "@/lib/seo/jsonld";
 
@@ -59,6 +61,10 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
   // JSON-LD は build / SSR 時に生成し、`safeParse` 失敗時は出力をスキップする。
   // 検索エンジン側に壊れた構造化データを送らないための保険。
   const jsonLd = buildPropertyJsonLd(property, getBaseUrl());
+
+  // 関連物件は同じ都道府県 + buildingType / suitableBusinessRefs 重複でスコアリングする。
+  // mock 5 件だと最大 2-3 件、Sanity 実接続後は最大 3 件を想定。
+  const relatedProperties = findRelatedProperties(property, MOCK_PROPERTIES, 3);
 
   return (
     <article className="container-page py-10">
@@ -282,6 +288,8 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
           <PropertyMapLazy properties={[property]} className="min-h-[400px]" />
         </div>
       </section>
+
+      <RelatedProperties properties={relatedProperties} />
     </article>
   );
 };
