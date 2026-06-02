@@ -9,6 +9,7 @@
 [![Lighthouse CI](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml)
 [![CodeQL](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/OceansCreative/oceans-tenant-demo/graph/badge.svg)](https://codecov.io/gh/OceansCreative/oceans-tenant-demo)
+[![Chromatic](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/chromatic.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/chromatic.yml)
 [![Release](https://img.shields.io/github/v/release/OceansCreative/oceans-tenant-demo?display_name=tag&sort=semver)](https://github.com/OceansCreative/oceans-tenant-demo/releases)
 
 [![License: MIT](https://img.shields.io/github/license/OceansCreative/oceans-tenant-demo?color=yellow)](LICENSE)
@@ -130,9 +131,11 @@ pnpm dev                                      # http://localhost:3000
 ### 追加で動かせるもの
 
 ```bash
-pnpm studio           # Sanity Studio (apps/studio)
-pnpm screenshots      # スクリーンショット再撮影（Playwright）
-pnpm screenshots:gif  # 🎬 操作デモ GIF 再生成
+pnpm studio                                       # Sanity Studio (apps/studio)
+pnpm --filter @oceans-tenant/web storybook        # Storybook UI カタログ（http://localhost:6006）
+pnpm --filter @oceans-tenant/web build-storybook  # 静的 storybook-static/ を生成（Chromatic / CI 用）
+pnpm screenshots                                  # スクリーンショット再撮影（Playwright）
+pnpm screenshots:gif                              # 🎬 操作デモ GIF 再生成
 ```
 
 ### 環境変数

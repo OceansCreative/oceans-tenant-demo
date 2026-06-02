@@ -39,6 +39,11 @@ test-results/
 # Lighthouse CI
 .lighthouseci/
 
+# Storybook
+storybook-static/
+chromatic.log
+chromatic-diagnostics.json
+
 # Build
 dist/
 build/
