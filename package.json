@@ -21,6 +21,7 @@
     "test": "pnpm -r --parallel run test",
     "test:coverage": "pnpm -r --parallel run test:coverage",
     "screenshots": "node scripts/screenshots/capture.mjs",
+    "screenshots:gif": "node scripts/screenshots/capture-gif.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -32,6 +33,9 @@
     "@biomejs/biome": "^2.4.16",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "fluent-ffmpeg": "^2.1.3",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
     "typescript": "^5.6.3"

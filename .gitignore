@@ -65,3 +65,6 @@ Thumbs.db
 # Misc
 *.tsbuildinfo
 .turbo/
+
+# GIF 撮影用の中間 PNG フレーム（scripts/screenshots/capture-gif.mjs）
+.cache/
