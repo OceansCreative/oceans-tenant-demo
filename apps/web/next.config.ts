@@ -23,11 +23,22 @@ const isBasePathEnabled = process.env.OCEANS_BASEPATH === "/tenant-search";
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // gzip 圧縮を明示有効化（v0.6.0 WS-2 / Lighthouse Performance 改善）。
+  // Vercel では Edge が brotli/gzip を自動付与するため二重圧縮にはならず、
+  // `next start` での self-host 計測時にも HTML / JS / CSS に gzip が適用される。
+  compress: true,
   ...(isBasePathEnabled ? { basePath: "/tenant-search", assetPrefix: "/tenant-search" } : {}),
   experimental: {
     typedRoutes: true,
+    // 大規模パッケージのバレル import をルート別に最適化し、初回 JS バンドルを縮小する。
+    // `@vis.gl/react-google-maps` は /search（地図モード）と物件詳細でのみ使うため、
+    // 不要 export を除去して initial bundle を削減する（v0.6.0 WS-2）。
+    optimizePackageImports: ["@vis.gl/react-google-maps"],
   },
   images: {
+    // Sanity CDN を許可しつつ、modern image format で配信できるよう avif / webp を優先する。
+    // OG 画像（`next/og`）や docs/images の PNG は `next/image` を介さないため対象外。
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
   },
   // Turbopack 用の解決設定（Next.js 15.3+ でトップレベル設定として正式化）。
