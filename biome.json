@@ -23,6 +23,7 @@
       "!**/test-results",
       "!**/.sanity",
       "!**/.vercel",
+      "!**/storybook-static",
       "!**/pnpm-lock.yaml",
       "!**/globals.css"
     ]
