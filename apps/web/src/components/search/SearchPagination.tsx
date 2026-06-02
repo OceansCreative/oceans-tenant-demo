@@ -90,6 +90,7 @@ export const SearchPagination = ({
               href={buildHref(currentPage - 1) as never}
               aria-label="前のページ"
               rel="prev"
+              prefetch={false}
               className={navItem}
             >
               前へ
@@ -112,6 +113,7 @@ export const SearchPagination = ({
                 <Link
                   href={buildHref(pageNumber) as never}
                   aria-label={`${pageNumber} ページ目`}
+                  prefetch={false}
                   className={navItem}
                 >
                   {pageNumber}
@@ -126,6 +128,7 @@ export const SearchPagination = ({
               href={buildHref(currentPage + 1) as never}
               aria-label="次のページ"
               rel="next"
+              prefetch={false}
               className={navItem}
             >
               次へ
