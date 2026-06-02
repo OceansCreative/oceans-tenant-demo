@@ -13,6 +13,49 @@
 - `sanity_client.py` のリトライ・タイムアウト戦略（#66）
 - chat-search のクライアント切断時に Anthropic 呼び出しを中断（#82）
 
+## [0.1.6] — 2026-06-02
+
+UX 改善と並列開発インフラ整備のメンテナンスリリース。Dependabot 8 件 + 開発体験 + UI ライティングをまとめて反映。
+
+### Changed (UI / ライティング)
+
+- **キャッチコピーから専門用語「構造化抽出」を排除し平易な言葉に置換**
+  - Hero h1: 「URL を貼るだけで、AI が物件情報を自動で読み取ります」
+  - 機能 3 カラム: 「URL → 自動入力」と具体例（住所・賃料・面積）
+  - `/agent/ingest` の説明文、IngestForm のヘルプ、metadata description も統一
+  - Claude API への system prompt（LLM 向け技術指示）の「構造化抽出エージェント」は維持
+
+### Added (開発体験)
+
+- **git worktree 並列実行のセットアップ**
+  - `.worktreeinclude`: 新 worktree に `.env*` を自動コピーするパターンを集約（実値は含まない）
+  - `.claude/settings.json`: `worktree.baseRef = "fresh"` / `cleanupPeriodDays = 14`
+  - `.claude/commands/ship.md`: ゴールをワークストリームに分解 → worktree 分離サブエージェントで並列実行するスラッシュコマンド
+  - `.gitignore` に `.claude/worktrees/` を追加
+  - pnpm 9.15.4 は content-addressed store のため worktree との相性が良く、追加ディスクは差分のみ
+
+### Changed (依存更新、Dependabot)
+
+- `@types/node` 20.19.41 → 25.9.1（dev）
+- `lint-staged` 17.0.5 → 17.0.7
+- `happy-dom` 15.11.7 → 20.9.0（dev、major bump、テスト全 pass で検証）
+- `pandas` 2.2.3 → 3.0.3（Python、major bump）
+- `pytest` 8.3.3 → 9.0.3（Python、major bump）
+- `matplotlib` 3.9.2 → 3.10.9
+- `actions/setup-python` 5 → 6
+- `pnpm/action-setup` 4 → 6
+- `actions/cache` 4 → 5
+- `vitest` 2 → 4 はテスト互換性のため close（v0.2.0 で TS 6 と合わせて検討）
+
+### Tests
+
+- shared 135 / web 160 / pytest 40 / Playwright 5 シナリオ × 2 ブラウザ 全 pass
+- CI 全 green（Lint / typecheck / Vitest / Python / Playwright / CodeQL / 静的解析）
+
+### Changed (release)
+
+- `package.json` version を 0.1.6 に
+
 ## [0.1.5] — 2026-06-01
 
 外部レビュー第 5 弾の指摘 4 件をまとめて修正。v0.1.4 の dead assertion 是正と、v0.2.0「Sanity 実接続」着手前のデータモデル整合化が主軸。
