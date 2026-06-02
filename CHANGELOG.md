@@ -11,8 +11,66 @@
 - Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
-- クライアントコンポーネント（SearchBar / SearchFilter / PropertyMap / IngestForm）への RTL テスト追加で apps/web Lines 70% 到達
 - Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
+- `lib/ai/anthropic-client.ts` / `lib/ai/claude-extraction.ts` / `lib/seo/og.tsx` の追加カバレッジ
+- WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
+- Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
+
+## [0.6.0] — 2026-06-03
+
+Phase 6 マイナー継続。`/ship` 並列実装の **5 サイクル目** で、apps/web のカバレッジ底上げ（WS-1）/ Lighthouse Performance 90+ 達成（WS-2）/ axe-core によるアクセシビリティ違反 0 化（WS-3）の 3 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "品質磨き込み"（coverage / performance / a11y）を一段引き上げた。
+
+### Added
+
+- **apps/web クライアントコンポーネントの RTL テスト拡充で Lines 70% 突破 (#112)** — `userEvent` ベースで URL クエリ反映・aria 属性・キーボード操作・既存クエリの保持と削除まで網羅
+  - **SearchBar / SearchFilter / ViewModeToggle テスト** — URL 同期・aria 属性・キーボード操作・既存クエリ保持を `userEvent` ベースで網羅
+  - **IngestForm テスト** — `fetch` をモックし、成功 / API エラー / ネットワーク例外 / 信頼度バーの色帯（emerald / amber / red）/ 送信中ラベルを網羅
+  - **PropertyMap テスト** — `@vis.gl/react-google-maps` を軽量スタブに差し替え、API キー有無の分岐とマーカークリックで InfoWindow が開く挙動を検証
+  - **ChatPanel SSE 連携テスト** — `ReadableStream` + `TextEncoder` で本物の `Response` を生成し criteria / message / error / done / HTTP エラー / fetch 例外 / 送信中状態を網羅
+  - **uuid ユニットテスト** — `crypto.randomUUID` 有り / フォールバック双方の分岐と 10 回連続生成での一意性を検証
+- **Lighthouse Performance 90+ を 4 ルートで恒常達成 (#114)** — `next/dynamic` / route 別 `loading.tsx` / `prefetch={false}` / `next.config.ts` 最適化で 4 URL × 3 ラン中央値を 0.96+ に
+  - **`PropertyMapLazy`（`next/dynamic`）** — `@vis.gl/react-google-maps` を client 遅延ロード化し `/search` を −13 kB、`/properties/[slug]` を −14 kB 削減
+  - **route 別 `loading.tsx`** — `/` / `/search` / `/chat` / `/properties/[slug]` に `aria-busy` 付き skeleton を追加し Streaming で FCP / LCP を底上げ
+  - **`Link prefetch={false}`** — Footer / `SearchPagination` / `PropertyCard` で初回 paint 時の RSC ペイロード競合を抑制し TBT を改善（Header のグローバルナビは即タップ確率が高いため `prefetch` を維持）
+  - **`next.config.ts` の最適化** — `compress: true` / `images.formats: [avif, webp]` / `optimizePackageImports`（`@vis.gl/react-google-maps` 含む）を投入
+  - **テスト追加** — `tests/components/PropertyMapLazy.test.tsx` と `tests/app/loading.test.tsx` で遅延ロード境界とスケルトン描画を保証
+- **axe-core 2 層導入で主要 4 ページの a11y 違反を 0 化 (#113)** — `vitest-axe`（ユニット）+ `@axe-core/playwright`（E2E）で WCAG 2.1 AA + best-practice をフルチェック
+  - **主要 11 コンポーネントの a11y ユニットテスト** — Header / Footer / PropertyCard / AvailabilityBadge（3 状態）/ SearchPagination / SearchBar / SearchFilter / ViewModeToggle / PropertyMap fallback / IngestForm を `toHaveNoViolations()` で網羅（`tests/a11y/components.test.tsx`、+12 件）
+  - **4 ページの a11y E2E スイート** — `/`, `/search`, `/chat`, `/properties/[slug]` を `wcag2a/2aa/21a/21aa/best-practice` で検査し、失敗時は id / impact / help / nodes 数を stderr に出力（`e2e/tests/a11y.spec.ts`、+4 件）
+  - **`vitest-axe@0.1.0` ワークアラウンド** — `extend-expect` エントリが空 JS なため `matchers` から直接 `expect.extend` 登録、`declare module "vitest"` で `Assertion` 型を `AxeMatchers` で拡張
+  - **アクセシビリティガイドラインの文書化** — `docs/ARCHITECTURE.md` に計測 / 自動化レイヤ表・守っているガイドライン・axe ルール除外方針・AAA 段階引き上げ方針を明文化
+
+### Changed
+
+- `package.json` version を 0.6.0 に
+- **Lighthouse CI assertion を厳格化** — `apps/web/.lighthouserc.cjs` の performance を `warn 0.8` → `error 0.9` に引き上げ、計測対象に `/properties/[slug]` を追加し 4 URL 構成へ。median 0.96 で 0.06 の headroom を確保
+- **`next/font` 適用の修正** — `globals.css` の `--font-sans` を CSS 変数 `var(--font-noto-sans-jp)` 経由に切り替え self-host フォントを確実に適用
+- **`.github/workflows/lighthouse.yml`** — job 名を 4 URL 表記に更新
+- **物件詳細の補助カラムを `<aside>` → `<div>` に置換** — `<article>` 配下の `<aside>` は complementary landmark が article 配下となり要件不適合のため、`landmark-complementary-is-top-level` 違反 1 件を解消
+- **`apps/web` devDependencies 拡張** — `@axe-core/playwright^4.11.3` / `axe-core^4.12.0` / `vitest-axe^0.1.0` を追加
+- **next/navigation モック共通化** — `mockSearchParamsString` を `let` で書き換える方式に統一し URL クエリありの分岐を網羅
+
+### Process
+
+- `/ship` 並列実装の **5 サイクル目**。WS-1 (coverage) / WS-2 (Lighthouse 90+) / WS-3 (a11y) を worktree 分離サブエージェントで同時着手し、PR #112 → #113 → #114 の順に CI green を確認しながらマージ
+- v0.6.0 リリースノート生成は Workflow（並列サーベイ 3 agent + 統合 1 agent）で自動化（**3 サイクル目**、v0.4.0 / v0.5.0 で確立したパターンを踏襲）
+- 並列開発中は dev server をブラウザ起動したまま 3 worktree を同時編集し、リアルタイムに描画差分・コンソールを目視しながら進行
+
+### Tests
+
+- apps/web vitest: 270 → **364** ケース pass（+94: WS-1 で +69 / WS-3 で a11y +12 / WS-2 で +6 / 微増 +7）
+- apps/web カバレッジ: Lines **66.74 → 89.86%（+23.12pt）** / Functions **85.41 → 94.11%（+8.70pt）**
+- Playwright: 5 → **9** ケース pass（+4: `/`, `/search`, `/chat`, `/properties/[slug]` の a11y E2E）
+- packages/shared 144 / Python pytest / CodeQL / Lighthouse 全 green
+- Lighthouse Performance: 4 URL × 3 ラン中央値で **0.96 以上** を確認、assertion は `error 0.9` で CI 強制
+- axe 違反: 主要 4 ページで After **全て 0 件**
+- Codecov は `informational: true` の warning レベル運用を継続し閾値強制化は別フェーズで段階引き上げ
+
+### Docs
+
+- `docs/ARCHITECTURE.md` に **パフォーマンス計測 / 最適化レイヤ** と **アクセシビリティ計測 / 自動化レイヤ** を追記
+  - パフォーマンス: `next/dynamic` 境界 / route 別 `loading.tsx` / `prefetch={false}` ポリシー / Lighthouse assertion `error 0.9` / 4 URL 計測構成を明示
+  - a11y: vitest-axe / `@axe-core/playwright` の 2 層・WCAG 2.1 AA + best-practice 対象タグ・守っているガイドライン（ランドマーク / 見出し / フォーム / コントラスト / フォーカス）・axe ルール除外方針・AAA 段階引き上げ方針を明文化
 
 ## [0.5.0] — 2026-06-03
 
