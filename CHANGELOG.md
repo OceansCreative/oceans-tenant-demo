@@ -8,9 +8,24 @@
 ## [Unreleased]
 
 ### Added
+- i18n フェーズ 2: `/search` / `/chat` / `/agent` / `/properties/[slug]` 等の全コンポーネント文言を翻訳キー化
+- Sanity 文言（建物種別ラベル等）の locale 切替
+- Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
+- Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
+- TypeScript 6.x 対応
+- Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
+- WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
+- Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
+- AI 抽出評価ハーネスの実 Claude 実行 + CI 統合（週次 cron / `eval` ラベル付与時）
 
-- **next-intl による i18n インフラ整備（v0.8.0 WS-1 / フェーズ 1）** — 日本語（ja）/ 英語（en）2 言語の足場を導入
-  - `next-intl@^4.13.0` を apps/web に追加し、`messages/{ja,en}.json` に `common.*` / `nav.*` / `footer.*` / `home.*` / `seo.*` の 5 名前空間で初期キーを定義
+## [0.8.0] — 2026-06-03
+
+Phase 6 マイナー継続。`/ship` 並列実装の **7 サイクル目** で、i18n（日英）足場（WS-1）/ AI 抽出評価ハーネス（WS-2）/ Storybook Foundation MDX + 未カバー stories 拡充（WS-3）の 3 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "国際化 + 品質可視化" を一段引き上げた。
+
+### Added
+
+- **next-intl による i18n インフラ整備（フェーズ 1）(#122)** — 日本語（ja）/ 英語（en）2 言語の足場を導入
+  - `next-intl@^4.13.0` を `apps/web` に追加し、`messages/{ja,en}.json` に `common.*` / `nav.*` / `footer.*` / `home.*` / `seo.*` の 5 名前空間で初期キーを定義
   - `src/i18n/{config,request}.ts` で locale 定義（`ja` / `en`）と RSC 用 `getRequestConfig` を集約
   - `src/middleware.ts` で `Accept-Language` → `NEXT_LOCALE` cookie 初期化（URL prefix 不使用 / `localStorage` 禁止規約遵守）
   - `LocaleSwitcher` コンポーネントを Header に統合（`<label>` + `<select>` で a11y 適合、切替時に cookie 書き換え + reload）
@@ -19,14 +34,48 @@
   - `RootLayout` を `NextIntlClientProvider` でラップし、`<html lang>` と OG locale を実際の locale に同期
   - `generateMetadata` を locale 依存に変更し、`seo.*` から OG/Twitter メタデータを生成
   - テスト helper `renderWithI18n` を新設し、ja / en 両方の表示検証を可能化
-  - vitest 件数 439 → 452（+13: LocaleSwitcher 6 / i18n-config 4 / Header en 1 / Footer en 1 / Header LocaleSwitcher 1）
-  - **v0.8.1 残作業**: `/search`, `/chat`, `/agent`, `/properties/[slug]` 等のコンポーネント文言の全翻訳化、Sanity 文言（建物種別ラベル等）の locale 切替
-- Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
-- Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
-- TypeScript 6.x 対応
-- Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
-- WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
-- Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
+  - **MVP スコープ**: フェーズ 1 は Header / Footer / Hero まで。`/search` / `/chat` / `/agent` / `/properties/[slug]` 等の全翻訳化は v0.8.1 へ
+- **extract_property の AI 抽出評価ハーネス (#120)** — `scripts/eval/` に評価基盤を新設
+  - Gold Standard データセット 5 件（完全架空の HTML + expected.json）: `cafe-shibuya` / `restaurant-shinjuku` / `bar-roppongi` / `shop-omotesando` / `office-marunouchi`
+  - メトリクス: フィールド別精度（rent 完全一致 / area ±1㎡ / テキスト Sørensen–Dice / 配列 Jaccard）+ 重み付き全体スコア + precision / recall / F1
+  - `mock-anthropic.mjs` で API キー未設定でもハーネス自体のスモークテスト可能（モック 1 件意図的に落として変動を演出）
+  - `report.mjs` で Markdown レポート出力、`--output-json` で CI 連携用 JSON 出力
+  - `node --test` で metrics の純粋関数を 21 件テスト
+  - **CI 統合は別 PR**（実 Claude 呼び出しコスト管理が必要、`.github/workflows/eval.yml` を後続で）
+- **Storybook 拡充 + Foundation MDX 4 ページ (#121)** — デザインシステムの可視化と未カバー UI の story 追加
+  - 未カバー 4 コンポーネントの stories 追加: `RelatedProperties` (2 stories) / `FilterChips` (2 stories) / `PropertyMapLazy` (2 stories) / `ChatPanel` (2 stories)
+  - Foundation MDX 4 ページ: `Introduction.mdx`（プロジェクト概要 + Storybook ロール）/ `Typography.mdx`（h1〜h6 + body / caption スケール）/ `Colors.mdx`（`brand-*` swatches + grays + semantic colors）/ `Tokens.mdx`（radius / shadow / weight / spacing scale）
+  - `useSearchParams` モックを `window.location.search` 参照に変更し、Story 側で `history.replaceState` で URL 仕込み可能に
+  - Storybook index entries: 28 → **54**（Foundation 4 + 未カバー 8 stories + 既存 28 + 派生 14）
+
+### Changed
+
+- `package.json` version を 0.8.0 に
+- **Playwright config に ja locale 強制 (#122)** — middleware が Accept-Language で初期 locale を決定する仕様にしたが、Playwright の Chromium / WebKit が en-US を送り日本語前提 E2E が落ちていた。`projects` 共通の `use` に `locale: "ja-JP"` + `Accept-Language: ja-JP,...` ヘッダを追加してテスト全体で日本語表示を強制
+- `apps/web/src/components/layout/Header.tsx` / `Footer.tsx` を Server Component → Client Component に変更（`useTranslations()` 利用のため）
+- `apps/web/.storybook/preview.tsx` に `NextIntlClientProvider`（ja）をグローバル decorator として追加
+- `pnpm-workspace.yaml` に `scripts/eval` を追加（独立ワークスペース化）
+
+### Process
+
+- `/ship` 並列実装の **7 サイクル目**。WS-1 (i18n) / WS-2 (eval) / WS-3 (Storybook) を worktree 分離サブエージェントで同時着手
+- **Anthropic API レート制限 → MVP スコープ削減 → 再起動**: 初回試行で WS-1 と WS-3 がサーバ側レート制限で中断したため、スコープを縮小（WS-1 = Header / Footer / Hero のみ、WS-3 = 4 stories + 4 MDX）して再起動。WS-2 は影響なく完了
+- v0.8.0 リリースノート生成は Workflow を試したが decision check で deterministic 制約に引っかかったため手動代替（テンプレート）
+- 4 PR 連続マージで `pnpm-lock.yaml` / `apps/web/package.json` の rebase 衝突が複数発生したが、`git checkout --theirs` + `pnpm install` 再生成で都度解消
+
+### Tests
+
+- apps/web vitest: 407 → **452** ケース pass（+45: i18n +13 / 微増 +32）
+- packages/shared 144 / `oceans-tenant-eval` node:test **21 件**（metrics 純粋関数）/ Python pytest / Playwright 21 件（i18n locale 強制で安定化）/ CodeQL / Lighthouse / Codecov / Chromatic 全 green
+- 既存 RTL テストは `renderWithI18n` ヘルパで NextIntl 対応に最小工数で移行
+
+### Docs
+
+- `docs/ARCHITECTURE.md` に国際化（i18n）セクションを追加
+- `docs/AI_INTEGRATION.md` に抽出評価ハーネスの章を追加
+- `scripts/eval/README.md` を新設、評価ハーネスの使い方・fixtures 追加手順を明文化
+- `apps/web/src/stories/{Introduction,Typography,Colors,Tokens}.mdx` でデザインシステムを可視化
+- README に i18n 対応の記述、CHANGELOG にフェーズ分割の境界を明記
 
 ## [0.7.0] — 2026-06-03
 
