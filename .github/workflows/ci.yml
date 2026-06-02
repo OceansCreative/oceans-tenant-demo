@@ -84,16 +84,40 @@ jobs:
 
       - name: テスト実行（カバレッジ付き）
         run: pnpm test:coverage
-        # NOTE: 各ワークスペースの実テストは Issue #5 以降で順次追加する。
-        # この段階では placeholder テストのみが走るため CI は green になる。
 
-      - name: カバレッジを Codecov にアップロード
-        if: hashFiles('**/coverage/lcov.info') != ''
+      - name: カバレッジ成果物をアップロード（PR から確認可能に）
+        if: always() && hashFiles('**/coverage/lcov.info') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            apps/web/coverage/
+            packages/shared/coverage/
+          retention-days: 14
+
+      - name: カバレッジを Codecov にアップロード（web ワークスペース）
+        if: hashFiles('apps/web/coverage/lcov.info') != ''
+        uses: codecov/codecov-action@v6
+        with:
+          # public repo のため tokenless で動作する想定。
+          # token を Secrets に登録した場合は自動で使われ、未登録でも `fail_ci_if_error: false` で CI を落とさない。
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          files: ./apps/web/coverage/lcov.info
+          flags: web
+          name: web-coverage
+          disable_search: true
+
+      - name: カバレッジを Codecov にアップロード（shared ワークスペース）
+        if: hashFiles('packages/shared/coverage/lcov.info') != ''
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          files: ./coverage/lcov.info,./apps/web/coverage/lcov.info,./apps/studio/coverage/lcov.info,./packages/shared/coverage/lcov.info
+          files: ./packages/shared/coverage/lcov.info
+          flags: shared
+          name: shared-coverage
+          disable_search: true
 
   python:
     name: Python テスト (pytest)
@@ -121,11 +145,14 @@ jobs:
       - name: pytest（カバレッジ付き）
         run: pytest --cov --cov-report=xml --cov-report=term
 
-      - name: カバレッジを Codecov にアップロード
+      - name: カバレッジを Codecov にアップロード（python）
         if: hashFiles('scripts/python/coverage.xml') != ''
         uses: codecov/codecov-action@v6
         with:
+          # public repo のため tokenless で動作する想定。
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           files: ./scripts/python/coverage.xml
           flags: python
+          name: python-coverage
+          disable_search: true
