@@ -24,7 +24,48 @@ describe("generateUuidV4", () => {
     });
   });
 
-  describe("crypto.randomUUID がない環境のフォールバック", () => {
+  describe("crypto.randomUUID がない環境（getRandomValues のみ）のフォールバック", () => {
+    let originalCrypto: Crypto;
+
+    beforeEach(() => {
+      originalCrypto = globalThis.crypto;
+      // randomUUID は無く getRandomValues のみある環境を模倣（古いブラウザ / 一部 jsdom 等）
+      Object.defineProperty(globalThis, "crypto", {
+        value: {
+          getRandomValues: <T extends ArrayBufferView | null>(array: T): T => {
+            if (array instanceof Uint8Array) {
+              for (let i = 0; i < array.length; i++) {
+                // 0-255 の擬似乱数。crypto としては真乱数だが、テストでは決定論的でなくて構わない
+                array[i] = Math.floor(originalCrypto.getRandomValues(new Uint8Array(1))[0] ?? 0);
+              }
+            }
+            return array;
+          },
+        },
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: originalCrypto,
+        configurable: true,
+      });
+    });
+
+    it("UUID v4 形式の文字列を返す（getRandomValues 経由）", () => {
+      const id = generateUuidV4();
+      expect(id).toMatch(UUID_V4_PATTERN);
+    });
+
+    it("毎回ユニークな値を返す（10 回で重複しない）", () => {
+      const ids = new Set<string>();
+      for (let i = 0; i < 10; i++) ids.add(generateUuidV4());
+      expect(ids.size).toBe(10);
+    });
+  });
+
+  describe("crypto API そのものが無い環境", () => {
     let originalCrypto: Crypto;
 
     beforeEach(() => {
@@ -42,15 +83,8 @@ describe("generateUuidV4", () => {
       });
     });
 
-    it("UUID v4 形式の文字列を返す", () => {
-      const id = generateUuidV4();
-      expect(id).toMatch(UUID_V4_PATTERN);
-    });
-
-    it("毎回ユニークな値を返す（10 回で重複しない）", () => {
-      const ids = new Set<string>();
-      for (let i = 0; i < 10; i++) ids.add(generateUuidV4());
-      expect(ids.size).toBe(10);
+    it("Math.random フォールバックは廃止されたため明示的に throw する", () => {
+      expect(() => generateUuidV4()).toThrow(/crypto/);
     });
   });
 });
