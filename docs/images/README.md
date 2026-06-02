@@ -1,36 +1,49 @@
-# スクリーンショット / GIF
+# スクリーンショット
 
-このディレクトリには README とドキュメントで使うスクリーンショット・GIF を配置します。
+README から参照されるスクリーンショットを配置します。撮影は Playwright + sharp による自動化スクリプト
+`scripts/screenshots/capture.mjs` で行い、`pnpm screenshots` で再現できます。
 
-## 撮影予定リスト（v0.1.1 で確定）
+## 構成
 
-| ファイル | 用途 | サイズ目標 |
-|---|---|---|
-| `landing.png` | ランディングページ | 1440×960、200KB 以下 |
-| `search-list.png` | /search 一覧ビュー | 1440×960、200KB 以下 |
-| `search-map.png` | /search 地図ビュー | 1440×960、250KB 以下 |
-| `chat.gif` | /chat の対話 1 往復 | 800×600、500KB 以下 |
-| `ingest.gif` | URL 投入 → AI 抽出 → プレビュー | 800×600、500KB 以下 |
-| `property-detail.png` | 物件詳細ページ | 1440×960、200KB 以下 |
-| `mobile-search.png` | モバイル view | 414×896 |
+```text
+docs/images/
+├─ desktop/   # 1440x900、PNG パレット化済み
+│  ├─ landing.png
+│  ├─ search.png
+│  ├─ property-detail.png
+│  ├─ chat.png
+│  ├─ agent.png
+│  └─ agent-ingest.png
+└─ mobile/    # iPhone 14 viewport、Retina ダウンサンプル
+   └─ （上と同じ slug）
+```
+
+## 再撮影手順
+
+```bash
+# 1. apps/web をビルド
+pnpm --filter @oceans-tenant/web build
+
+# 2. http://localhost:3000 で next start を起動（別ターミナル）
+pnpm --filter @oceans-tenant/web exec next start --port 3000
+
+# 3. 撮影 + 最適化（sharp で PNG パレット化）
+pnpm screenshots
+```
+
+撮影対象 URL とビューポートは `scripts/screenshots/capture.mjs` の `PAGES` / viewport 定義を変更します。
+
+## 撮影ポリシー
+
+- Mock データのみ使用。実 Sanity / Anthropic / Google Maps の鍵が未設定でも UI が成立するよう、
+  `apps/web/src/lib/sanity/mock-properties.ts` の固定 5 件を表示
+- 実在企業名・実在物件情報は混入させない（タイトルに「サンプル」を含む mock を撮影）
+- `prefers-reduced-motion: reduce` を強制し、アニメーションのブレを抑制
+- フォント `document.fonts.ready` + 0.5 秒の追加待機で文字化けを防止
 
 ## 最適化
 
-```bash
-# PNG: pngquant 90%
-pngquant --quality=70-90 --strip --output landing.png landing.raw.png
-# GIF: gifsicle で減色とフレームレート
-gifsicle -O3 --colors 128 chat.raw.gif > chat.gif
-```
+`sharp.png({ palette: true, quality: 80, compressionLevel: 9, effort: 10 })` でパレット化。
+モバイルは Retina 2x で撮影されるため、`maxWidth: 750` にダウンサンプルしています。
 
-## 撮影手順（参考）
-
-1. `pnpm dev` でローカル起動（実 Sanity / Anthropic / Maps 鍵を `.env.local` に設定）
-2. seed スクリプトでダミーデータ投入
-3. macOS の Screenshot.app（⌘⇧4）で領域指定撮影、または Cleanshot X
-4. GIF は Kap で撮影、gifsicle で最適化
-5. このディレクトリに配置し README.md / docs/ から参照
-
-## 未配置時の挙動
-
-README は画像ファイル不存在時もテキストフォールバックで読めるよう書いています。
+目安: デスクトップ < 150 KB、モバイル < 400 KB（情報量の多いページは超過することがあります）。

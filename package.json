@@ -20,6 +20,7 @@
     "typecheck": "pnpm -r --parallel run typecheck",
     "test": "pnpm -r --parallel run test",
     "test:coverage": "pnpm -r --parallel run test:coverage",
+    "screenshots": "node scripts/screenshots/capture.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
