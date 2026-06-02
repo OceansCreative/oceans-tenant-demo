@@ -6,13 +6,13 @@
 **AI 連携を組み込んだ店舗物件検索プラットフォームのリファレンス実装**
 
 [![CI](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/ci.yml)
+[![Lighthouse CI](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/lighthouse.yml)
 [![CodeQL](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![Sanity](https://img.shields.io/badge/Sanity-v3-F03E2F?logo=sanity&logoColor=white)](https://www.sanity.io/)
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![Release](https://img.shields.io/github/v/release/OceansCreative/oceans-tenant-demo?display_name=tag&sort=semver)](https://github.com/OceansCreative/oceans-tenant-demo/releases)
+
+[![License: MIT](https://img.shields.io/github/license/OceansCreative/oceans-tenant-demo?color=yellow)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20.x-brightgreen?logo=nodedotjs&logoColor=white)](.nvmrc)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript&logoColor=white)](tsconfig.json)
 
 </div>
 
@@ -102,7 +102,21 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 
 詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を参照。
 
-## 🚀 セットアップ
+## 🚀 Quick Start
+
+依存さえ整っていれば、以下のブロックをそのまま貼るだけでローカル起動まで到達します。
+`ANTHROPIC_API_KEY` を `.env.local` に入れれば AI 連携が、Sanity 環境変数を入れれば
+GROQ 接続が有効化されます（いずれも未設定なら mock データで動作します）。
+
+```bash
+git clone https://github.com/OceansCreative/oceans-tenant-demo.git
+cd oceans-tenant-demo
+nvm use                                       # Node 20 LTS（.nvmrc）
+corepack enable && corepack prepare pnpm@9.15.4 --activate
+pnpm install
+cp .env.example .env.local                    # ANTHROPIC_API_KEY を設定（Sanity 未設定なら mock fallback）
+pnpm dev                                      # http://localhost:3000
+```
 
 ### 前提条件
 
@@ -112,22 +126,12 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 | pnpm | 9.15.4（`packageManager` で固定） |
 | Python | 3.12（`scripts/python/` でのみ使用） |
 
-### 手順
+### 追加で動かせるもの
 
 ```bash
-# クローンと依存関係インストール
-git clone https://github.com/OceansCreative/oceans-tenant-demo.git
-cd oceans-tenant-demo
-corepack prepare pnpm@9.15.4 --activate
-pnpm install
-
-# 環境変数の準備
-cp .env.example .env.local
-# .env.local を編集して Sanity / Anthropic / Google Maps の各キーを設定
-
-# 開発サーバー起動
-pnpm dev              # Next.js (apps/web)
 pnpm studio           # Sanity Studio (apps/studio)
+pnpm screenshots      # スクリーンショット再撮影（Playwright）
+pnpm screenshots:gif  # 🎬 操作デモ GIF 再生成
 ```
 
 ### 環境変数
@@ -192,17 +196,35 @@ oceans-tenant-demo/
 └─ .github/               # workflows / templates
 ```
 
+## 🛣️ Phase 進捗
+
+OSS リファレンス実装としての成熟度を段階で公開しています。各 Phase の詳細は
+[CHANGELOG.md](CHANGELOG.md) を参照してください。
+
+| Phase | 状態 | サマリ |
+|---|---|---|
+| Phase 1: 基盤構築 | ✅ 完了 (v0.1.0) | pnpm モノレポ / Biome / CI / Sanity スキーマ 5 種 / Zod ミラー / Python シード |
+| Phase 2: 検索体験 | ✅ 完了 (v0.1.0) | `/search` フィルタ + 地図切替 / 物件詳細 ISR / Playwright E2E |
+| Phase 3: AI 機能 | ✅ 完了 (v0.1.0) | `/api/ingest-url` / `/api/chat-search` SSE / `/api/query-build` GROQ 決定論変換 |
+| Phase 4: 仕上げ | ✅ 完了 (v0.1.0) | `/agent` ポータル / `vercel.json` / `OCEANS_BASEPATH` / DEPLOY.md / ARCHITECTURE.md |
+| Phase 5: 品質強化 | ✅ 完了 (v0.1.1〜v0.3.0) | SSRF 多層防御 / Tool Use 移行 / NextStudio 埋込 / ページネーション / Lighthouse CI / スクショ |
+| Phase 6: 公開準備 | 🚧 進行中 (v0.4.0) | Sanity 実プロジェクト接続（env 切替 mock↔GROQ）/ Vercel 実デプロイ手順 / GIF 操作デモ / README 仕上げ |
+
 ## 📚 ドキュメント
 
-- 📐 [アーキテクチャ](docs/ARCHITECTURE.md)
-- 🤖 [AI 連携設計](docs/AI_INTEGRATION.md)
-- 📜 [仕様書](docs/spec.md)
-- 🚀 [デプロイ手順](docs/DEPLOY.md)
-- 🧐 [レビューガイド](docs/REVIEW_GUIDE.md)（コードレビュー入口）
-- 🛠 [コントリビュート](CONTRIBUTING.md)
-- 🔐 [セキュリティ](SECURITY.md)
-- 🤝 [行動規範](CODE_OF_CONDUCT.md)
-- 🤖 [Claude Code 開発規約](CLAUDE.md)
+| ドキュメント | 内容 |
+|---|---|
+| [docs/spec.md](docs/spec.md) | 仕様書（要件 / データモデル / API 契約 / 受け入れ基準） |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 全体構成 / レイヤ図 / データフロー 3 ユースケース / 主要ライブラリ表 / セキュリティ要点 |
+| [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md) | Claude Tool Use 設計 / プロンプト / SSE / SSRF 防御の詳細 |
+| [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | コードレビュー入口 / 着眼点 / よくある質問 |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（環境変数 / Region / Troubleshooting） |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有デプロイ運用 |
+| [CHANGELOG.md](CHANGELOG.md) | 全リリース履歴（Keep a Changelog 準拠、v0.1.0〜v0.3.0 + Unreleased） |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 開発フロー / ブランチ戦略 / Conventional Commits |
+| [SECURITY.md](SECURITY.md) | 脆弱性報告手順 / サポート対象バージョン |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | 行動規範（Contributor Covenant v2.1） |
+| [CLAUDE.md](CLAUDE.md) | Claude Code 開発規約（プロジェクト原則 / 禁止事項） |
 
 ## 🤝 コントリビュート
 

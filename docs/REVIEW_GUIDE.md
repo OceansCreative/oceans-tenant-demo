@@ -122,11 +122,12 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 
 ### 6. ドキュメント
 
-- [ ] [README.md](../README.md): 第三者がセットアップ完結可能
-- [ ] [docs/ARCHITECTURE.md](ARCHITECTURE.md): mermaid 全体図 + ER 図
+- [ ] [README.md](../README.md): 第三者がセットアップ完結可能（Quick Start 1 ブロック完結）
+- [ ] [docs/ARCHITECTURE.md](ARCHITECTURE.md): レイヤ図 + データフロー 3 ユースケース + ライブラリ表 + セキュリティ要点 + mermaid 全体図 / ER 図
 - [ ] [docs/AI_INTEGRATION.md](AI_INTEGRATION.md): プロンプト、SSE イベント、SSRF 防御、Claude 出力再バリデーション
-- [ ] [docs/DEPLOY.md](DEPLOY.md): Vercel + DNS + 環境変数
-- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.1.5 全て記載
+- [ ] [docs/DEPLOYMENT.md](DEPLOYMENT.md): Vercel への初回接続手順（環境変数 / Region / Troubleshooting）
+- [ ] [docs/DEPLOY.md](DEPLOY.md): カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有運用
+- [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.3.0 + Unreleased（v0.4.0 候補）まで網羅
 - [ ] CONTRIBUTING / SECURITY / CODE_OF_CONDUCT が揃っている
 
 ## 起動・検証手順
