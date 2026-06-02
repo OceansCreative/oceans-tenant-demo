@@ -9,6 +9,7 @@ body:
     attributes:
       value: |
         ご報告ありがとうございます。再現に必要な情報をできるだけ詳しく記入してください。
+        セキュリティ脆弱性は本フォームではなく [Security Advisory](https://github.com/OceansCreative/oceans-tenant-demo/security/advisories/new) からご報告ください。
 
   - type: textarea
     id: summary
@@ -35,6 +36,7 @@ body:
     id: expected
     attributes:
       label: 期待する挙動
+      description: 本来どのように動作すべきかを記述してください。
     validations:
       required: true
 
@@ -42,6 +44,7 @@ body:
     id: actual
     attributes:
       label: 実際の挙動
+      description: 実際に観測された動作を記述してください。エラーメッセージがあれば貼ってください。
     validations:
       required: true
 
@@ -57,16 +60,56 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: locale
+    attributes:
+      label: ロケール
+      description: 不具合が発生した UI 言語を選択してください（v0.8.0+ で next-intl 導入）
+      options:
+        - ja（日本語）
+        - en（英語）
+        - 両方
+        - 不明 / 該当しない
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sanity
+    attributes:
+      label: Sanity 接続状態
+      description: mock fallback で動作していたか、実 Sanity プロジェクトに接続していたか
+      options:
+        - mock fallback（env 未設定）
+        - 実 Sanity プロジェクト接続
+        - 不明 / 該当しない
+    validations:
+      required: true
+
+  - type: dropdown
+    id: admin_flag
+    attributes:
+      label: admin UI（/agent / /studio / /insights）の有効化
+      description: feature flag 関連の挙動か判別するため
+      options:
+        - 有効
+        - 無効
+        - 不明 / 該当しない
+    validations:
+      required: true
+
   - type: textarea
     id: environment
     attributes:
       label: 環境
-      description: ブラウザ / OS / Node バージョン / 該当コミット SHA など
+      description: ブラウザ / OS / Node バージョン / 該当コミット SHA / Vercel or local など
       placeholder: |
         - ブラウザ: Chrome 124
         - OS: macOS 14.5
         - Node: 20.12.0
         - commit: abcdef1
+        - 環境: ローカル (pnpm dev) / Vercel Preview / Vercel Production
+    validations:
+      required: true
 
   - type: textarea
     id: logs
