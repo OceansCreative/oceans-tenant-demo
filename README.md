@@ -24,6 +24,24 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 
 🔗 **デモ**: [demo.oceans-base.com/tenant-search](https://demo.oceans-base.com/tenant-search)
 
+### 累積成果サマリ（v0.9.0 時点）
+
+| 指標 | 値 |
+|---|---|
+| vitest（apps/web） | **470 ケース** pass |
+| vitest（packages/shared） | **144 ケース** pass |
+| node:test（scripts/eval） | **29 ケース** pass |
+| Playwright E2E | **22 ケース** pass（locale 強制 + `/insights` a11y 含む） |
+| apps/web カバレッジ Lines | **95.84%** |
+| Lighthouse（5 URL × 3 ラン中央値） | 全カテゴリ **0.96+** |
+| axe 違反（主要 5 ページ） | **0** |
+| `/ship` 並列実装サイクル | **8 回**実施 |
+| Workflow（リリースノート生成） | **3 回**実施 |
+| 公開 Release タグ | **v0.1.0 → v0.9.0**（15 タグ） |
+
+次の v1.0.0 では Sanity 実 PROJECT_ID 投入 / Vercel 実デプロイ公開 / TypeScript 6.x 等を完了させ、
+**「公開リファレンス実装としての完成」** を達成予定です。詳細は [docs/ROADMAP.md](docs/ROADMAP.md) を参照してください。
+
 ---
 
 ## ✨ 特徴
@@ -219,12 +237,15 @@ oceans-tenant-demo/
 ├─ packages/
 │  └─ shared/             # Zod スキーマ / 型 / GROQ
 ├─ scripts/
-│  └─ python/             # Sanity シード + ログ分析
+│  ├─ python/             # Sanity シード + ログ分析
+│  └─ eval/               # AI 抽出評価ハーネス（v0.8.0 で導入）
 ├─ e2e/                   # Playwright（Phase 2 で導入）
 ├─ docs/
 │  ├─ spec.md             # 仕様書
 │  ├─ ARCHITECTURE.md
 │  ├─ AI_INTEGRATION.md
+│  ├─ ROADMAP.md          # v1.0.0 マイルストーン
+│  ├─ MIGRATION.md        # 互換性ガイド
 │  └─ images/             # スクリーンショット
 └─ .github/               # workflows / templates
 ```
@@ -241,7 +262,8 @@ OSS リファレンス実装としての成熟度を段階で公開していま�
 | Phase 3: AI 機能 | ✅ 完了 (v0.1.0) | `/api/ingest-url` / `/api/chat-search` SSE / `/api/query-build` GROQ 決定論変換 |
 | Phase 4: 仕上げ | ✅ 完了 (v0.1.0) | `/agent` ポータル / `vercel.json` / `OCEANS_BASEPATH` / DEPLOY.md / ARCHITECTURE.md |
 | Phase 5: 品質強化 | ✅ 完了 (v0.1.1〜v0.3.0) | SSRF 多層防御 / Tool Use 移行 / NextStudio 埋込 / ページネーション / Lighthouse CI / スクショ |
-| Phase 6: 公開準備 | 🚧 進行中 (v0.4.0) | Sanity 実プロジェクト接続（env 切替 mock↔GROQ）/ Vercel 実デプロイ手順 / GIF 操作デモ / README 仕上げ |
+| Phase 6: 公開・運用 | 🚧 進行中 (v0.4.0〜v0.9.0) | Sanity 実接続レイヤ / Vercel デプロイ手順 / GIF 操作デモ / Storybook + Chromatic / 関連物件 / next-intl（ja/en）/ AI 抽出評価ハーネス + CI 統合 / `/insights` 物件統計ダッシュボード |
+| Phase 7: v1.0.0 リリース | 🎯 計画中 | Sanity 実 PROJECT_ID 投入 / Vercel 実デプロイ公開 / TypeScript 6.x / Upstash Redis 置換（詳細は [docs/ROADMAP.md](docs/ROADMAP.md)） |
 
 ## 📚 ドキュメント
 
@@ -250,13 +272,15 @@ OSS リファレンス実装としての成熟度を段階で公開していま�
 | [docs/spec.md](docs/spec.md) | 仕様書（要件 / データモデル / API 契約 / 受け入れ基準） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 全体構成 / レイヤ図 / データフロー 3 ユースケース / 主要ライブラリ表 / セキュリティ要点 |
 | [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md) | Claude Tool Use 設計 / プロンプト / SSE / SSRF 防御 / 抽出評価ハーネスの詳細 |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | v1.0.0 マイルストーン / Done（v0.1.0〜v0.9.0）/ v1.x 構想（OSS スコープ境界） |
+| [docs/MIGRATION.md](docs/MIGRATION.md) | バージョン間互換性ガイド / 環境変数履歴 / API スキーマ変更 / 既知の制約 |
 | [scripts/eval/README.md](scripts/eval/README.md) | `extract_property` の Gold Standard 評価ハーネス（メトリクス / fixture 追加手順） |
 | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | コードレビュー入口 / 着眼点 / よくある質問 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（環境変数 / Region / Troubleshooting） |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有デプロイ運用 |
-| [CHANGELOG.md](CHANGELOG.md) | 全リリース履歴（Keep a Changelog 準拠、v0.1.0〜v0.3.0 + Unreleased） |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 開発フロー / ブランチ戦略 / Conventional Commits |
-| [SECURITY.md](SECURITY.md) | 脆弱性報告手順 / サポート対象バージョン |
+| [CHANGELOG.md](CHANGELOG.md) | 全リリース履歴（Keep a Changelog 準拠、v0.1.0〜v0.9.0 + Unreleased） |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 開発フロー / `/ship` パターン / 翻訳キー追加手順 / 品質ゲート |
+| [SECURITY.md](SECURITY.md) | 脆弱性報告手順 / SLA / 過去の対応事例 |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | 行動規範（Contributor Covenant v2.1） |
 | [CLAUDE.md](CLAUDE.md) | Claude Code 開発規約（プロジェクト原則 / 禁止事項） |
 
