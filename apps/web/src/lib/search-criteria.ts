@@ -33,6 +33,25 @@ const parseInteger = (value: string | null, min = 0): number | undefined => {
   return num;
 };
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 20;
+const MIN_PAGE = 1;
+const MAX_PAGE = 10000;
+const MIN_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 100;
+
+const parseIntegerInRange = (
+  value: string | null,
+  min: number,
+  max: number,
+  fallback: number,
+): number => {
+  if (value === null || value === "") return fallback;
+  const num = Number.parseInt(value, 10);
+  if (!Number.isInteger(num) || num < min || num > max) return fallback;
+  return num;
+};
+
 const parsePositiveNumber = (value: string | null): number | undefined => {
   if (value === null || value === "") return undefined;
   const num = Number.parseFloat(value);
@@ -108,6 +127,13 @@ export const parseSearchCriteria = (params: URLSearchParams): SearchCriteria => 
     ) as ReadonlyArray<Condition>,
     businessCategoryRefs: parseFreeStringList(params.getAll("biz"), REF_PATTERN),
     q,
+    page: parseIntegerInRange(params.get("page"), MIN_PAGE, MAX_PAGE, DEFAULT_PAGE),
+    pageSize: parseIntegerInRange(
+      params.get("pageSize"),
+      MIN_PAGE_SIZE,
+      MAX_PAGE_SIZE,
+      DEFAULT_PAGE_SIZE,
+    ),
   };
 };
 
@@ -123,6 +149,9 @@ export const serializeSearchCriteria = (criteria: SearchCriteria): URLSearchPara
   for (const value of criteria.conditions) params.append("condition", value);
   for (const value of criteria.businessCategoryRefs) params.append("biz", value);
   if (criteria.q) params.set("q", criteria.q);
+  // page=1 / pageSize=20 はデフォルトなので URL から省く（共有 URL を短く保つ）。
+  if (criteria.page !== DEFAULT_PAGE) params.set("page", String(criteria.page));
+  if (criteria.pageSize !== DEFAULT_PAGE_SIZE) params.set("pageSize", String(criteria.pageSize));
   return params;
 };
 
@@ -130,6 +159,8 @@ export const EMPTY_CRITERIA: SearchCriteria = {
   buildingTypes: [],
   conditions: [],
   businessCategoryRefs: [],
+  page: DEFAULT_PAGE,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export const isEmptyCriteria = (criteria: SearchCriteria): boolean =>

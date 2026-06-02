@@ -43,8 +43,16 @@ const sanitizeText = (value: string, maxLength = 80): string => {
  * SearchCriteria から決定論的に GROQ を組み立てる。
  *
  * 全フィールドをホワイトリストで検査し、不正な値は GroqInjectionError を投げる。
+ *
+ * `limit` を省略した場合は `criteria.pageSize` を、`offset` を省略した場合は
+ * `(criteria.page - 1) * criteria.pageSize` を採用する。GROQ には `[$offset...$offset + $limit]`
+ * で出力するため、Phase 3 で Sanity に切り替えても同じプロンプトで動く。
  */
-export const buildPropertyGroq = (criteria: SearchCriteria, limit = 60): BuildGroqResult => {
+export const buildPropertyGroq = (
+  criteria: SearchCriteria,
+  limit?: number,
+  offset?: number,
+): BuildGroqResult => {
   const filters: string[] = ['_type == "property"'];
   const params: Record<string, string | number | ReadonlyArray<string>> = {};
 
@@ -109,16 +117,24 @@ export const buildPropertyGroq = (criteria: SearchCriteria, limit = 60): BuildGr
     params.q = sanitizeText(criteria.q, 100);
     filters.push("[title, description, pt::text(description)] match $q + '*'");
   }
-  if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+  const resolvedLimit = limit ?? criteria.pageSize;
+  const resolvedOffset = offset ?? (criteria.page - 1) * criteria.pageSize;
+  if (!Number.isInteger(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 200) {
     throw new GroqInjectionError("limit は 1〜200 の整数");
   }
+  if (!Number.isInteger(resolvedOffset) || resolvedOffset < 0 || resolvedOffset > 1_000_000) {
+    throw new GroqInjectionError("offset は 0〜1000000 の整数");
+  }
+  params.limit = resolvedLimit;
+  params.offset = resolvedOffset;
 
   const filterString = filters.join(" && ");
   // 注意: tsubo を GROQ で計算しない。坪数換算は packages/shared の squareMeterToTsubo を
   // 単一の真実とし、フロント側で derivePropertyTsubo(property) を通す（Issue #87）。
   // GROQ で `area * 0.3025` を直接出すと丸めが効かず JS 側の Math.round 結果と食い違う。
   // また、Sanity → shared Zod の橋渡しのため aiMeta / *Refs を projection で吸収する（Issue #86）。
-  const groq = `*[${filterString}] | order(publishedAt desc) [0...${limit}]{
+  // [$offset...$offset + $limit] で page-based pagination を実現する。
+  const groq = `*[${filterString}] | order(publishedAt desc) [$offset...$offset + $limit]{
   _id,
   title,
   slug,

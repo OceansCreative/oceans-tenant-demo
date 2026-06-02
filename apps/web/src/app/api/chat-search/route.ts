@@ -38,7 +38,7 @@ const RequestSchema = z.object({
 type SseEvent =
   | { type: "criteria"; criteria: SearchCriteria }
   | { type: "message"; content: string }
-  | { type: "results"; properties: ReturnType<typeof filterProperties> }
+  | { type: "results"; properties: ReturnType<typeof filterProperties>["items"] }
   | { type: "done" }
   | { type: "error"; error: string };
 
@@ -236,7 +236,7 @@ export const POST = async (request: Request): Promise<Response> => {
         safeEnqueue(writeEvent({ type: "message", content: message }));
 
         const results = filterProperties(MOCK_PROPERTIES, criteria);
-        safeEnqueue(writeEvent({ type: "results", properties: results }));
+        safeEnqueue(writeEvent({ type: "results", properties: results.items }));
         safeEnqueue(writeEvent({ type: "done" }));
         safeClose();
       } catch (error) {

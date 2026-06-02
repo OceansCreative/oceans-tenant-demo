@@ -29,6 +29,8 @@ export const SearchBar = ({ className }: SearchBarProps): React.JSX.Element => {
     } else {
       next.delete("q");
     }
+    // 検索語変更時はページを 1 に戻す（パース側の page=1 デフォルトに任せるため明示削除）。
+    next.delete("page");
     const query = next.toString();
     startTransition(() => {
       router.replace(`/search${query ? `?${query}` : ""}` as never);

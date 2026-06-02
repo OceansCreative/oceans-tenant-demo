@@ -61,8 +61,9 @@ export const SearchFilter = ({
     [router],
   );
 
+  // フィルタ変更時はページを 1 に戻す（2 ページ目で条件を変えたら表示が無になる事故を防ぐ）。
   const update = (partial: Partial<SearchCriteria>) => {
-    apply({ ...criteria, ...partial });
+    apply({ ...criteria, ...partial, page: 1 });
   };
 
   const toggleListValue = <T extends string>(

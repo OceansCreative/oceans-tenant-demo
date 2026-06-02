@@ -38,14 +38,17 @@ describe("buildExtractPropertyUserPrompt", () => {
 });
 
 describe("buildPropertyGroq", () => {
-  it("空 criteria で _type フィルタのみ", () => {
+  it("空 criteria で _type フィルタのみ + デフォルトの limit/offset", () => {
     const result = buildPropertyGroq({
       buildingTypes: [],
       conditions: [],
       businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
     });
     expect(result.groq).toContain('_type == "property"');
-    expect(result.params).toEqual({});
+    // criteria.page / pageSize から導出した limit / offset が必ず入る
+    expect(result.params).toEqual({ limit: 20, offset: 0 });
   });
 
   it("複数条件のときに params が揃う", () => {
@@ -60,6 +63,8 @@ describe("buildPropertyGroq", () => {
       conditions: ["skeleton"],
       businessCategoryRefs: ["category-cafe"],
       q: "新宿",
+      page: 1,
+      pageSize: 20,
     });
     expect(result.params.prefecture).toBe("東京都");
     expect(result.params.minRent).toBe(100000);
@@ -78,6 +83,8 @@ describe("buildPropertyGroq", () => {
         buildingTypes: [],
         conditions: [],
         businessCategoryRefs: ["malicious; *[]"],
+        page: 1,
+        pageSize: 20,
       }),
     ).toThrow(GroqInjectionError);
   });
@@ -87,6 +94,8 @@ describe("buildPropertyGroq", () => {
       buildingTypes: [],
       conditions: [],
       businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
       city: 'new"york',
     });
     expect(result.params.city).toBe("newyork");
@@ -94,7 +103,49 @@ describe("buildPropertyGroq", () => {
 
   it("limit が範囲外だと GroqInjectionError", () => {
     expect(() =>
-      buildPropertyGroq({ buildingTypes: [], conditions: [], businessCategoryRefs: [] }, 300),
+      buildPropertyGroq(
+        { buildingTypes: [], conditions: [], businessCategoryRefs: [], page: 1, pageSize: 20 },
+        300,
+      ),
+    ).toThrow(GroqInjectionError);
+  });
+
+  it("page / pageSize から limit / offset を導出し $offset...$offset + $limit を出力", () => {
+    const result = buildPropertyGroq({
+      buildingTypes: [],
+      conditions: [],
+      businessCategoryRefs: [],
+      page: 3,
+      pageSize: 25,
+    });
+    expect(result.params.limit).toBe(25);
+    expect(result.params.offset).toBe(50); // (3 - 1) * 25
+    expect(result.groq).toContain("[$offset...$offset + $limit]");
+  });
+
+  it("offset 引数で明示的に上書きできる", () => {
+    const result = buildPropertyGroq(
+      {
+        buildingTypes: [],
+        conditions: [],
+        businessCategoryRefs: [],
+        page: 1,
+        pageSize: 20,
+      },
+      30,
+      100,
+    );
+    expect(result.params.limit).toBe(30);
+    expect(result.params.offset).toBe(100);
+  });
+
+  it("offset が負だと GroqInjectionError", () => {
+    expect(() =>
+      buildPropertyGroq(
+        { buildingTypes: [], conditions: [], businessCategoryRefs: [], page: 1, pageSize: 20 },
+        20,
+        -1,
+      ),
     ).toThrow(GroqInjectionError);
   });
 
@@ -104,6 +155,8 @@ describe("buildPropertyGroq", () => {
       buildingTypes: [],
       conditions: [],
       businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
     });
     // aiMeta はネスト形で取得
     expect(result.groq).toContain('"aiMeta"');
@@ -121,6 +174,8 @@ describe("buildPropertyGroq", () => {
       buildingTypes: [],
       conditions: [],
       businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
     });
     expect(result.groq).not.toContain("tsubo");
     expect(result.groq).not.toContain("0.3025");
@@ -135,6 +190,8 @@ describe("buildChatSearchUserContext", () => {
         buildingTypes: [],
         conditions: [],
         businessCategoryRefs: [],
+        page: 1,
+        pageSize: 20,
       },
     });
     expect(text).toContain("東京都");

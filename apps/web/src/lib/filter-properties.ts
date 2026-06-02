@@ -2,14 +2,28 @@ import type { PropertyWithTsubo } from "@oceans-tenant/shared";
 import type { SearchCriteria } from "./search-criteria";
 
 /**
+ * `filterProperties` の戻り値型。
+ *
+ * `items` はページサイズ分にスライスした結果、`totalCount` はスライス前の全件数。
+ * ページネーション UI で「N 件中 i 〜 j 件目」を出すために双方が必要。
+ */
+export type FilteredProperties = {
+  readonly items: ReadonlyArray<PropertyWithTsubo>;
+  readonly totalCount: number;
+};
+
+/**
  * メモリ上の物件配列に対して検索条件を適用するフィルタ。
  * Phase 3 で Sanity GROQ に置き換える前提で、関心の分離だけ確保する。
+ *
+ * 検索結果は `criteria.page` / `criteria.pageSize` に基づいてスライスし、
+ * スライス前の全件数を `totalCount` として返す。
  */
 export const filterProperties = (
   properties: ReadonlyArray<PropertyWithTsubo>,
   criteria: SearchCriteria,
-): ReadonlyArray<PropertyWithTsubo> => {
-  return properties.filter((property) => {
+): FilteredProperties => {
+  const filtered = properties.filter((property) => {
     if (criteria.prefecture && property.address.prefecture !== criteria.prefecture) {
       return false;
     }
@@ -50,4 +64,7 @@ export const filterProperties = (
     }
     return true;
   });
+  const start = (criteria.page - 1) * criteria.pageSize;
+  const items = filtered.slice(start, start + criteria.pageSize);
+  return { items, totalCount: filtered.length };
 };
