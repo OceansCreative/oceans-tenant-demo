@@ -6,7 +6,7 @@ export const SITE_CONFIG = {
   name: "OceansTenant",
   tagline: "AI で店舗物件を探す、登録する",
   description:
-    "URL をペーストするだけで AI が物件情報を構造化抽出。自然言語での対話型検索と地図ビューで、店舗物件マッチングを次の段階へ。",
+    "URL を貼るだけで AI が物件情報を自動で読み取り。話しかけて絞り込む対話型検索と地図ビューで、店舗物件マッチングを次の段階へ。",
   navigation: [
     { href: "/", label: "ホーム" },
     { href: "/search", label: "物件を探す" },
