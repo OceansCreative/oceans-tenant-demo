@@ -1,0 +1,76 @@
+{
+  "common": {
+    "siteName": "OceansTenant",
+    "tagline": "Find and list retail spaces with AI",
+    "description": "Paste a URL and AI extracts the property info automatically. A conversational search and map view bring retail-space matching to the next step.",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "save": "Save",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "languageSwitcher": "Language",
+    "demoDisclaimer": "This site is an OSS reference implementation demo and is not intended for production use.",
+    "copyright": "© {year} OceansBase — Reference implementation"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Browse properties",
+    "chat": "Chat search",
+    "agent": "For agents",
+    "brandLabel": "Back to OceansTenant home",
+    "registerCta": "List a property"
+  },
+  "footer": {
+    "sections": {
+      "service": "Service",
+      "agent": "For agents",
+      "project": "Project"
+    },
+    "links": {
+      "search": "Property search",
+      "chat": "Conversational search",
+      "agentPortal": "Agent portal",
+      "ingest": "Add from URL",
+      "github": "GitHub",
+      "architecture": "Architecture"
+    }
+  },
+  "home": {
+    "heroBadge": "AI × Retail-space matching",
+    "heroHeadline": "Paste a URL — AI extracts the property info automatically.",
+    "heroLead": "A reference implementation that combines conversational filtering, a map view, and tidy data management for retail-space matching.",
+    "ctaSearch": "Browse properties",
+    "ctaChat": "Chat search",
+    "showcase": {
+      "extraction": { "title": "URL extraction", "body": "AI reads listings straight from a URL" },
+      "chat": { "title": "Chat search", "body": "Narrow down by talking to the assistant" },
+      "map": { "title": "Map view", "body": "Integrated with Google Maps" },
+      "cms": { "title": "Sanity CMS", "body": "Centralized property data" }
+    },
+    "features": {
+      "ingest": {
+        "title": "URL → Auto-fill",
+        "body": "Submit a listing URL and AI reads address, rent, area and saves it as a Sanity draft."
+      },
+      "chat": {
+        "title": "Conversational filtering",
+        "body": "Generate GROQ queries from natural-language criteria like \"a 30-tsubo cafe in Shinjuku\"."
+      },
+      "stack": {
+        "title": "OSS reference",
+        "body": "An implementation showcase of Next.js 15 / Sanity v3 / Claude API / Tailwind v4 / Playwright."
+      }
+    }
+  },
+  "seo": {
+    "defaultTitle": "OceansTenant — Find and list retail spaces with AI",
+    "titleTemplate": "%s | OceansTenant"
+  }
+}

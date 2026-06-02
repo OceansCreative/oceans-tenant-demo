@@ -1,0 +1,76 @@
+{
+  "common": {
+    "siteName": "OceansTenant",
+    "tagline": "AI で店舗物件を探す、登録する",
+    "description": "URL を貼るだけで AI が物件情報を自動で読み取り。話しかけて絞り込む対話型検索と地図ビューで、店舗物件マッチングを次の段階へ。",
+    "skipToContent": "メインコンテンツへスキップ",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "loading": "読み込み中…",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "cancel": "キャンセル",
+    "submit": "送信",
+    "save": "保存",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "languageSwitcher": "言語",
+    "demoDisclaimer": "本サイトは OSS リファレンス実装のデモであり、本番運用を想定していません。",
+    "copyright": "© {year} OceansBase — リファレンス実装"
+  },
+  "nav": {
+    "home": "ホーム",
+    "search": "物件を探す",
+    "chat": "対話で探す",
+    "agent": "不動産会社",
+    "brandLabel": "OceansTenant トップへ",
+    "registerCta": "物件を登録"
+  },
+  "footer": {
+    "sections": {
+      "service": "サービス",
+      "agent": "事業者向け",
+      "project": "プロジェクト"
+    },
+    "links": {
+      "search": "物件検索",
+      "chat": "対話型検索",
+      "agentPortal": "不動産会社ポータル",
+      "ingest": "URL からの登録",
+      "github": "GitHub",
+      "architecture": "アーキテクチャ"
+    }
+  },
+  "home": {
+    "heroBadge": "AI × 店舗物件マッチング",
+    "heroHeadline": "URL を貼るだけで、AI が物件情報を自動で読み取ります。",
+    "heroLead": "話しかけて絞り込む対話型検索、地図ビュー、整理されたデータ管理を統合した店舗物件マッチングのリファレンス実装です。",
+    "ctaSearch": "物件を探す",
+    "ctaChat": "対話で探す",
+    "showcase": {
+      "extraction": { "title": "URL 抽出", "body": "掲載 URL から AI が自動で読み取り" },
+      "chat": { "title": "対話型検索", "body": "条件を話しかけて絞り込む" },
+      "map": { "title": "地図ビュー", "body": "Google Maps と連携" },
+      "cms": { "title": "Sanity CMS", "body": "物件データを一元管理" }
+    },
+    "features": {
+      "ingest": {
+        "title": "URL → 自動入力",
+        "body": "物件掲載ページの URL を投入すると、AI が住所・賃料・面積などを読み取って Sanity のドラフトに保存します。"
+      },
+      "chat": {
+        "title": "対話で絞り込む",
+        "body": "「新宿で 30 坪のカフェ向け」のような自然言語条件から、GROQ クエリを生成して検索します。"
+      },
+      "stack": {
+        "title": "OSS リファレンス",
+        "body": "Next.js 15 / Sanity v3 / Claude API / Tailwind v4 / Playwright の組み合わせ実装例。"
+      }
+    }
+  },
+  "seo": {
+    "defaultTitle": "OceansTenant — AI で店舗物件を探す、登録する",
+    "titleTemplate": "%s | OceansTenant"
+  }
+}

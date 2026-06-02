@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const isBasePathEnabled = process.env.OCEANS_BASEPATH === "/tenant-search";
+
+/**
+ * next-intl のプラグイン。`src/i18n/request.ts` を `getRequestConfig` のエントリとして
+ * 登録し、RSC レンダリング時に locale と messages を解決させる。
+ * v0.8.0 で導入（URL prefix を使わず cookie ベースで locale を保持）。
+ */
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /**
  * monorepo の `packages/shared` は ESM/NodeNext 互換のため、`.ts` ファイルを
@@ -59,4 +67,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
