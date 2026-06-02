@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PropertyMap } from "@/components/map/PropertyMap";
+import { PropertyMapLazy } from "@/components/map/PropertyMapLazy";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SearchFilter } from "@/components/search/SearchFilter";
@@ -103,7 +103,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
 
         <section aria-label="検索結果" className="flex flex-col gap-6">
           {viewMode === "map" ? (
-            <PropertyMap properties={mapProperties} className="min-h-[600px]" />
+            <PropertyMapLazy properties={mapProperties} className="min-h-[600px]" />
           ) : totalCount === 0 ? (
             <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-12 text-center">
               <p className="text-sm font-semibold text-neutral-700">
