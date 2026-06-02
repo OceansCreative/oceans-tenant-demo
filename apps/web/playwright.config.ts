@@ -24,6 +24,14 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    // i18n (v0.8.0+): middleware は Accept-Language で初期 locale を決定する。
+    // Playwright の Chromium / WebKit はデフォルトで en-US を送るため、UI 文言を
+    // 日本語前提で書かれたテストが落ちる。テスト全体で常に ja を強制する。
+    // 個別テストで en を検証する場合は test.use({ locale: "en", extraHTTPHeaders: ... }) で上書きする。
+    locale: "ja-JP",
+    extraHTTPHeaders: {
+      "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+    },
   },
   projects: [
     {
