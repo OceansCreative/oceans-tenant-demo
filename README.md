@@ -33,6 +33,22 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 - 🎨 **Tailwind CSS v4** — oklch カラートークン / Noto Sans JP / モバイルファースト / a11y 配慮
 - 🐍 **Python 補助** — pydantic + faker でダミー物件 50 件を生成し Sanity にシード
 
+## 🎬 操作デモ
+
+<sub>Mock データと Playwright スクリプトで再現。実 API 鍵は不要。再生成は `pnpm screenshots:gif`。</sub>
+
+### 物件を探す — フィルタ即時絞り込み
+
+![検索画面で都道府県・賃料・建物形態のフィルタを順に切り替え、結果カードが即座に絞り込まれていく様子のデモ GIF](docs/images/demos/search-filter.gif)
+
+### 対話で物件を探す — 自然言語 → AI 抽出 → SSE 配信
+
+![対話型検索画面で「東京の20万円以下のカフェ向け物件」と自然文を投げると、Tool Use 経由で検索条件 JSON が組み上がり、SSE で結果カードが流れてくる様子のデモ GIF](docs/images/demos/ai-chat.gif)
+
+### URL から物件を取り込む — AI 構造化抽出
+
+![不動産会社向け取り込み画面で物件掲載 URL を貼り付けると、AI が本文を読み取り、住所・賃料・面積などをドラフトとして整形する様子のデモ GIF](docs/images/demos/url-ingest.gif)
+
 ## 📸 スクリーンショット
 
 <sub>Mock データのみ使用（実在企業・実在物件は含みません）。再生成は `pnpm screenshots`。</sub>
