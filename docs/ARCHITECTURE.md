@@ -384,6 +384,49 @@ SEO を一通り整える際の最小セット」を意図する。
   - 各ページの `generateMetadata` で `alternates.canonical` を明示
   - 物件詳細は `openGraph.images: /og/property/[slug]` で個別画像に差し替え
 
+## Insights ダッシュボード（/insights）
+
+v0.9.0 WS-3 で追加した「データの見せ方」サンプル。OSS リファレンス実装として
+recharts による業務データ可視化の最小構成例を示す。
+
+### レイヤ構成
+
+```
+apps/web/
+├── src/lib/insights/aggregate.ts        集計の pure 関数群（mock / Sanity 共通）
+├── src/lib/insights/__tests__/          aggregate の vitest（13 件）
+├── src/components/insights/
+│   ├── chart-theme.ts                  brand トークンと整合した SVG カラー
+│   ├── ChartFigure.tsx                 figure / figcaption + sr-only テーブルの共通枠
+│   ├── KpiCards.tsx                    KPI 4 枚（Server Component, recharts 不要）
+│   ├── BuildingTypeChart.tsx           recharts PieChart（業態別）
+│   ├── PrefectureBarChart.tsx          recharts BarChart（都道府県別）
+│   ├── RentDistribution.tsx            recharts BarChart（賃料ヒストグラム）
+│   └── ConditionChart.tsx              recharts BarChart（物件状態）
+├── src/app/insights/page.tsx           Server Component（fetchProperties → 集計 → props）
+└── src/app/insights/loading.tsx        CLS 抑制用 skeleton
+```
+
+### 設計判断
+
+- **集計は pure 関数に切り離す**: `aggregate.ts` は `PropertyWithTsubo[]` を受け取り、
+  recharts に渡せる形へ整形して返すだけ。mock / Sanity 実接続のどちらでも同じ呼び出しで動く。
+- **chart は Client Component**: recharts は SVG / DOM 計測を伴う CSR 専用ライブラリ。
+  Server Component に閉じ込めるためページ本体は RSC のまま保ち、各 chart のみ `"use client"` 化。
+- **a11y は二段構え**: SVG に `role="img"` + `aria-label` を付け、加えて同一データの
+  `<table>` を `.sr-only` で併記。スクリーンリーダーは表から数値を直接読める。
+- **空状態は SVG を描画しない**: 0 件で recharts を描画すると軸だけ残って意味不明になるため、
+  `ChartFigure` が `isEmpty` を見てテキスト案内に分岐する。
+
+### Sanity 実接続時
+
+`fetchProperties()` は env の有無で mock ↔ GROQ を自動切替するため、
+`/insights` 側のコードは変更不要。ただし以下に注意:
+
+- mock は 5 件しかなく分布が偏るため、本番データに切り替えるとカテゴリ数 / bin 数が増える
+- `histogramRent` の `binSize` はデフォルト 50,000 円。本番では物件価格帯に応じて調整余地あり
+- 大量データ時は Server 側で aggregate を実行する前に「集計用の絞り込みクエリ」を導入する余地がある（現状はページ全件を Server で集計）
+
 ## 拡張ポイント
 
 - Sanity Studio 埋め込み: `next-sanity` の `NextStudio` を `/studio` に統合
