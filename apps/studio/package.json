@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "description": "OceansTenant Sanity Studio v3",
+  "type": "module",
+  "exports": {
+    ".": "./sanity.config.ts",
+    "./sanity.config": "./sanity.config.ts",
+    "./schemas": "./schemas/index.ts"
+  },
   "scripts": {
     "dev": "echo \"dev: Issue #5〜#7 で Sanity Studio を導入予定\"",
     "build": "echo \"build: Issue #5〜#7 で Sanity Studio を導入予定\"",
@@ -12,15 +18,16 @@
   "dependencies": {
     "@oceans-tenant/shared": "workspace:*",
     "@sanity/types": "^3",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19",
+    "react-dom": "^19",
     "sanity": "^3",
     "styled-components": "^6"
   },
   "devDependencies": {
     "@sanity/vision": "^3",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "typescript": "^5.6.3"
   }
 }

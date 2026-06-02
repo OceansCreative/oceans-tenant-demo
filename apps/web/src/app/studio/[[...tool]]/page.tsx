@@ -1,14 +1,17 @@
 /**
  * /studio — Sanity Studio v3 を Next.js に埋め込むエントリポイント。
  *
- * 実運用するには `apps/studio/sanity.config.ts` を read して `NextStudio` を
- * レンダリングする実装に置き換える必要がある（next-sanity の `NextStudio`）。
+ * - 環境変数 `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` が
+ *   両方設定されている場合は `next-sanity` の `NextStudio` で Studio を埋め込む。
+ * - いずれかが未設定の場合は、設定手順を案内する親切なフォールバック UI を表示する。
  *
- * 本リファレンス実装では、環境変数が未設定の状況を前提に親切な案内 UI を表示し、
- * 設定済みの場合は埋め込みを試みる構造にしておく。
+ * NextStudio は Client Component であり、Studio 自体が動的にルーティングを取り回すため、
+ * Next.js 側では Studio を内包したセグメントを完全に Studio に委譲する。
  */
-import type { Metadata } from "next";
+
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { StudioClient } from "./StudioClient";
 
 export const dynamic = "force-static";
 
@@ -17,11 +20,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type PageProps = {
-  readonly params: Promise<{ tool?: string[] }>;
+// NextStudio が要求する viewport 設定（Studio はモバイル UI を独自最適化するため）。
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
-const StudioEmbedPage = async ({ params: _params }: PageProps): Promise<React.JSX.Element> => {
+const StudioEmbedPage = async (): Promise<React.JSX.Element> => {
   const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
   const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
 
@@ -65,23 +70,7 @@ const StudioEmbedPage = async ({ params: _params }: PageProps): Promise<React.JS
     );
   }
 
-  return (
-    <div className="container-page py-10">
-      <section className="rounded-2xl border border-neutral-200 bg-white p-8">
-        <h1 className="text-xl font-bold text-neutral-900">Sanity Studio 接続準備済み</h1>
-        <p className="mt-2 text-sm text-neutral-700">
-          プロジェクト ID <code className="rounded bg-neutral-100 px-1">{projectId}</code> ／
-          データセット <code className="rounded bg-neutral-100 px-1">{dataset}</code> に接続します。
-        </p>
-        <p className="mt-3 text-xs text-neutral-500">
-          ※ 完全な Studio 埋め込みは{" "}
-          <code className="rounded bg-neutral-100 px-1">next-sanity</code> の
-          <code className="ml-1 rounded bg-neutral-100 px-1">NextStudio</code>{" "}
-          導入時に有効化されます。 現状はプレースホルダーです。
-        </p>
-      </section>
-    </div>
-  );
+  return <StudioClient />;
 };
 
 export default StudioEmbedPage;
