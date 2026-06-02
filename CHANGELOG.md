@@ -8,10 +8,69 @@
 ## [Unreleased]
 
 ### Added
-- Sanity 実プロジェクトへの GROQ 接続（mock 撤去）
-- Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開
+- Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
+- Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
-- GIF 形式の操作デモ追加
+
+## [0.4.0] — 2026-06-02
+
+Phase 6 マイナーアップデート。`/ship` 並列実装の 3 サイクル目で、Vercel 実デプロイ準備（WS-1）/ Sanity 実接続レイヤ（WS-2）/ 操作デモ GIF 埋め込み（WS-3）/ README・ARCHITECTURE 整備（WS-4）の 4 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "公開水準" を一段引き上げた。
+
+### Added
+
+- **Vercel デプロイ設定と環境変数雛形を整備 (#103)** — monorepo の `apps/web` を繋ぐだけで build / preview / prod できる状態に
+  - `vercel.json` に `outputDirectory: apps/web/.next` を追加（`framework: nextjs` / `regions: hnd1` / API Routes の `maxDuration: 60` は既存維持）
+  - `.vercelignore` を新設し `apps/studio` / `scripts/python` / `docs/images` / `.claude` / テスト系を除外、ビルドノイズとデプロイサイズを削減
+  - `.env.example` をリポジトリ全体 grep ベースで全面拡充。実参照の `process.env.*` を「必須/オプション」「用途」「取得 URL」付きで日本語コメント明記（実値は含めない）
+  - `SANITY_API_TOKEN` / `OCEANS_BASEPATH` / Playwright 系変数の用途と最小権限ポリシーを明文化
+  - `docs/DEPLOYMENT.md` を新設し、Vercel 初回接続を 7 ステップ + Troubleshooting 6 項目で記述。既存 `DEPLOY.md`（カスタムドメイン・basePath 運用）と役割を明確分離
+- **Sanity 実接続レイヤを env 切替で導入 (#104)** — env が揃った瞬間に mock から実 GROQ へ自動で切替わる
+  - `@sanity/client@^7.22.1` を `apps/web` に追加（読み取り専用クエリ用途、書き込み系依存は持ち込まない方針）
+  - `getSanityClient()`: `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` / `SANITY_API_READ_TOKEN` が揃えば `createClient`（apiVersion 2024-01-01 / useCdn: true）、欠ければ `null` を返す env 切替クライアント
+  - `fetchProperties(criteria)`: 一覧と `count(*[...])` を `Promise.all` で並列取得し、`propertySchema.array().safeParse()` 通過時のみ実接続結果を返す。Zod 失敗 / count 不正 / 配列外 / fetch 例外は `console.error` + mock fallback で死活を守る
+  - `buildPropertyCountGroq`: 件数取得用 GROQ ビルダを `query-build.ts` に追加。slice 前段の totalCount 取得に利用
+  - `buildPropertyGroqFilter` 内部 helper を抽出し、一覧 / 件数クエリ双方で同一フィルタ式を共有（公開 API 挙動は不変）
+  - `SANITY_API_READ_TOKEN`（読み取り専用）を `.env.example` に追加し、既存の書き込み用 `SANITY_API_TOKEN` と用途を分離
+- **操作デモ GIF 3 本を README に埋め込み (#105)** — スクリーンショット直下に「🎬 操作デモ」セクションを新設
+  - `capture-gif.mjs` を新規追加。Playwright で 15fps 操作キャプチャ → ffmpeg の palettegen / paletteuse 2 パスで最適化 GIF を生成（約 500 行、`pnpm screenshots:gif` から実行）
+  - `docs/images/demos/` に `search-filter.gif`（213KB）/ `ai-chat.gif`（98KB）/ `url-ingest.gif`（85KB）の計 396KB を追加。検索・対話・URL 取り込みの 3 シーンを a11y 配慮の日本語 alt 付きで埋め込み
+  - Playwright の `page.route` で `/api/chat-search` SSE と `/api/ingest-url` JSON をフェイク化し、ANTHROPIC_API_KEY 不要で再現可能な撮影パイプラインに
+  - `@ffmpeg-installer/ffmpeg` + `fluent-ffmpeg` + `@types/fluent-ffmpeg` を devDependencies に追加、macOS / Linux で追加セットアップ不要
+- **README にバッジ・Quick Start・Architecture を整備 (#106)** — OSS 公開水準の初見可読性を確立
+  - バッジ群を 7 個に集約（CI / Lighthouse CI / CodeQL / Release / License (MIT) / Node 20.x / TypeScript strict）を 2 行構成で配置
+  - Quick Start セクション新設。`clone → nvm use → corepack → install → .env.local → dev` を 1 コードブロックで完結。ANTHROPIC / Sanity 未設定でも mock fallback で全画面動作する旨を明記
+  - Phase 進捗テーブル（Phase 1〜5 完了 / Phase 6 v0.4.0 進行中）と、ドキュメント索引（11 件）を表形式で整理
+  - `docs/ARCHITECTURE.md` にレイヤ図とデータフロー 3 ユースケース（検索 / 対話型検索 SSE / URL 取り込み SSRF defense + Tool Use）を ASCII で可視化。Sanity client の env 切替 mock↔GROQ も明示
+  - 主要ライブラリ表（14 行）とセキュリティ要点表（SSRF 3 段 / GROQ injection / Claude 出力 / エラー漏洩 / シークレット / 依存脆弱性）を追加
+
+### Changed
+
+- `package.json` version を 0.4.0 に
+- `vercel.json` のキー順を整理し、`framework` を上部に移動して設定意図を読みやすく再配置
+- README 既存「セットアップ」を Quick Start に昇格し、追加コマンド（studio / screenshots / screenshots:gif）に再編
+- `docs/ARCHITECTURE.md` 「セキュリティ」を「セキュリティ運用」に改名し、攻撃面ごとの対策は新設のセキュリティ要点表に分離。本セクションは CodeQL / Dependabot / Lighthouse CI など運用フローに特化
+- `docs/REVIEW_GUIDE.md` のリンク整合性を更新（DEPLOYMENT.md / ARCHITECTURE.md / CHANGELOG の参照を v0.4.0 構成に追随）
+- `docs/images/README.md` を「スクリーンショット / 操作デモ」へ改題し、GIF 撮影手順・最適化方針・ディレクトリ構成を追記
+- `.gitignore` に GIF 撮影の中間 PNG フレーム置き場 `.cache/` を追加
+
+### Process
+
+- `/ship` 並列実装の **3 サイクル目**。WS-1 (Vercel deploy) / WS-2 (Sanity 実接続) / WS-3 (操作デモ GIF) / WS-4 (README + ARCHITECTURE) を worktree 分離サブエージェントで同時着手し、PR #103 → #104 → #105 → #106 の順に CI green を確認しながらマージ
+- 4 PR 連続マージで `pnpm-lock.yaml` / `.env.example` / README の rebase 衝突が発生したが、後続 PR で `git checkout --theirs` + `pnpm install` 再生成 + 手動マージで都度解消
+
+### Tests
+
+- apps/web: 205 → **240** ケース pass（+35: WS-2 で client 7 / properties 9 を追加 + WS-1/3/4 関連微増、設定・ドキュメント中心の PR ではテスト追加なし）
+- packages/shared 144 / Python pytest / Playwright 5×2 / CodeQL / Lighthouse 全 green
+- WS-2 では env 三点切替・条件ドリフト防止・Zod 失敗 / count 不正 / 配列外 / fetch 例外の全 fallback 経路をカバー
+
+### Docs
+
+- `docs/DEPLOYMENT.md` を新設し、Vercel 初回接続フローを 7 ステップ + Troubleshooting 6 項目で完結（既存 `DEPLOY.md` はカスタムドメイン・basePath 運用に責務分離）
+- `docs/ARCHITECTURE.md` にレイヤ図 / データフロー 3 ユースケース / 主要ライブラリ表 / セキュリティ要点表を追加
+- README に 7 バッジ / Quick Start / Phase 進捗 / ドキュメント索引（11 件） / 操作デモ GIF セクションを追加
+- `docs/images/README.md` を「スクリーンショット / 操作デモ」へ改題し撮影手順を追記
+- `.env.example` を全面拡充（実参照変数の用途・最小権限ポリシーを日本語コメント明記）
 
 ## [0.3.0] — 2026-06-02
 
