@@ -1,0 +1,123 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Foundation/Colors" />
+
+# カラーパレット
+
+OceansTenant のブランドカラーは **OKLCH** 色空間で定義された青系のスケールです。
+Tailwind v4 の `@theme` ブロックでカスタムプロパティとして定義され、
+`bg-brand-500` / `text-brand-700` のようにユーティリティ経由で参照します。
+
+色定義の単一ソースは `apps/web/src/styles/globals.css` です。
+
+## Brand（OKLCH）
+
+<div className="grid grid-cols-2 gap-3 rounded-2xl border border-neutral-200 bg-white p-6 sm:grid-cols-3 lg:grid-cols-6">
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-50" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-50</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.97 0.02 240)</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-100" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-100</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.93 0.04 240)</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-500" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-500</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.55 0.14 240)</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-600" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-600</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.48 0.16 240)</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-700" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-700</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.4 0.18 240)</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-3">
+    <div className="h-16 rounded-md bg-brand-900" />
+    <p className="mt-2 text-xs font-semibold text-neutral-900">brand-900</p>
+    <p className="text-[11px] text-neutral-500">oklch(0.22 0.1 240)</p>
+  </div>
+</div>
+
+主要な使い分け:
+
+- `brand-50` / `brand-100`: ハイライト背景・選択中 chip・hover 背景
+- `brand-500`: focus-visible outline、リンク・アクセント
+- `brand-600`: 主要ボタン背景（送信 / 適用）、`text-white` と組み合わせる
+- `brand-700`: 主要テキスト強調 / hover 後の濃いボタン
+- `brand-900`: ロゴ・極めて濃いテキスト・暗背景
+
+## Neutral（Tailwind 既定）
+
+Tailwind v4 の `neutral-*` をそのまま使います。
+
+<div className="mt-2 grid grid-cols-2 gap-3 rounded-2xl border border-neutral-200 bg-white p-6 sm:grid-cols-5 lg:grid-cols-9">
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-50" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-50</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-100" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-100</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-200" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-200</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-300" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-300</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-500" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-500</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-600" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-600</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-700" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-700</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-800" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-800</p>
+  </div>
+  <div className="rounded-xl border border-neutral-100 p-2">
+    <div className="h-12 rounded-md bg-neutral-900" />
+    <p className="mt-1 text-[11px] font-medium text-neutral-900">neutral-900</p>
+  </div>
+</div>
+
+## Semantic
+
+ステータスに応じた色は Tailwind の `green` / `amber` / `red` を直接使います
+（独自トークンを増やしすぎない方針）。
+
+<div className="mt-2 grid grid-cols-1 gap-3 rounded-2xl border border-neutral-200 bg-white p-6 sm:grid-cols-3">
+  <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+    <p className="text-sm font-semibold text-green-700">Success</p>
+    <p className="mt-1 text-xs text-green-700">完了・公開中・成功通知（green-700 on green-50）</p>
+  </div>
+  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+    <p className="text-sm font-semibold text-amber-700">Warning</p>
+    <p className="mt-1 text-xs text-amber-700">商談中・要確認・rate-limit 警告（amber-700 on amber-50）</p>
+  </div>
+  <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+    <p className="text-sm font-semibold text-red-700">Danger</p>
+    <p className="mt-1 text-xs text-red-700">バリデーション失敗・通信エラー（red-700 on red-50）</p>
+  </div>
+</div>
+
+## コントラスト方針
+
+- 本文（`text-neutral-900` on white）と補助（`text-neutral-500` on white）はいずれも WCAG AA 以上を満たします
+- focus-visible は brand-500 outline で a11y 上の可視性を担保します
+- 詳細な a11y チェックは `@storybook/addon-a11y` パネルおよび CI の axe-core テストで継続検証します
