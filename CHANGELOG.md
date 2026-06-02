@@ -12,9 +12,61 @@
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
 - Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
-- `lib/ai/anthropic-client.ts` / `lib/ai/claude-extraction.ts` / `lib/seo/og.tsx` の追加カバレッジ
 - WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
 - Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
+- i18n（日英スイッチ）足場の整備（next-intl 等）
+
+## [0.7.0] — 2026-06-03
+
+Phase 6 マイナー継続。`/ship` 並列実装の **6 サイクル目** で、Storybook + Chromatic 視覚回帰（WS-1）/ 物件詳細機能拡張（WS-2）/ AI 連携カバレッジ強化（WS-3）の 3 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "可視化 + 品質補完" を一段引き上げた。
+
+### Added
+
+- **Storybook 8 + Chromatic で UI コンポーネントを可視化 (#118)** — OSS 公開水準の "見て触れる" デザインシステムを確立
+  - `@storybook/react-vite` + Storybook 8.6 + addon-essentials + addon-a11y を導入
+  - 10 ファイル / 28 stories を新設: Property (AvailabilityBadge / PropertyCard) / Search (SearchBar / SearchFilter / ViewModeToggle / SearchPagination) / Layout (Header / Footer) / Agent (IngestForm) / Map (PropertyMap)
+  - Tailwind v4 を `@tailwindcss/vite` プラグインで preview に直接統合し、`globals.css` の `@theme` / `@layer base` がそのまま反映
+  - `.storybook/mocks/{next-navigation, next-link, next-font-google}` で Next.js 固有モジュールを差し替え
+  - `.github/workflows/chromatic.yml` を新設し `chromaui/action@v11` で視覚回帰を CI に統合。`CHROMATIC_PROJECT_TOKEN` 未設定でも CI が落ちない構成（`continue-on-error` + `if` ガード）
+  - README に Storybook ローカル起動コマンドと Chromatic バッジを追加
+- **物件詳細機能拡張 — 関連物件 / FilterChips / 地図クラスタリング (#117)** — UX 完成度を一段引き上げ
+  - **関連物件サイドバー** (`RelatedProperties.tsx`) — prefecture +3 / buildingType +2 / business ref +1/件 のスコアリングで最大 3 件をサジェスト。0 件時は `publishedAt` 降順フォールバックで埋める。Sanity 実接続後も `pool` を入れ替えるだけで動作する設計
+  - **適用中フィルタ chip 表示** (`FilterChips.tsx`) — URL クエリから現在の絞り込みを抽出し、各 chip クリックで対応パラメータを削除。「すべてクリア」ボタンも装備。`localStorage` 禁止規約を守るため URL 一元管理
+  - **マーカークラスタリング** — `@googlemaps/markerclusterer` を導入し、ピン 10 件以上で自動クラスタ化。`MarkersLayer` 内側で `useMap` 取得 → 件数で分岐、閾値未満は従来通り個別ピンで mock 5 件のテスト互換性を維持
+  - 関連物件 / FilterChips を `tests/a11y/components.test.tsx` に追加して違反 0 を維持
+- **AI 連携と OG 画像のカバレッジを底上げ (#116)** — apps/web Lines を **89.86 → 95.84%** に引き上げ
+  - `lib/ai/anthropic-client.ts` の SDK モック + 環境変数分岐テストを追加（47% → **100%**）
+  - `lib/ai/html-extraction.ts` の Readability / Cheerio 経路テストを追加（33% → **93.93%**）
+  - `lib/seo/og.tsx` の ImageResponse モック + フォント fallback テストを追加（0% → **100%**）
+  - vitest 件数 370 → 407（+37）
+
+### Changed
+
+- `package.json` version を 0.7.0 に
+- **UUID v4 フォールバックを `crypto.getRandomValues` に切替 (#116)** — CodeQL `js/insecure-randomness`（high severity）を解消。`Math.random` は予測可能なためセッション識別子で使えない。`getRandomValues` で RFC 4122 §4.4 準拠の v4 を直接組み立てる実装に置換し、`crypto` API 自体が無い環境では明示的に throw
+- **OG 画像テストの URL 部分文字列マッチを hostname 厳密比較に (#116)** — CodeQL `js/incomplete-url-substring-sanitization`（high severity）対策。`url.includes("fonts.googleapis.com")` を `new URL(url).hostname === "fonts.googleapis.com"` に変更
+- **availability ステータスマッピング** や Sanity / Vercel 既存設定は維持
+
+### Process
+
+- `/ship` 並列実装の **6 サイクル目**。WS-1 (Storybook+Chromatic) / WS-2 (物件詳細機能) / WS-3 (AI coverage) を worktree 分離サブエージェントで同時着手し、PR #116 → #117 → #118 の順に CI green を確認しながらマージ
+- 3 PR 連続マージで `pnpm-lock.yaml` / `apps/web/package.json` の rebase 衝突が複数発生したが、`git checkout --theirs pnpm-lock.yaml` + `pnpm install` 再生成で都度解消
+- CodeQL 警告解消の経緯: `Math.random` を `crypto.getRandomValues` に置換 → 古い alert を「won't fix」で dismiss（実コードは fix 済み）→ 新たに検出された `js/incomplete-url-substring-sanitization` を hostname 比較で修正 + dismiss → CodeQL 通過
+- Storybook builder 選定で `@storybook/nextjs` と Next.js 15.5 の `Cache.shutdown` 経路衝突に遭遇し、`@storybook/react-vite` + `viteFinal` alias で next-* モジュールをモックする構成に切り替え
+
+### Tests
+
+- apps/web vitest: 364 → **407** ケース pass（+43）。テストファイル 29 → 38 ファイル
+- apps/web カバレッジ: Lines **89.86 → 95.84%（+5.98pt）** / `anthropic-client.ts` 100% / `html-extraction.ts` 93.93% / `og.tsx` 100%
+- Storybook: 10 ファイル / 28 stories / `build-storybook` 4.5s 成功
+- packages/shared 144 / Python pytest / Playwright / CodeQL / Lighthouse / Codecov / Chromatic 全 green
+
+### Docs
+
+- `docs/ARCHITECTURE.md` に関連物件 / フィルタ chip / 地図クラスタリングの設計メモを追記
+- `README.md` に Storybook ローカル起動コマンド (`pnpm storybook`) と Chromatic バッジを追加
+- `.gitignore` に `storybook-static/` 等を追記、`biome.json` で Storybook 出力を lint 対象外に
+- `apps/web/src/lib/uuid.ts` の冒頭コメントに `crypto.getRandomValues` 採用理由（CodeQL 対策）を明文化
 
 ## [0.6.0] — 2026-06-03
 
