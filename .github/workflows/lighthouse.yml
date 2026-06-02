@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   lighthouse:
-    name: Lighthouse 計測 (/, /search, /chat)
+    name: Lighthouse 計測 (/, /search, /chat, /properties/[slug])
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
