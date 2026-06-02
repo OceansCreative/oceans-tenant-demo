@@ -1,0 +1,35 @@
+# Vercel ビルドに不要なディレクトリ・ファイルを除外する。
+# Next.js (apps/web) のデプロイのみを対象とし、それ以外を持ち込まない。
+
+# Sanity Studio（別途デプロイする想定。Vercel 上の Next.js ビルドには不要）
+apps/studio/
+
+# Python 系スクリプト（データ前処理用。Vercel runtime では実行しない）
+scripts/python/
+
+# ドキュメント用画像（ビルド成果物には含めない）
+docs/images/
+
+# テスト・E2E 関連
+e2e/
+**/tests/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/playwright-report/
+**/test-results/
+**/coverage/
+**/.lighthouseci/
+
+# Claude Code のワークツリー / ローカル設定
+.claude/
+
+# Git / GitHub メタ情報
+.git/
+.github/
+
+# ローカル env と pnpm キャッシュ
+.env
+.env.local
+.env.*.local
+.pnpm-store/
