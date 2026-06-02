@@ -1,0 +1,28 @@
+{
+  "title": "Sample Shop Omotesando 路面店（架空サンプル）",
+  "slug": "sample-shop-omotesando",
+  "address": {
+    "prefecture": "東京都",
+    "city": "渋谷区",
+    "streetAddress": "神宮前 4-2-8",
+    "geopoint": { "lat": 35.6657, "lng": 139.7117 }
+  },
+  "nearestStations": [
+    { "line": "東京メトロ千代田線", "station": "表参道", "walkMinutes": 3 },
+    { "line": "東京メトロ銀座線", "station": "表参道", "walkMinutes": 3 },
+    { "line": "JR 山手線", "station": "原宿", "walkMinutes": 8 }
+  ],
+  "rent": 1250000,
+  "commonFee": 50000,
+  "depositMonths": 12,
+  "keyMoneyMonths": 2,
+  "area": 72.0,
+  "floor": "1 階",
+  "buildingType": "street_level",
+  "condition": "skeleton",
+  "suitableBusinessRefs": ["category-apparel", "category-retail"],
+  "features": ["スケルトン", "路面店", "間口 6m", "天井高 3.5m", "ケヤキ並木沿い"],
+  "description": "表参道ケヤキ並木の中心エリア、ハイブランド路面店が並ぶ通り沿いの 1 階区画です。天井高 3.5m、間口 6m と開放感のあるファサード。スケルトン渡しのため、ブランドの世界観に合わせた内装設計が可能です。バックヤードは 8 ㎡確保。",
+  "availability": "public",
+  "publishedAt": "2026-02-10T00:00:00.000Z"
+}

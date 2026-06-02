@@ -1,0 +1,26 @@
+{
+  "title": "Sample Office Marunouchi 区画（架空サンプル）",
+  "slug": "sample-office-marunouchi",
+  "address": {
+    "prefecture": "東京都",
+    "city": "千代田区",
+    "streetAddress": "丸の内 2-4-1",
+    "geopoint": { "lat": 35.6812, "lng": 139.7649 }
+  },
+  "nearestStations": [
+    { "line": "JR 東海道線", "station": "東京", "walkMinutes": 2 },
+    { "line": "東京メトロ丸ノ内線", "station": "東京", "walkMinutes": 2 }
+  ],
+  "rent": 2400000,
+  "depositMonths": 12,
+  "keyMoneyMonths": 0,
+  "area": 120.5,
+  "floor": "8 階",
+  "buildingType": "second_floor_or_above",
+  "condition": "skeleton",
+  "suitableBusinessRefs": ["category-office"],
+  "features": ["OAフロア", "24 時間空調", "有人受付", "宅配ボックス"],
+  "description": "東京駅丸の内口から徒歩 2 分、丸の内仲通りに面したオフィスビル 8 階の区画です。基準階面積 120.5 ㎡、天井高 2.8m、OAフロア 100mm。24 時間空調・有人受付・宅配ボックス完備。スケルトン渡しのため自由に内装設計が可能。法人本社・士業オフィスに適しています。",
+  "availability": "public",
+  "publishedAt": "2026-01-30T00:00:00.000Z"
+}
