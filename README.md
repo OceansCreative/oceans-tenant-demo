@@ -10,6 +10,7 @@
 [![CodeQL](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/OceansCreative/oceans-tenant-demo/graph/badge.svg)](https://codecov.io/gh/OceansCreative/oceans-tenant-demo)
 [![Chromatic](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/chromatic.yml/badge.svg)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/chromatic.yml)
+[![AI 抽出評価](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/eval.yml/badge.svg?event=schedule)](https://github.com/OceansCreative/oceans-tenant-demo/actions/workflows/eval.yml)
 [![Release](https://img.shields.io/github/v/release/OceansCreative/oceans-tenant-demo?display_name=tag&sort=semver)](https://github.com/OceansCreative/oceans-tenant-demo/releases)
 
 [![License: MIT](https://img.shields.io/github/license/OceansCreative/oceans-tenant-demo?color=yellow)](LICENSE)
