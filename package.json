@@ -1,6 +1,6 @@
 {
   "name": "oceans-tenant-demo",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "private": true,
   "description": "AI連携を組み込んだ店舗物件検索プラットフォームのリファレンス実装",
   "license": "MIT",

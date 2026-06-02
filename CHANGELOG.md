@@ -9,9 +9,56 @@
 
 ### Added
 - スクリーンショット / GIF の正式撮影（docs/images）
-- Turbopack 移行に備えた `extensionAlias` 二重化（#65）
-- `sanity_client.py` のリトライ・タイムアウト戦略（#66）
-- chat-search のクライアント切断時に Anthropic 呼び出しを中断（#82）
+- Sanity 実プロジェクトへの GROQ 接続（mock 撤去）
+- Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開
+- 一覧のページネーション
+- TypeScript 6.x 対応
+- Lighthouse Performance 90+ を CI で計測
+
+## [0.2.0] — 2026-06-02
+
+Phase 5 マイナーバージョンアップ。AI レイヤを Tool Use 化、`/studio` を実 NextStudio に、Sanity シードを運用堅牢化、Turbopack 対応の予防策。`/ship` スラッシュコマンドによる worktree 分離サブエージェントの並列実装で 4 ワークストリームをまとめて投入したマイルストーン。
+
+### Added
+
+- **Anthropic Tool Use 移行 (#82 + Tool Use)** — `apps/web/src/lib/ai/tools.ts` 新設、`extract_property` / `update_criteria` の 2 ツールを定義
+  - `propertySchema` / `searchCriteriaSchema` を `zod-to-json-schema` で input_schema 化（スキーマ二重管理の解消）
+  - `tool_choice: { type: "tool", name }` で構造化応答を強制、`tool_use.input` を必ず `safeParse`
+  - 自由テキスト出力のパースぶれを排除
+- **NextStudio 埋め込み** — `apps/studio/sanity.config.ts` 新設し、`/studio` を実 Sanity Studio に
+  - 環境変数 `NEXT_PUBLIC_SANITY_PROJECT_ID` / `_DATASET` 未設定時は既存のフォールバック UI 維持
+  - `next-sanity@^9.12.0` を導入（Next 15 / React 19 / Sanity 3 と整合）
+  - workspace 内で React 18 → 19 に統一、sanity 型の二重解決を回避
+- **`/ship` スラッシュコマンド** — worktree 分離サブエージェントによる並列実装パターンを v0.1.6 で導入、v0.2.0 でこのコマンド経由で 4 WS を並列投入
+
+### Changed
+
+- **chat-search の abort 伝播 (#82)** — `request.signal` を `client.messages.create(args, { signal })` に伝搬、`ReadableStream.start` 内で `signal.abort` 購読で `controller.close()`。abort 由来例外は SSE error を出さず静かに終了
+- **Sanity Python シードクライアント (#66)** — `urllib3.Retry` + `HTTPAdapter` で 429/5xx の exp backoff、`Retry-After` 尊重、タイムアウト `(connect=10, read=60)`、`CHUNK_SIZE=50` で分割
+- **Turbopack 対応の予防策 (#65)** — `apps/web/next.config.ts` に `turbopack.resolveExtensions` を追加。webpack 設定は維持し二重化。Turbopack の `resolveAlias` 等価 API は Next.js Issue #82945 で対応中、解決後に webpack 設定削除予定
+- `package.json` version を 0.2.0 に
+
+### Tests
+
+- apps/web: 160 → **192** ケース pass（+32: Tool Use 統合 / abort 経路 / tools 単体 / studio 分岐）
+- shared 135、Python pytest 61 (+17)、Playwright 5×2 全 pass
+- CI 全 green（Lint / typecheck / Vitest / Python / Playwright / CodeQL / 静的解析）
+
+### Docs
+
+- `docs/AI_INTEGRATION.md` を全面的に Tool Use 対応に更新
+  - フロー図を `messages.create` テキスト出力 → tool_use ブロックに刷新
+  - Zod ⇄ Tool Use の対応表を追加
+  - chat-search の abort 伝播経路を 1 セクションで明文化
+
+### Deferred to v0.3.0
+
+- Sanity 実プロジェクト接続（mock 撤去）: 実プロジェクト ID / トークン未提供のため
+- Vercel 実デプロイ + DNS: 実 Vercel アカウント未提供のため
+- スクリーンショット撮影: 実 Sanity 接続後
+- TypeScript 6.x 対応: 主要依存の対応待ち
+- 一覧のページネーション: 規模大、別フェーズで独立して扱う
+- Lighthouse CI: 実デプロイ後の運用課題
 
 ## [0.1.6] — 2026-06-02
 
