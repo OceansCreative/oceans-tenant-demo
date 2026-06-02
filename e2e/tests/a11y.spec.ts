@@ -56,4 +56,10 @@ test.describe("a11y: 主要ページに axe-core 違反が無い", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await runAxe(page, "/properties/[slug]");
   });
+
+  test("/insights (物件統計ダッシュボード)", async ({ page }) => {
+    await page.goto("/insights");
+    await expect(page.getByRole("heading", { level: 1, name: "物件データ可視化" })).toBeVisible();
+    await runAxe(page, "/insights");
+  });
 });

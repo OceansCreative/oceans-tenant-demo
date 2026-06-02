@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { BuildingTypeChart } from "@/components/insights/BuildingTypeChart";
-import { ConditionChart } from "@/components/insights/ConditionChart";
+import { ChartsGrid } from "@/components/insights/ChartsGrid";
 import { KpiCards } from "@/components/insights/KpiCards";
-import { PrefectureBarChart } from "@/components/insights/PrefectureBarChart";
-import { RentDistribution } from "@/components/insights/RentDistribution";
 import {
   aggregateByCondition,
   aggregateByPrefecture,
@@ -70,12 +67,12 @@ const InsightsPage = async (): Promise<React.JSX.Element> => {
       <section aria-label={t("title")} className="flex flex-col gap-6">
         <KpiCards kpis={kpis} />
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <BuildingTypeChart buckets={buildingTypeBuckets} />
-          <PrefectureBarChart buckets={prefectureBuckets} />
-          <RentDistribution bins={rentBins} />
-          <ConditionChart buckets={conditionBuckets} />
-        </div>
+        <ChartsGrid
+          buildingTypeBuckets={buildingTypeBuckets}
+          prefectureBuckets={prefectureBuckets}
+          rentBins={rentBins}
+          conditionBuckets={conditionBuckets}
+        />
       </section>
     </main>
   );

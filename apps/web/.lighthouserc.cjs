@@ -1,7 +1,7 @@
 /**
  * Lighthouse CI 設定（apps/web 配下）
  *
- * - `/`, `/search`, `/chat`, `/properties/[slug]`（mock の固定 slug）の 4 ページを計測
+ * - `/`, `/search`, `/chat`, `/properties/[slug]`（mock の固定 slug）, `/insights` の 5 ページを計測
  * - numberOfRuns: 3（中央値で評価）
  * - chrome flags: --no-sandbox --headless（CI 想定）
  * - 結果は GitHub Actions のアーティファクトとして保存（filesystemPath）
@@ -24,6 +24,7 @@ module.exports = {
         "http://localhost:3000/search",
         "http://localhost:3000/chat",
         "http://localhost:3000/properties/sample-shinjuku-sanchome-street",
+        "http://localhost:3000/insights",
       ],
       numberOfRuns: 3,
       settings: {
