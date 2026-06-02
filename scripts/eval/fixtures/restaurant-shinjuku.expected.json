@@ -1,0 +1,28 @@
+{
+  "title": "Sample Restaurant Shinjuku 居抜き区画（架空サンプル）",
+  "slug": "sample-restaurant-shinjuku",
+  "address": {
+    "prefecture": "東京都",
+    "city": "新宿区",
+    "streetAddress": "歌舞伎町 1-5-12",
+    "geopoint": { "lat": 35.6951, "lng": 139.7027 }
+  },
+  "nearestStations": [
+    { "line": "JR 山手線", "station": "新宿", "walkMinutes": 7 },
+    { "line": "西武新宿線", "station": "西武新宿", "walkMinutes": 3 }
+  ],
+  "rent": 720000,
+  "commonFee": 36000,
+  "depositMonths": 6,
+  "keyMoneyMonths": 1,
+  "area": 58.4,
+  "floor": "2 階",
+  "buildingType": "building_inline",
+  "condition": "second_hand",
+  "previousBusiness": "イタリアン",
+  "suitableBusinessRefs": ["category-restaurant", "category-bar"],
+  "features": ["居抜き", "ダクト完備", "深夜営業可", "エレベーター"],
+  "description": "新宿駅東口から徒歩 7 分、繁華街中心部のビルイン物件です。前業態はイタリアンレストランで、ホール 20 席分の造作と業務用キッチン設備がそのまま使えるため、初期投資を大きく抑えられます。深夜営業可能、ダクトは屋上まで貫通済み。エレベーター 1 基。",
+  "availability": "public",
+  "publishedAt": "2026-04-15T00:00:00.000Z"
+}

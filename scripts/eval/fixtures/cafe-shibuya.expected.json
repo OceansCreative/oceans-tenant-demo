@@ -1,0 +1,27 @@
+{
+  "title": "Sample Cafe Shibuya（架空サンプル）",
+  "slug": "sample-cafe-shibuya",
+  "address": {
+    "prefecture": "東京都",
+    "city": "渋谷区",
+    "streetAddress": "道玄坂 2-10-5",
+    "geopoint": { "lat": 35.6587, "lng": 139.6985 }
+  },
+  "nearestStations": [
+    { "line": "JR 山手線", "station": "渋谷", "walkMinutes": 5 },
+    { "line": "東京メトロ銀座線", "station": "渋谷", "walkMinutes": 5 }
+  ],
+  "rent": 480000,
+  "commonFee": 24000,
+  "depositMonths": 10,
+  "keyMoneyMonths": 2,
+  "area": 32.5,
+  "floor": "1 階",
+  "buildingType": "street_level",
+  "condition": "skeleton",
+  "suitableBusinessRefs": ["category-cafe", "category-bakery"],
+  "features": ["スケルトン渡し", "視認性高", "天井高 3.2m", "1 階路面店"],
+  "description": "渋谷駅から徒歩 5 分、道玄坂の坂上に位置する 1 階路面店舗です。前面道路は通行量が多く、夜間も人通りが途絶えません。スケルトン渡しのため造作は自由に設計可能。給排水・電気容量は飲食業態に対応できる仕様です。",
+  "availability": "public",
+  "publishedAt": "2026-05-01T00:00:00.000Z"
+}

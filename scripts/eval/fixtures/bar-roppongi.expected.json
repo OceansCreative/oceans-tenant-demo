@@ -1,0 +1,28 @@
+{
+  "title": "Sample Bar Roppongi 地下区画（架空サンプル）",
+  "slug": "sample-bar-roppongi",
+  "address": {
+    "prefecture": "東京都",
+    "city": "港区",
+    "streetAddress": "六本木 7-12-3",
+    "geopoint": { "lat": 35.6627, "lng": 139.7314 }
+  },
+  "nearestStations": [
+    { "line": "東京メトロ日比谷線", "station": "六本木", "walkMinutes": 4 },
+    { "line": "都営大江戸線", "station": "六本木", "walkMinutes": 4 }
+  ],
+  "rent": 380000,
+  "commonFee": 18000,
+  "depositMonths": 8,
+  "keyMoneyMonths": 1,
+  "area": 28.0,
+  "floor": "地下 1 階",
+  "buildingType": "basement",
+  "condition": "transferable_fixtures",
+  "previousBusiness": "バー",
+  "suitableBusinessRefs": ["category-bar"],
+  "features": ["造作譲渡", "防音工事済み", "深夜営業可", "風営法許可実績"],
+  "description": "六本木交差点から徒歩 4 分、雑居ビル地下 1 階のバー居抜き区画です。カウンター 8 席、テーブル 12 席分の造作付き。深夜 4 時まで営業可能で、風営法 1 号許可の取得実績あり。防音工事済み。",
+  "availability": "public",
+  "publishedAt": "2026-03-20T00:00:00.000Z"
+}

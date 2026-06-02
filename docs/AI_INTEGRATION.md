@@ -265,6 +265,56 @@ Claude API 側の 429（Anthropic のレート制限）への対処は別レイ�
 - API 側: 失敗時にエラー JSON を返し、UI でユーザーに通知
 - 将来: exponential backoff + 内部キュー（Phase 5 以降）
 
+## 抽出評価（`scripts/eval/`、v0.8.0 WS-2）
+
+`extract_property` の抽出精度を Gold Standard データセットで継続的に測るためのハーネスを
+`scripts/eval/` に同梱しています。LLM 連携の品質を **数値で評価する** OSS リファレンスとして整備しました。
+
+### 構成
+
+| ファイル | 役割 |
+|---|---|
+| `scripts/eval/run.mjs` | CLI エントリポイント。`--mock` で API キー不要のスモーク実行 |
+| `scripts/eval/extract.mjs` | Claude SDK（実 / モック）の呼び出しを抽象化 |
+| `scripts/eval/metrics.mjs` | precision / recall / F1 / フィールド別スコアの純粋関数群 |
+| `scripts/eval/mock-anthropic.mjs` | API キーなしでもハーネスを回せるモッククライアント |
+| `scripts/eval/report.mjs` | Markdown / JSON レポート整形 |
+| `scripts/eval/fixtures/` | 5 件の架空物件 HTML + 期待 JSON |
+
+### メトリクス
+
+| カテゴリ | フィールド | 比較方法 |
+|---|---|---|
+| 数値 | `rent` | 完全一致 |
+| 数値（許容範囲） | `area` | ±1 ㎡ |
+| 厳密一致 | `address.prefecture` / `address.city` / `buildingType` / `condition` / `floor` | 厳密一致 |
+| 自由テキスト | `title` / `description` | Sørensen–Dice 係数（バイグラム） |
+| 配列 | `suitableBusinessRefs` / `features` | Jaccard 類似度 |
+| 駅配列 | `nearestStations` | 路線+駅名で正規化後 Jaccard |
+
+全体スコアは `FIELD_WEIGHTS` による重み付き平均。precision / recall / F1 は
+「expected/actual の双方にフィールドが存在し、かつ matched」を true positive として集計。
+
+### 実行コマンド
+
+```bash
+# モック実行（API キー不要、ハーネスのスモーク確認）
+pnpm --filter oceans-tenant-eval run eval:mock
+
+# 実 Claude 実行
+ANTHROPIC_API_KEY=sk-ant-... node scripts/eval/run.mjs
+
+# メトリクスのユニットテスト
+pnpm --filter oceans-tenant-eval test
+```
+
+詳細と fixture 追加手順は [`scripts/eval/README.md`](../scripts/eval/README.md) を参照。
+
+### CI 統合方針
+
+実 Claude 呼び出しを伴うため CI には常時組み込まず、将来的に PR ラベル `eval` 付与時 / 週次 cron での
+実行を想定（本リリースではコマンド整備のみ）。
+
 ## モックとテスト
 
 - `apps/web/src/lib/ai/prompts/*.ts` は pure 関数で snapshot テスト
