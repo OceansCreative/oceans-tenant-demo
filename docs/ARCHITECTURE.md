@@ -120,6 +120,24 @@ URL ?prefecture=...&page=2&pageSize=20
   `[$offset...$offset + $limit]` に直接渡る（DoS 防御）。
 - フィルタ更新は `useTransition` で URL を書き換えて RSC を再フェッチ。
   `localStorage` / `sessionStorage` は使わない（`CLAUDE.md` 禁止事項）。
+- **適用中フィルタ chip 表示**（v0.7.0 / WS-2）: `FilterChips` Client Component が
+  `parseSearchCriteria` の結果をそのまま chip 化し、× クリックで該当キーを
+  `serializeSearchCriteria` 経由で除去する。chip 0 件のときは何も描画せず、
+  「すべてクリア」ボタンで `EMPTY_CRITERIA` に戻す。状態は **URL 一元管理**。
+- **関連物件サイドバー**（v0.7.0 / WS-2）: 物件詳細ページ末尾で
+  `findRelatedProperties(current, MOCK_PROPERTIES, 3)` を呼び、
+  「同 prefecture +3 / buildingType 一致 +2 / suitableBusinessRefs 重複 +1」で
+  スコアリングし上位 3 件を表示。スコア 0 でも publishedAt 降順で充填し
+  「関連 0 件」が頻発するのを避ける。Sanity 実接続後も同じシグネチャで
+  GROQ 化が可能。
+- **マーカークラスタリング**（v0.7.0 / WS-2）: `PropertyMap` 内側の
+  `MarkersLayer` が `useMap` で map インスタンスを取得し、
+  `properties.length >= CLUSTERING_THRESHOLD (=10)` のとき
+  `@googlemaps/markerclusterer` の `MarkerClusterer` を生成。
+  閾値未満は従来通り個別ピン（mock 5 件で挙動互換）。
+  生 `AdvancedMarkerElement` は slug-keyed `Map` で保持し、
+  properties 変化時に clusterer を作り直す。useEffect cleanup で
+  `clearMarkers()` + `onRemove()` を確実に呼ぶ。
 
 ### 2. 対話型検索（`/chat`）
 
