@@ -46,6 +46,7 @@
     "happy-dom": "^20",
     "jsdom": "^25.0.1",
     "postcss": "^8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "vitest": "^2",

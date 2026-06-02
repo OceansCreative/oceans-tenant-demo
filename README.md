@@ -35,9 +35,35 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 
 ## 📸 スクリーンショット
 
-| ランディング | 検索 | 対話型検索 |
+<sub>Mock データのみ使用（実在企業・実在物件は含みません）。再生成は `pnpm screenshots`。</sub>
+
+### ランディング
+
+![ランディングページのスクリーンショット（OceansTenant のヒーローセクションと特徴カード）](docs/images/desktop/landing.png)
+
+### 物件を探す（検索一覧）
+
+![検索一覧ページのスクリーンショット（フィルタとカード一覧）](docs/images/desktop/search.png)
+
+### 物件詳細
+
+![物件詳細ページのスクリーンショット（基本情報・最寄り駅・地図フォールバック）](docs/images/desktop/property-detail.png)
+
+### 対話型検索
+
+![対話型検索画面のスクリーンショット（自然言語入力と抽出条件 JSON プレビュー）](docs/images/desktop/chat.png)
+
+### 不動産会社ポータル
+
+| ダッシュボード | URL 取り込み |
+|---|---|
+| ![不動産会社ダッシュボードのスクリーンショット（自社物件数・公開数・平均賃料）](docs/images/desktop/agent.png) | ![URL 取り込み画面のスクリーンショット（URL 入力フォーム）](docs/images/desktop/agent-ingest.png) |
+
+### モバイル表示
+
+| ランディング | 検索 | 対話 |
 |---|---|---|
-| `docs/images/landing.png`（後日撮影） | `docs/images/search.png` | `docs/images/chat.gif` |
+| ![モバイル版ランディング](docs/images/mobile/landing.png) | ![モバイル版検索](docs/images/mobile/search.png) | ![モバイル版対話型検索](docs/images/mobile/chat.png) |
 
 ## 🏗️ アーキテクチャ
 
