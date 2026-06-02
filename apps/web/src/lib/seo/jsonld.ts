@@ -79,7 +79,7 @@ export type JsonLdProperty = z.infer<typeof jsonLdPropertySchema>;
 /**
  * Sanity 側の `availability` 値を schema.org の Offer availability URI に対応付ける。
  *
- * `public` → InStock / `negotiating` → LimitedAvailability / `private` → OutOfStock。
+ * `public` → InStock / `negotiating` → LimitedAvailability / `closed` → SoldOut。
  * 検索エンジン側にデモ用ステータスの意味合いをそのまま伝えるためのざっくり対応。
  */
 const offerAvailabilityFromStatus = (availability: PropertyWithTsubo["availability"]): string => {
@@ -88,8 +88,8 @@ const offerAvailabilityFromStatus = (availability: PropertyWithTsubo["availabili
       return "https://schema.org/InStock";
     case "negotiating":
       return "https://schema.org/LimitedAvailability";
-    case "private":
-      return "https://schema.org/OutOfStock";
+    case "closed":
+      return "https://schema.org/SoldOut";
     default: {
       // exhaustive check — 将来 enum が増えたら型エラーで気付ける
       const _exhaustive: never = availability;
