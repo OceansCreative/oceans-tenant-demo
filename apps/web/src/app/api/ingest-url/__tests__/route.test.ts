@@ -30,6 +30,7 @@ import { setAnthropicClientForTesting } from "@/lib/ai/anthropic-client";
 import { extractReadableContent } from "@/lib/ai/html-extraction";
 import { EXTRACT_PROPERTY_TOOL_NAME } from "@/lib/ai/tools";
 import { fetchHtmlSafe } from "@/lib/ai/url-safety";
+import { __resetRateLimitForTesting } from "@/lib/rate-limit";
 import { POST } from "../route";
 
 const buildRequest = (body: unknown): Request =>
@@ -67,6 +68,8 @@ const VALID_TOOL_INPUT = {
 describe("POST /api/ingest-url (Tool Use)", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    // 各テストで in-memory バケットを初期化（前テストの消費が残らないように）
+    __resetRateLimitForTesting();
     // Default mock: fetch returns OK HTML, extraction returns long text.
     vi.mocked(fetchHtmlSafe).mockResolvedValue({
       url: "https://example.com/listings/1",
