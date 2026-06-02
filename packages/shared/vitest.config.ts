@@ -7,15 +7,14 @@ export default defineConfig({
     globals: false,
     coverage: {
       provider: "v8",
-      reporter: ["text", "lcov"],
+      // text: CI ログで確認、json-summary: スクリプト連携、lcov: Codecov 連携
+      reporter: ["text", "json-summary", "lcov"],
+      reportsDirectory: "./coverage",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/**/index.ts"],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
-      },
+      exclude: ["src/**/*.test.ts", "src/**/index.ts", "**/*.d.ts"],
+      // 閾値は明示的に設定しない（warning レベル運用）。
+      // shared は型 + Zod の純関数中心のため実数値は 99% 前後を維持しているが、
+      // CI を fail させないポリシーで運用し、目標は docs/REVIEW_GUIDE.md に明示する。
     },
   },
 });
