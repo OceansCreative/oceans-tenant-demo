@@ -1,6 +1,10 @@
 /**
  * `/search` 用 loading UI。Server Component で URL パース / filter を実行している間、
  * カードグリッドの骨格だけを即返して FCP / LCP を確保する。
+ *
+ * sr-only 文言は瞬間表示の補助テキストかつ Lighthouse / 既存ローディングテストとの整合のため
+ * 既存実装と同じ日本語固定のまま残す（loading は瞬時に actual コンテンツへ置換されるため、
+ * 翻訳優先度は低い。i18n 化が必要になったら別 issue で `useTranslations` 化する）。
  */
 const SearchLoading = (): React.JSX.Element => {
   return (

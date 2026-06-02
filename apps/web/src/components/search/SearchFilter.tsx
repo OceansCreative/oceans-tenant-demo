@@ -2,17 +2,17 @@
 
 import {
   type BuildingType,
-  buildingTypeLabel,
   buildingTypeValues,
   type Condition,
-  conditionLabel,
   conditionValues,
   type Prefecture,
   prefectureValues,
 } from "@oceans-tenant/shared";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useTransition } from "react";
 import { cn } from "@/lib/cn";
+import { useEnumLabelLookup } from "@/lib/i18n/enum-labels";
 import {
   EMPTY_CRITERIA,
   parseSearchCriteria,
@@ -26,21 +26,30 @@ type SearchFilterProps = {
   readonly initialCriteria?: SearchCriteria;
 };
 
-const BUSINESS_CATEGORY_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: "category-cafe", label: "カフェ" },
-  { value: "category-restaurant", label: "レストラン" },
-  { value: "category-bar", label: "バー / 居酒屋" },
-  { value: "category-retail", label: "物販 / 小売" },
-  { value: "category-beauty", label: "美容 / サロン" },
-  { value: "category-office", label: "オフィス" },
-  { value: "category-fitness", label: "フィットネス" },
-  { value: "category-clinic", label: "クリニック" },
+/**
+ * 業種カテゴリ ref → 翻訳キー suffix のマップ。
+ *
+ * `search.businessCategory.<suffix>` から locale 別ラベルを引く。
+ * Sanity 移行後に schema 側へ寄せる可能性があるため、ここでは小さな定数として局所保持する。
+ */
+const BUSINESS_CATEGORY_OPTION_REFS: ReadonlyArray<{ value: string; labelKey: string }> = [
+  { value: "category-cafe", labelKey: "cafe" },
+  { value: "category-restaurant", labelKey: "restaurant" },
+  { value: "category-bar", labelKey: "bar" },
+  { value: "category-retail", labelKey: "retail" },
+  { value: "category-beauty", labelKey: "beauty" },
+  { value: "category-office", labelKey: "office" },
+  { value: "category-fitness", labelKey: "fitness" },
+  { value: "category-clinic", labelKey: "clinic" },
 ];
 
 export const SearchFilter = ({
   className,
   initialCriteria,
 }: SearchFilterProps): React.JSX.Element => {
+  const tFilter = useTranslations("search.filter");
+  const tCategory = useTranslations("search.businessCategory");
+  const enumLabels = useEnumLabelLookup();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -78,7 +87,7 @@ export const SearchFilter = ({
 
   return (
     <aside
-      aria-label="検索フィルタ"
+      aria-label={tFilter("ariaLabel")}
       data-pending={isPending ? "true" : "false"}
       className={cn(
         "flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm",
@@ -86,22 +95,22 @@ export const SearchFilter = ({
       )}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-neutral-900">フィルタ</h2>
+        <h2 className="text-sm font-semibold text-neutral-900">{tFilter("heading")}</h2>
         <button
           type="button"
           onClick={() => apply(EMPTY_CRITERIA)}
           className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50"
           disabled={isPending}
         >
-          条件をクリア
+          {tFilter("clear")}
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1">
-          <span className={fieldLabel}>都道府県</span>
+          <span className={fieldLabel}>{tFilter("prefecture")}</span>
           <select
-            aria-label="都道府県"
+            aria-label={tFilter("prefecture")}
             className={inputBase}
             value={criteria.prefecture ?? ""}
             onChange={(event) =>
@@ -110,7 +119,7 @@ export const SearchFilter = ({
               })
             }
           >
-            <option value="">指定なし</option>
+            <option value="">{tFilter("prefecturePlaceholder")}</option>
             {prefectureValues.map((pref) => (
               <option key={pref} value={pref}>
                 {pref}
@@ -120,28 +129,28 @@ export const SearchFilter = ({
         </label>
 
         <label className="space-y-1">
-          <span className={fieldLabel}>市区町村（部分一致）</span>
+          <span className={fieldLabel}>{tFilter("city")}</span>
           <input
             type="text"
-            aria-label="市区町村"
+            aria-label={tFilter("cityAriaLabel")}
             inputMode="text"
             maxLength={80}
             className={inputBase}
             value={criteria.city ?? ""}
             onChange={(event) => update({ city: event.target.value.trim() || undefined })}
-            placeholder="例: 新宿区"
+            placeholder={tFilter("cityPlaceholder")}
           />
         </label>
       </div>
 
       <fieldset className="space-y-2">
-        <legend className={fieldLabel}>賃料（円 / 月）</legend>
+        <legend className={fieldLabel}>{tFilter("rentLegend")}</legend>
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">
-            <span className="sr-only">賃料下限</span>
+            <span className="sr-only">{tFilter("rentMinAriaLabel")}</span>
             <input
               type="number"
-              aria-label="賃料下限"
+              aria-label={tFilter("rentMinAriaLabel")}
               min={0}
               step={10000}
               className={inputBase}
@@ -151,14 +160,14 @@ export const SearchFilter = ({
                   minRent: event.target.value ? Number.parseInt(event.target.value, 10) : undefined,
                 })
               }
-              placeholder="下限"
+              placeholder={tFilter("rentMinPlaceholder")}
             />
           </label>
           <label className="space-y-1">
-            <span className="sr-only">賃料上限</span>
+            <span className="sr-only">{tFilter("rentMaxAriaLabel")}</span>
             <input
               type="number"
-              aria-label="賃料上限"
+              aria-label={tFilter("rentMaxAriaLabel")}
               min={0}
               step={10000}
               className={inputBase}
@@ -168,20 +177,20 @@ export const SearchFilter = ({
                   maxRent: event.target.value ? Number.parseInt(event.target.value, 10) : undefined,
                 })
               }
-              placeholder="上限"
+              placeholder={tFilter("rentMaxPlaceholder")}
             />
           </label>
         </div>
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className={fieldLabel}>面積（㎡）</legend>
+        <legend className={fieldLabel}>{tFilter("areaLegend")}</legend>
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">
-            <span className="sr-only">面積下限</span>
+            <span className="sr-only">{tFilter("areaMinAriaLabel")}</span>
             <input
               type="number"
-              aria-label="面積下限"
+              aria-label={tFilter("areaMinAriaLabel")}
               min={0}
               step={0.1}
               className={inputBase}
@@ -191,14 +200,14 @@ export const SearchFilter = ({
                   minArea: event.target.value ? Number.parseFloat(event.target.value) : undefined,
                 })
               }
-              placeholder="下限"
+              placeholder={tFilter("areaMinPlaceholder")}
             />
           </label>
           <label className="space-y-1">
-            <span className="sr-only">面積上限</span>
+            <span className="sr-only">{tFilter("areaMaxAriaLabel")}</span>
             <input
               type="number"
-              aria-label="面積上限"
+              aria-label={tFilter("areaMaxAriaLabel")}
               min={0}
               step={0.1}
               className={inputBase}
@@ -208,14 +217,14 @@ export const SearchFilter = ({
                   maxArea: event.target.value ? Number.parseFloat(event.target.value) : undefined,
                 })
               }
-              placeholder="上限"
+              placeholder={tFilter("areaMaxPlaceholder")}
             />
           </label>
         </div>
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className={fieldLabel}>建物形態</legend>
+        <legend className={fieldLabel}>{tFilter("buildingTypeLegend")}</legend>
         <div className="flex flex-wrap gap-2">
           {buildingTypeValues.map((value) => {
             const selected = criteria.buildingTypes.includes(value);
@@ -236,7 +245,7 @@ export const SearchFilter = ({
                     : "border-neutral-300 text-neutral-700 hover:border-brand-300",
                 )}
               >
-                {buildingTypeLabel[value]}
+                {enumLabels.buildingType(value)}
               </button>
             );
           })}
@@ -244,7 +253,7 @@ export const SearchFilter = ({
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className={fieldLabel}>物件状態</legend>
+        <legend className={fieldLabel}>{tFilter("conditionLegend")}</legend>
         <div className="flex flex-wrap gap-2">
           {conditionValues.map((value) => {
             const selected = criteria.conditions.includes(value);
@@ -265,7 +274,7 @@ export const SearchFilter = ({
                     : "border-neutral-300 text-neutral-700 hover:border-brand-300",
                 )}
               >
-                {conditionLabel[value]}
+                {enumLabels.condition(value)}
               </button>
             );
           })}
@@ -273,9 +282,9 @@ export const SearchFilter = ({
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className={fieldLabel}>適合業種</legend>
+        <legend className={fieldLabel}>{tFilter("businessCategoryLegend")}</legend>
         <div className="flex flex-wrap gap-2">
-          {BUSINESS_CATEGORY_OPTIONS.map((option) => {
+          {BUSINESS_CATEGORY_OPTION_REFS.map((option) => {
             const selected = criteria.businessCategoryRefs.includes(option.value);
             return (
               <button
@@ -297,7 +306,7 @@ export const SearchFilter = ({
                     : "border-neutral-300 text-neutral-700 hover:border-brand-300",
                 )}
               >
-                {option.label}
+                {tCategory(option.labelKey)}
               </button>
             );
           })}

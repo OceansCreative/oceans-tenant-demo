@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PropertyMapLazy } from "@/components/map/PropertyMapLazy";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { FilterChips } from "@/components/search/FilterChips";
@@ -7,6 +8,7 @@ import { SearchFilter } from "@/components/search/SearchFilter";
 import { SearchPagination } from "@/components/search/SearchPagination";
 import { type ViewMode, ViewModeToggle } from "@/components/search/ViewModeToggle";
 import { filterProperties } from "@/lib/filter-properties";
+import { computeVisiblePages } from "@/lib/pagination";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 import {
   EMPTY_CRITERIA,
@@ -14,23 +16,28 @@ import {
   serializeSearchCriteria,
 } from "@/lib/search-criteria";
 
-export const metadata: Metadata = {
-  title: "物件を探す",
-  description: "店舗物件を地図またはカード一覧で検索します。",
-  alternates: { canonical: "/search" },
-  openGraph: {
-    type: "website",
-    url: "/search",
-    title: "物件を探す",
-    description: "店舗物件を地図またはカード一覧で検索します。",
-    images: [{ url: "/og/search", width: 1200, height: 630, alt: "物件検索" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "物件を探す",
-    description: "店舗物件を地図またはカード一覧で検索します。",
-    images: ["/og/search"],
-  },
+export const generateMetadata = async (): Promise<Metadata> => {
+  const t = await getTranslations("search");
+  const title = t("pageTitle");
+  const description = t("pageDescription");
+  return {
+    title,
+    description,
+    alternates: { canonical: "/search" },
+    openGraph: {
+      type: "website",
+      url: "/search",
+      title,
+      description,
+      images: [{ url: "/og/search", width: 1200, height: 630, alt: t("ogAlt") }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og/search"],
+    },
+  };
 };
 
 type SearchPageProps = {
@@ -51,6 +58,7 @@ const toUrlSearchParams = (raw: Record<string, string | string[] | undefined>): 
 };
 
 const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.Element> => {
+  const t = await getTranslations("search");
   const raw = await searchParams;
   const urlParams = toUrlSearchParams(raw);
   const criteria = parseSearchCriteria(urlParams);
@@ -83,14 +91,22 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
     const query = params.toString();
     return query ? `/search?${query}` : "/search";
   };
+  // SearchPagination が Client Component のため、関数 prop は渡せない。
+  // 表示に必要なページ（前/次/可視 5 件）の href を Server 側で配列化する。
+  const visiblePages = computeVisiblePages(currentPage, totalPages);
+  const targetPages = new Set<number>([currentPage - 1, currentPage + 1, ...visiblePages]);
+  const paginationHrefs = Array.from(targetPages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .map((page) => [page, buildPageHref(page)] as const);
 
   return (
     <div className="container-page py-10">
       <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">物件を探す</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">{t("pageTitle")}</h1>
           <p className="mt-1 text-sm text-neutral-600">
-            {totalCount} 件 / 全 {MOCK_PROPERTIES.length} 件{isFiltered && "（フィルタ適用中）"}
+            {t("resultsCount", { matched: totalCount, total: MOCK_PROPERTIES.length })}
+            {isFiltered && t("filteredSuffix")}
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -104,18 +120,13 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <SearchFilter className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto" />
 
-        <section aria-label="検索結果" className="flex flex-col gap-6">
+        <section aria-label={t("resultsRegion")} className="flex flex-col gap-6">
           {viewMode === "map" ? (
             <PropertyMapLazy properties={mapProperties} className="min-h-[600px]" />
           ) : totalCount === 0 ? (
             <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-12 text-center">
-              <p className="text-sm font-semibold text-neutral-700">
-                該当する物件が見つかりませんでした
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-neutral-500">
-                フィルタ条件を緩めるか、自然言語検索で「新宿で 30
-                坪、カフェ向け」のように指定してみてください。
-              </p>
+              <p className="text-sm font-semibold text-neutral-700">{t("empty.title")}</p>
+              <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t("empty.hint")}</p>
             </div>
           ) : (
             <>
@@ -131,7 +142,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps): Promise<React.JSX.
                 totalPages={totalPages}
                 totalCount={totalCount}
                 pageSize={criteria.pageSize}
-                buildHref={buildPageHref}
+                hrefs={paginationHrefs}
               />
             </>
           )}

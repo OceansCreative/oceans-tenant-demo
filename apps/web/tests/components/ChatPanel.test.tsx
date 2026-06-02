@@ -1,6 +1,8 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import jaMessages from "../../messages/ja.json";
+import { renderWithI18n } from "../test-utils";
 
 // Next.js のフックをモック化（jsdom 環境用）
 const mockReplace = vi.fn();
@@ -35,6 +37,8 @@ afterEach(() => {
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
+const tChat = jaMessages.chat;
+
 /**
  * SSE レスポンスをスタブするヘルパ。
  * 各イベントを `data: <json>\n\n` の形式で結合してストリームに流す。
@@ -57,14 +61,14 @@ const buildSseResponse = (events: ReadonlyArray<unknown>): Response => {
 describe("ChatPanel auto-scroll (Issue #56)", () => {
   it("初回マウント時に末尾までスクロールする", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
     expect(scrollToSpy).toHaveBeenCalled();
   });
 
   it("scrollTo が smooth behavior で呼ばれる", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
     const lastCall = scrollToSpy.mock.calls[scrollToSpy.mock.calls.length - 1];
     expect(lastCall?.[0]).toMatchObject({ behavior: "smooth" });
@@ -74,39 +78,38 @@ describe("ChatPanel auto-scroll (Issue #56)", () => {
 describe("ChatPanel rendering", () => {
   it("初期状態でプレースホルダー文言を表示する", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    expect(
-      screen.getByText(/新宿で 30 坪のカフェ向け物件.*話しかけてみてください/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tChat.placeholderMessage)).toBeInTheDocument();
   });
 
   it("メッセージ入力欄に aria-label が付く", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    expect(screen.getByLabelText("メッセージ")).toBeInTheDocument();
+    expect(screen.getByLabelText(tChat.inputAriaLabel)).toBeInTheDocument();
   });
 
   it("入力が空のとき送信ボタンは disabled", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    expect(screen.getByRole("button", { name: "送信" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: tChat.send })).toBeDisabled();
   });
 
   it("ヒット物件が 0 件のときは空状態メッセージを描画", async () => {
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    expect(screen.getByText(/まだ結果がありません/)).toBeInTheDocument();
-    expect(screen.getByText(/ヒット物件 \(0\)/)).toBeInTheDocument();
+    expect(screen.getByText(tChat.noResults)).toBeInTheDocument();
+    // ヒット物件見出しは ICU で {count} 埋め込みのため正規表現で照合
+    expect(screen.getByText(/ヒット物件\s*\(0\)/)).toBeInTheDocument();
   });
 
   it("URL の sessionId が UUID v4 ならそのまま表示する", async () => {
     mockSearchParamsString = "sessionId=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
     expect(screen.getByText("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee")).toBeInTheDocument();
   });
@@ -114,11 +117,19 @@ describe("ChatPanel rendering", () => {
   it("URL の sessionId が不正なときは新規発行し router.replace を呼ぶ", async () => {
     mockSearchParamsString = "sessionId=invalid";
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
     expect(mockReplace).toHaveBeenCalled();
     const arg = mockReplace.mock.calls[0]?.[0] as string;
     expect(arg).toMatch(/sessionId=12345678/);
+  });
+
+  it("locale=en では英語ラベルになる", async () => {
+    await act(async () => {
+      renderWithI18n(<ChatPanel />, { locale: "en" });
+    });
+    expect(screen.getByLabelText("Message")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 });
 
@@ -129,11 +140,11 @@ describe("ChatPanel SSE 連携", () => {
       .mockResolvedValue(buildSseResponse([{ type: "done" }]));
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    const input = screen.getByLabelText("メッセージ");
+    const input = screen.getByLabelText(tChat.inputAriaLabel);
     await user.type(input, "新宿カフェ");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe("/api/chat-search");
@@ -144,10 +155,10 @@ describe("ChatPanel SSE 連携", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(buildSseResponse([{ type: "done" }]));
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "新宿の物件を探して");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "新宿の物件を探して");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       expect(screen.getByText("新宿の物件を探して")).toBeInTheDocument();
     });
@@ -159,10 +170,10 @@ describe("ChatPanel SSE 連携", () => {
     );
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "おしえて");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "おしえて");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       expect(screen.getByText("条件を整理しました")).toBeInTheDocument();
     });
@@ -187,10 +198,10 @@ describe("ChatPanel SSE 連携", () => {
     );
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "新宿");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "新宿");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       const pre = document.querySelector("pre");
       expect(pre?.textContent ?? "").toMatch(/"prefecture": "東京都"/);
@@ -203,10 +214,10 @@ describe("ChatPanel SSE 連携", () => {
     );
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "test");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "test");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       expect(screen.getByText("rate limit")).toBeInTheDocument();
     });
@@ -221,10 +232,10 @@ describe("ChatPanel SSE 連携", () => {
     );
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "test");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "test");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       expect(screen.getByText("サーバー過負荷")).toBeInTheDocument();
     });
@@ -234,10 +245,10 @@ describe("ChatPanel SSE 連携", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("通信が切れました"));
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "test");
-    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "test");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
     await waitFor(() => {
       expect(screen.getByText("通信が切れました")).toBeInTheDocument();
     });
@@ -247,12 +258,12 @@ describe("ChatPanel SSE 連携", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    const input = screen.getByLabelText("メッセージ");
+    const input = screen.getByLabelText(tChat.inputAriaLabel);
     await user.type(input, "    ");
     // 送信ボタンは trim 後の長さ 0 で disabled なのでクリック自体できない
-    expect(screen.getByRole("button", { name: "送信" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: tChat.send })).toBeDisabled();
     // 念のため form submit 経由を試しても fetch されない
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -266,12 +277,12 @@ describe("ChatPanel SSE 連携", () => {
     );
     const user = userEvent.setup();
     await act(async () => {
-      render(<ChatPanel />);
+      renderWithI18n(<ChatPanel />);
     });
-    await user.type(screen.getByLabelText("メッセージ"), "test");
-    await user.click(screen.getByRole("button", { name: "送信" }));
-    await waitFor(() => expect(screen.getByText("考えています…")).toBeInTheDocument());
+    await user.type(screen.getByLabelText(tChat.inputAriaLabel), "test");
+    await user.click(screen.getByRole("button", { name: tChat.send }));
+    await waitFor(() => expect(screen.getByText(tChat.thinking)).toBeInTheDocument());
     resolveFetch(buildSseResponse([{ type: "done" }]));
-    await waitFor(() => expect(screen.queryByText("考えています…")).toBeNull());
+    await waitFor(() => expect(screen.queryByText(tChat.thinking)).toBeNull());
   });
 });

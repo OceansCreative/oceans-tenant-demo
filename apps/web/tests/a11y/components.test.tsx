@@ -1,4 +1,3 @@
-import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { IngestForm } from "@/components/agent/IngestForm";
@@ -45,70 +44,73 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   });
 
   it("PropertyCard: タイトルリンク + バッジが a11y 適合", async () => {
-    const { container } = render(<PropertyCard property={firstProperty} />);
+    const { container } = renderWithI18n(<PropertyCard property={firstProperty} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (public): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="public" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="public" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (negotiating): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="negotiating" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="negotiating" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("AvailabilityBadge (closed): ARIA 違反なし", async () => {
-    const { container } = render(<AvailabilityBadge availability="closed" />);
+    const { container } = renderWithI18n(<AvailabilityBadge availability="closed" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("SearchPagination: nav とリンクが識別可能", async () => {
-    const { container } = render(
+    const hrefs = Array.from({ length: 5 }, (_, i) => [i + 1, `/search?page=${i + 1}`] as const);
+    const { container } = renderWithI18n(
       <SearchPagination
         currentPage={2}
         totalPages={5}
         totalCount={100}
         pageSize={20}
-        buildHref={(page) => `/search?page=${page}`}
+        hrefs={hrefs}
       />,
     );
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("SearchBar: search role + label が機能", async () => {
-    const { container } = render(<SearchBar />);
+    const { container } = renderWithI18n(<SearchBar />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("SearchFilter: フィルタの fieldset/legend/label が a11y 適合", async () => {
-    const { container } = render(<SearchFilter />);
+    const { container } = renderWithI18n(<SearchFilter />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("ViewModeToggle: 表示モード切替が a11y 適合", async () => {
-    const { container } = render(<ViewModeToggle current="list" />);
+    const { container } = renderWithI18n(<ViewModeToggle current="list" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("PropertyMap (API キー未設定時): fallback UI が a11y 適合", async () => {
-    const { container } = render(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 3)} />);
+    const { container } = renderWithI18n(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 3)} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("IngestForm: URL 入力 + 送信が a11y 適合", async () => {
-    const { container } = render(<IngestForm />);
+    const { container } = renderWithI18n(<IngestForm />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("RelatedProperties: 関連物件セクションが a11y 適合", async () => {
-    const { container } = render(<RelatedProperties properties={MOCK_PROPERTIES.slice(0, 3)} />);
+    const { container } = renderWithI18n(
+      <RelatedProperties properties={MOCK_PROPERTIES.slice(0, 3)} />,
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
 
   it("FilterChips: 適用中フィルタ chip が a11y 適合", async () => {
-    const { container } = render(<FilterChips />);
+    const { container } = renderWithI18n(<FilterChips />);
     expect(await axe(container)).toHaveNoViolations();
   });
 

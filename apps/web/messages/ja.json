@@ -70,6 +70,229 @@
       }
     }
   },
+  "search": {
+    "pageTitle": "物件を探す",
+    "pageDescription": "店舗物件を地図またはカード一覧で検索します。",
+    "ogAlt": "物件検索",
+    "loadingSr": "検索結果を読み込み中です…",
+    "resultsCount": "{matched} 件 / 全 {total} 件",
+    "filteredSuffix": "（フィルタ適用中）",
+    "resultsRegion": "検索結果",
+    "empty": {
+      "title": "該当する物件が見つかりませんでした",
+      "hint": "フィルタ条件を緩めるか、自然言語検索で「新宿で 30 坪、カフェ向け」のように指定してみてください。"
+    },
+    "searchBar": {
+      "iconTitle": "検索",
+      "ariaLabel": "物件をフリーテキストで検索",
+      "placeholder": "自然言語で検索（例: 新宿で 30 坪、カフェ向け）",
+      "submit": "検索"
+    },
+    "viewMode": {
+      "ariaLabel": "表示モード",
+      "list": "一覧",
+      "map": "地図"
+    },
+    "filter": {
+      "heading": "フィルタ",
+      "clear": "条件をクリア",
+      "ariaLabel": "検索フィルタ",
+      "prefecture": "都道府県",
+      "prefecturePlaceholder": "指定なし",
+      "city": "市区町村（部分一致）",
+      "cityAriaLabel": "市区町村",
+      "cityPlaceholder": "例: 新宿区",
+      "rentLegend": "賃料（円 / 月）",
+      "rentMinAriaLabel": "賃料下限",
+      "rentMaxAriaLabel": "賃料上限",
+      "rentMinPlaceholder": "下限",
+      "rentMaxPlaceholder": "上限",
+      "areaLegend": "面積（㎡）",
+      "areaMinAriaLabel": "面積下限",
+      "areaMaxAriaLabel": "面積上限",
+      "areaMinPlaceholder": "下限",
+      "areaMaxPlaceholder": "上限",
+      "buildingTypeLegend": "建物形態",
+      "conditionLegend": "物件状態",
+      "businessCategoryLegend": "適合業種"
+    },
+    "businessCategory": {
+      "cafe": "カフェ",
+      "restaurant": "レストラン",
+      "bar": "バー / 居酒屋",
+      "retail": "物販 / 小売",
+      "beauty": "美容 / サロン",
+      "office": "オフィス",
+      "fitness": "フィットネス",
+      "clinic": "クリニック"
+    },
+    "chips": {
+      "regionAriaLabel": "適用中のフィルタ",
+      "appliedPrefix": "適用中:",
+      "clearAll": "すべてクリア",
+      "cityLabel": "市区町村: {value}",
+      "cityRemoveAriaLabel": "市区町村 {value} を解除",
+      "minRentLabel": "賃料下限: {value}",
+      "minRentRemoveAriaLabel": "賃料下限を解除",
+      "maxRentLabel": "賃料上限: {value}",
+      "maxRentRemoveAriaLabel": "賃料上限を解除",
+      "minAreaLabel": "面積下限: {value} ㎡",
+      "minAreaRemoveAriaLabel": "面積下限を解除",
+      "maxAreaLabel": "面積上限: {value} ㎡",
+      "maxAreaRemoveAriaLabel": "面積上限を解除",
+      "removeAriaLabel": "{label} を解除",
+      "keywordLabel": "キーワード: {value}",
+      "keywordRemoveAriaLabel": "キーワード {value} を解除"
+    },
+    "pagination": {
+      "ariaLabel": "ページネーション",
+      "summary": "{total} 件中 {start} 〜 {end} 件目（{current} / {pages} ページ）",
+      "prev": "前へ",
+      "next": "次へ",
+      "prevAriaLabel": "前のページ",
+      "nextAriaLabel": "次のページ",
+      "pageAriaLabel": "{page} ページ目"
+    }
+  },
+  "chat": {
+    "pageTitle": "対話で物件を探す",
+    "pageDescription": "自然言語の対話で店舗物件を絞り込みます。",
+    "pageLead": "自然言語で条件を伝えると、AI が条件を抽出してリアルタイムに結果を更新します。",
+    "loadingSr": "対話画面を準備中です…",
+    "historyAriaLabel": "チャット履歴",
+    "sessionIdLabel": "セッション ID",
+    "sessionIdIssuing": "発行中…",
+    "placeholderMessage": "「新宿で 30 坪のカフェ向け物件」のように話しかけてみてください。",
+    "thinking": "考えています…",
+    "inputAriaLabel": "メッセージ",
+    "inputPlaceholder": "メッセージを入力",
+    "send": "送信",
+    "resultsAriaLabel": "ヒット物件",
+    "extractedCriteriaHeading": "抽出された条件",
+    "resultsHeading": "ヒット物件 ({count})",
+    "noResults": "まだ結果がありません。条件を会話で伝えてください。"
+  },
+  "agent": {
+    "dashboard": {
+      "pageTitle": "不動産会社ポータル",
+      "pageDescription": "OceansTenant 不動産会社向け管理画面",
+      "lead": "デモのため固定の会社 {company} を表示しています。",
+      "ingestCta": "+ URL から物件を取り込む",
+      "stats": {
+        "totalProperties": "自社物件数",
+        "publicProperties": "うち公開中",
+        "avgRent": "平均賃料"
+      },
+      "ownProperties": "自社物件",
+      "viewAll": "一覧で見る →",
+      "emptyProperties": "まだ物件がありません。URL から取り込みましょう。",
+      "viewDetail": "詳細を見る →"
+    },
+    "properties": {
+      "pageTitle": "自社物件一覧",
+      "pageDescription": "OceansTenant 不動産会社向け 自社物件管理",
+      "count": "{count} 件"
+    },
+    "ingest": {
+      "pageTitle": "URL から物件を取り込む",
+      "pageDescription": "物件掲載ページの URL を AI が自動で読み取り、ドラフトに保存します。",
+      "lead": "物件掲載ページの URL を貼り付けると、AI が情報を自動で読み取ります。抽出結果を確認してから Sanity に保存できます。",
+      "form": {
+        "urlLabel": "物件掲載 URL",
+        "urlPlaceholder": "https://example.com/listings/...",
+        "submit": "AI で抽出",
+        "submitting": "AI で抽出中…",
+        "hint": "URL の本文を Claude API が読み取り、住所・賃料・面積などを自動で埋めます。実 API キーが未設定の場合は失敗します。"
+      },
+      "result": {
+        "confidenceLabel": "AI 抽出信頼度",
+        "previewNote": "※ プレビューのみ。Sanity への保存は次の Issue で実装します。",
+        "errorTitle": "抽出に失敗しました",
+        "unknownError": "不明なエラー"
+      }
+    }
+  },
+  "property": {
+    "notFoundTitle": "物件が見つかりません",
+    "breadcrumb": {
+      "ariaLabel": "パンくず",
+      "home": "ホーム",
+      "search": "物件を探す"
+    },
+    "detail": {
+      "basicInfoHeading": "基本情報",
+      "rent": "月額賃料",
+      "commonFee": "共益費",
+      "deposit": "敷金",
+      "depositMonths": "{months} ヶ月",
+      "keyMoney": "礼金",
+      "keyMoneyMonths": "{months} ヶ月",
+      "area": "専有面積",
+      "areaCombined": "{sqm} ({tsubo})",
+      "floor": "階数",
+      "buildingType": "建物形態",
+      "condition": "物件状態",
+      "previousBusiness": "前テナント業種",
+      "availabilityLabel": "公開状態",
+      "descriptionHeading": "物件の特徴",
+      "stationsHeading": "最寄り駅",
+      "stationWalkMinutes": "徒歩 {minutes} 分",
+      "mapHeading": "位置",
+      "inquiryHeading": "この物件を問い合わせる",
+      "inquiryNote": "※ デモのため送信は無効化されています",
+      "inquiryName": "氏名",
+      "inquiryEmail": "メールアドレス",
+      "inquiryMessage": "お問い合わせ内容",
+      "inquirySubmit": "問い合わせる（デモ）",
+      "aiQuestionHeading": "この物件についてAIに質問",
+      "aiQuestionLead": "Phase 3 で対話型検索 (/chat) と連携予定。",
+      "aiQuestionCta": "対話画面へ移動 →"
+    },
+    "card": {
+      "rentLabel": "月額賃料",
+      "stationWalkText": "{line} {station} 駅 徒歩 {minutes} 分"
+    },
+    "related": {
+      "heading": "関連物件",
+      "lead": "同じエリア / 業態が近い物件を最大 {count} 件表示しています。"
+    },
+    "map": {
+      "disabledAriaLabel": "地図ビュー（無効化）",
+      "disabledTitle": "地図ビューは無効化されています",
+      "disabledHintBefore": "",
+      "disabledHintAfter": "を環境変数に設定するとここに Google Maps が表示されます。",
+      "candidateCount": "現在 {count} 件の物件がマップ表示候補です。",
+      "infoDetailLink": "詳細を見る →"
+    },
+    "loadingSr": "物件詳細を読み込み中です…"
+  },
+  "enum": {
+    "buildingType": {
+      "street_level": "路面店",
+      "building_inline": "ビルイン",
+      "second_floor_or_above": "2 階以上",
+      "basement": "地下",
+      "stand_alone": "独立店舗",
+      "other": "その他"
+    },
+    "condition": {
+      "skeleton": "スケルトン",
+      "second_hand": "居抜き",
+      "transferable_fixtures": "造作譲渡"
+    },
+    "availability": {
+      "public": "公開中",
+      "negotiating": "商談中",
+      "closed": "成約"
+    }
+  },
+  "errors": {
+    "communication": "通信エラー",
+    "rateLimited": "リクエストが多すぎます。しばらく待ってから再試行してください。",
+    "fetchFailed": "URL を取得できませんでした",
+    "extractionFailed": "抽出に失敗しました",
+    "unknown": "不明なエラー"
+  },
   "seo": {
     "defaultTitle": "OceansTenant — AI で店舗物件を探す、登録する",
     "titleTemplate": "%s | OceansTenant"

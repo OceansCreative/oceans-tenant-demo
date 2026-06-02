@@ -10,6 +10,7 @@ import {
   Pin,
   useMap,
 } from "@vis.gl/react-google-maps";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatJpyCompact, formatSquareMeter } from "@/lib/format";
@@ -157,6 +158,7 @@ const MarkersLayer = ({ properties, onMarkerClick }: MarkersLayerProps): React.J
 };
 
 export const PropertyMap = ({ properties, className }: PropertyMapProps): React.JSX.Element => {
+  const t = useTranslations("property.map");
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
@@ -166,19 +168,20 @@ export const PropertyMap = ({ properties, className }: PropertyMapProps): React.
   if (!apiKey) {
     return (
       <section
-        aria-label="地図ビュー（無効化）"
+        aria-label={t("disabledAriaLabel")}
         className={cn(
           "flex h-full min-h-[480px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center",
           className,
         )}
       >
-        <p className="text-sm font-semibold text-neutral-700">地図ビューは無効化されています</p>
+        <p className="text-sm font-semibold text-neutral-700">{t("disabledTitle")}</p>
         <p className="max-w-md text-xs leading-relaxed text-neutral-500">
+          {t("disabledHintBefore")}
           <code className="rounded bg-white px-1 py-0.5">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>
-          を環境変数に設定するとここに Google Maps が表示されます。
+          {t("disabledHintAfter")}
         </p>
         <p className="text-xs text-neutral-500">
-          現在 {properties.length} 件の物件がマップ表示候補です。
+          {t("candidateCount", { count: properties.length })}
         </p>
       </section>
     );
@@ -221,7 +224,7 @@ export const PropertyMap = ({ properties, className }: PropertyMapProps): React.
                   href={`/properties/${activeProperty.slug}`}
                   className="mt-1 inline-block text-xs font-medium text-brand-600 hover:underline"
                 >
-                  詳細を見る →
+                  {t("infoDetailLink")}
                 </a>
               </div>
             </InfoWindow>

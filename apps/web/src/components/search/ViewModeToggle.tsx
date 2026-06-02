@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTranslations } from "next-intl";
+import { useMemo, useTransition } from "react";
 import { cn } from "@/lib/cn";
 
 export type ViewMode = "list" | "map";
 
-const VIEW_MODES: ReadonlyArray<{ value: ViewMode; label: string; icon: string }> = [
-  { value: "list", label: "一覧", icon: "▦" },
-  { value: "map", label: "地図", icon: "◎" },
-];
+const VIEW_MODE_ICONS: Readonly<Record<ViewMode, string>> = {
+  list: "▦",
+  map: "◎",
+};
 
 type ViewModeToggleProps = {
   readonly current: ViewMode;
@@ -17,9 +18,19 @@ type ViewModeToggleProps = {
 };
 
 export const ViewModeToggle = ({ current, className }: ViewModeToggleProps): React.JSX.Element => {
+  const t = useTranslations("search.viewMode");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  // ラベルは locale 依存のため、コンポーネント側で配列を組み立てる。
+  const modes = useMemo<ReadonlyArray<{ value: ViewMode; label: string; icon: string }>>(
+    () => [
+      { value: "list", label: t("list"), icon: VIEW_MODE_ICONS.list },
+      { value: "map", label: t("map"), icon: VIEW_MODE_ICONS.map },
+    ],
+    [t],
+  );
 
   const setMode = (mode: ViewMode) => {
     const next = new URLSearchParams(searchParams?.toString() ?? "");
@@ -33,13 +44,13 @@ export const ViewModeToggle = ({ current, className }: ViewModeToggleProps): Rea
 
   return (
     <fieldset
-      aria-label="表示モード"
+      aria-label={t("ariaLabel")}
       className={cn(
         "inline-flex rounded-full border border-neutral-200 bg-white p-1 shadow-sm",
         className,
       )}
     >
-      {VIEW_MODES.map((mode) => {
+      {modes.map((mode) => {
         const active = mode.value === current;
         return (
           <button

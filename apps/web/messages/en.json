@@ -70,6 +70,229 @@
       }
     }
   },
+  "search": {
+    "pageTitle": "Browse properties",
+    "pageDescription": "Search retail spaces on a map or in a card grid.",
+    "ogAlt": "Property search",
+    "loadingSr": "Loading search results…",
+    "resultsCount": "{matched} of {total}",
+    "filteredSuffix": " (filters applied)",
+    "resultsRegion": "Search results",
+    "empty": {
+      "title": "No matching properties found",
+      "hint": "Try relaxing the filters or use the chat search with something like \"a 30-tsubo cafe in Shinjuku\"."
+    },
+    "searchBar": {
+      "iconTitle": "Search",
+      "ariaLabel": "Free-text property search",
+      "placeholder": "Search in natural language (e.g. \"a 30-tsubo cafe in Shinjuku\")",
+      "submit": "Search"
+    },
+    "viewMode": {
+      "ariaLabel": "View mode",
+      "list": "List",
+      "map": "Map"
+    },
+    "filter": {
+      "heading": "Filters",
+      "clear": "Clear filters",
+      "ariaLabel": "Search filters",
+      "prefecture": "Prefecture",
+      "prefecturePlaceholder": "Any",
+      "city": "City / ward (partial match)",
+      "cityAriaLabel": "City",
+      "cityPlaceholder": "e.g. Shinjuku",
+      "rentLegend": "Rent (JPY / month)",
+      "rentMinAriaLabel": "Minimum rent",
+      "rentMaxAriaLabel": "Maximum rent",
+      "rentMinPlaceholder": "Min",
+      "rentMaxPlaceholder": "Max",
+      "areaLegend": "Area (m²)",
+      "areaMinAriaLabel": "Minimum area",
+      "areaMaxAriaLabel": "Maximum area",
+      "areaMinPlaceholder": "Min",
+      "areaMaxPlaceholder": "Max",
+      "buildingTypeLegend": "Building type",
+      "conditionLegend": "Property condition",
+      "businessCategoryLegend": "Suitable business"
+    },
+    "businessCategory": {
+      "cafe": "Cafe",
+      "restaurant": "Restaurant",
+      "bar": "Bar / Izakaya",
+      "retail": "Retail",
+      "beauty": "Beauty / Salon",
+      "office": "Office",
+      "fitness": "Fitness",
+      "clinic": "Clinic"
+    },
+    "chips": {
+      "regionAriaLabel": "Applied filters",
+      "appliedPrefix": "Applied:",
+      "clearAll": "Clear all",
+      "cityLabel": "City: {value}",
+      "cityRemoveAriaLabel": "Remove city {value}",
+      "minRentLabel": "Min rent: {value}",
+      "minRentRemoveAriaLabel": "Remove minimum rent",
+      "maxRentLabel": "Max rent: {value}",
+      "maxRentRemoveAriaLabel": "Remove maximum rent",
+      "minAreaLabel": "Min area: {value} m²",
+      "minAreaRemoveAriaLabel": "Remove minimum area",
+      "maxAreaLabel": "Max area: {value} m²",
+      "maxAreaRemoveAriaLabel": "Remove maximum area",
+      "removeAriaLabel": "Remove {label}",
+      "keywordLabel": "Keyword: {value}",
+      "keywordRemoveAriaLabel": "Remove keyword {value}"
+    },
+    "pagination": {
+      "ariaLabel": "Pagination",
+      "summary": "{start}–{end} of {total} ({current} / {pages})",
+      "prev": "Prev",
+      "next": "Next",
+      "prevAriaLabel": "Previous page",
+      "nextAriaLabel": "Next page",
+      "pageAriaLabel": "Page {page}"
+    }
+  },
+  "chat": {
+    "pageTitle": "Chat to find properties",
+    "pageDescription": "Narrow down retail spaces with a natural-language conversation.",
+    "pageLead": "Describe your criteria and the AI will extract them and update results in real time.",
+    "loadingSr": "Preparing the chat workspace…",
+    "historyAriaLabel": "Chat history",
+    "sessionIdLabel": "Session ID",
+    "sessionIdIssuing": "Issuing…",
+    "placeholderMessage": "Try something like \"a 30-tsubo cafe in Shinjuku\".",
+    "thinking": "Thinking…",
+    "inputAriaLabel": "Message",
+    "inputPlaceholder": "Type a message",
+    "send": "Send",
+    "resultsAriaLabel": "Matched properties",
+    "extractedCriteriaHeading": "Extracted criteria",
+    "resultsHeading": "Matched properties ({count})",
+    "noResults": "No results yet. Tell the assistant what you are looking for."
+  },
+  "agent": {
+    "dashboard": {
+      "pageTitle": "Agent portal",
+      "pageDescription": "Management console for OceansTenant agents",
+      "lead": "For demo purposes, fixed company {company} is shown.",
+      "ingestCta": "+ Import a property from URL",
+      "stats": {
+        "totalProperties": "Total properties",
+        "publicProperties": "Public",
+        "avgRent": "Avg. rent"
+      },
+      "ownProperties": "My properties",
+      "viewAll": "View all →",
+      "emptyProperties": "No properties yet — import one from a URL.",
+      "viewDetail": "View detail →"
+    },
+    "properties": {
+      "pageTitle": "My properties",
+      "pageDescription": "Manage your own properties (agent view)",
+      "count": "{count} properties"
+    },
+    "ingest": {
+      "pageTitle": "Import a property from URL",
+      "pageDescription": "AI reads a listing page from its URL and saves it as a draft.",
+      "lead": "Paste a listing URL and the AI will extract the information. Review the result before saving to Sanity.",
+      "form": {
+        "urlLabel": "Listing URL",
+        "urlPlaceholder": "https://example.com/listings/...",
+        "submit": "Extract with AI",
+        "submitting": "Extracting with AI…",
+        "hint": "The Claude API reads the page body and fills in address, rent and area. Requires a valid API key."
+      },
+      "result": {
+        "confidenceLabel": "AI extraction confidence",
+        "previewNote": "Preview only — saving to Sanity will be implemented in a follow-up issue.",
+        "errorTitle": "Extraction failed",
+        "unknownError": "Unknown error"
+      }
+    }
+  },
+  "property": {
+    "notFoundTitle": "Property not found",
+    "breadcrumb": {
+      "ariaLabel": "Breadcrumb",
+      "home": "Home",
+      "search": "Browse properties"
+    },
+    "detail": {
+      "basicInfoHeading": "Basic information",
+      "rent": "Monthly rent",
+      "commonFee": "Common-area fee",
+      "deposit": "Deposit",
+      "depositMonths": "{months} months",
+      "keyMoney": "Key money",
+      "keyMoneyMonths": "{months} months",
+      "area": "Floor area",
+      "areaCombined": "{sqm} ({tsubo})",
+      "floor": "Floor",
+      "buildingType": "Building type",
+      "condition": "Condition",
+      "previousBusiness": "Previous tenant",
+      "availabilityLabel": "Availability",
+      "descriptionHeading": "About this property",
+      "stationsHeading": "Nearest stations",
+      "stationWalkMinutes": "{minutes} min walk",
+      "mapHeading": "Location",
+      "inquiryHeading": "Contact about this property",
+      "inquiryNote": "Submission is disabled in this demo.",
+      "inquiryName": "Name",
+      "inquiryEmail": "Email",
+      "inquiryMessage": "Message",
+      "inquirySubmit": "Send inquiry (demo)",
+      "aiQuestionHeading": "Ask AI about this property",
+      "aiQuestionLead": "Will connect to the chat search (/chat) in Phase 3.",
+      "aiQuestionCta": "Open chat →"
+    },
+    "card": {
+      "rentLabel": "Monthly rent",
+      "stationWalkText": "{line} {station} Sta. — {minutes} min walk"
+    },
+    "related": {
+      "heading": "Related properties",
+      "lead": "Showing up to {count} properties in similar areas or business types."
+    },
+    "map": {
+      "disabledAriaLabel": "Map view (disabled)",
+      "disabledTitle": "Map view is disabled",
+      "disabledHintBefore": "Set ",
+      "disabledHintAfter": " as an environment variable to render Google Maps here.",
+      "candidateCount": "Currently {count} properties are candidates for map display.",
+      "infoDetailLink": "View detail →"
+    },
+    "loadingSr": "Loading property detail…"
+  },
+  "enum": {
+    "buildingType": {
+      "street_level": "Street-level",
+      "building_inline": "Tenant in building",
+      "second_floor_or_above": "2nd floor or above",
+      "basement": "Basement",
+      "stand_alone": "Stand-alone",
+      "other": "Other"
+    },
+    "condition": {
+      "skeleton": "Skeleton",
+      "second_hand": "Furnished (second-hand)",
+      "transferable_fixtures": "With fixtures transfer"
+    },
+    "availability": {
+      "public": "Available",
+      "negotiating": "In negotiation",
+      "closed": "Closed"
+    }
+  },
+  "errors": {
+    "communication": "Communication error",
+    "rateLimited": "Too many requests — please wait a moment and try again.",
+    "fetchFailed": "Could not fetch the URL",
+    "extractionFailed": "Extraction failed",
+    "unknown": "Unknown error"
+  },
   "seo": {
     "defaultTitle": "OceansTenant — Find and list retail spaces with AI",
     "titleTemplate": "%s | OceansTenant"

@@ -1,6 +1,9 @@
+"use client";
+
 import type { PropertyWithTsubo } from "@oceans-tenant/shared";
 import type { Route } from "next";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import {
   formatAddressSummary,
@@ -16,6 +19,7 @@ type PropertyCardProps = {
 };
 
 export const PropertyCard = ({ property, className }: PropertyCardProps): React.JSX.Element => {
+  const t = useTranslations("property.card");
   const nearestStation = property.nearestStations[0];
   return (
     <article
@@ -59,13 +63,17 @@ export const PropertyCard = ({ property, className }: PropertyCardProps): React.
 
         {nearestStation && (
           <p className="text-xs text-neutral-500">
-            {nearestStation.line} {nearestStation.station} 駅 徒歩 {nearestStation.walkMinutes} 分
+            {t("stationWalkText", {
+              line: nearestStation.line,
+              station: nearestStation.station,
+              minutes: nearestStation.walkMinutes,
+            })}
           </p>
         )}
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div>
-            <p className="text-xs text-neutral-500">月額賃料</p>
+            <p className="text-xs text-neutral-500">{t("rentLabel")}</p>
             <p className="text-lg font-bold text-brand-700">{formatJpyCompact(property.rent)}</p>
           </div>
           <div className="text-right text-xs text-neutral-600">
