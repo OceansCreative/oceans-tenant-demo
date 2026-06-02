@@ -190,7 +190,10 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
           )}
         </div>
 
-        <aside className="space-y-4">
+        {/* `<article>` 内に置く補助コンテンツのため、`<aside>` ではなく `<div>` で landmark
+            複合化（axe `landmark-complementary-is-top-level`）を回避する。
+            個別の補足ブロックは `<section aria-labelledby>` でスクリーンリーダから到達可能。 */}
+        <div className="space-y-4">
           <section
             aria-labelledby="inquiry-heading"
             className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6"
@@ -246,7 +249,7 @@ const PropertyDetailPage = async ({ params }: PageProps): Promise<React.JSX.Elem
               対話画面へ移動 →
             </Link>
           </section>
-        </aside>
+        </div>
       </section>
 
       {property.nearestStations.length > 0 && (

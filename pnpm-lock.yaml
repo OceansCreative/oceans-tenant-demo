@@ -121,6 +121,9 @@ importers:
         specifier: ^3
         version: 3.25.76
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.11.3
+        version: 4.11.3(playwright-core@1.60.0)
       '@lhci/cli':
         specifier: ^0.14.0
         version: 0.14.0
@@ -154,6 +157,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^2
         version: 2.1.9(vitest@2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0))
+      axe-core:
+        specifier: ^4.12.0
+        version: 4.12.0
       happy-dom:
         specifier: ^20
         version: 20.9.0
@@ -175,6 +181,9 @@ importers:
       vitest:
         specifier: ^2
         version: 2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0)
+      vitest-axe:
+        specifier: ^0.1.0
+        version: 0.1.0(vitest@2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0))
       zod-to-json-schema:
         specifier: ^3.25.2
         version: 3.25.2(zod@3.25.76)
@@ -290,6 +299,11 @@ packages:
   '@aws-lite/ssm@0.2.5':
     resolution: {integrity: sha512-1B8mZ79ySqlTEfSQ87KZ0XkmTOKQFMO3lUYUGUtwNTUncJINr6nhRWEjk128oBWwEQnpJ7NfpDPjdfg1ICe3xw==}
     engines: {node: '>=16'}
+
+  '@axe-core/playwright@4.11.3':
+    resolution: {integrity: sha512-h/kfksv4F0cVIDlKpT4700OehdRgpvuVskuQ2nb7/JmtWUXpe9ftHAPtwyXGvVSsa6SJ64A9ER7Zrzc/sIvC4w==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -2990,6 +3004,10 @@ packages:
 
   aws4@1.13.2:
     resolution: {integrity: sha512-lHe62zvbTB5eEABUVi/AwVh0ZKY9rMMDhmm+eeyuuUQbQ3+J+fONVQOZyj+DdrvD4BY33uYniyRJ4UJIaSKAfw==}
+
+  axe-core@4.11.4:
+    resolution: {integrity: sha512-KunSNx+TVpkAw/6ULfhnx+HWRecjqZGTOyquAoWHYLRSdK1tB5Ihce1ZW+UY3fj33bYAFWPu7W/GRSmmrCGuxA==}
+    engines: {node: '>=4'}
 
   axe-core@4.12.0:
     resolution: {integrity: sha512-FTavr/7Ba0IptwGOPxnQvdyW2tAsdLBMTBXz7rKH6xJ2skpyxpBxyHkDdBs4lf69yRqYpkqCdfhnwS8YULGOmg==}
@@ -6634,6 +6652,11 @@ packages:
       yaml:
         optional: true
 
+  vitest-axe@0.1.0:
+    resolution: {integrity: sha512-jvtXxeQPg8R/2ANTY8QicA5pvvdRP4F0FsVUAHANJ46YCDASie/cuhlSzu0DGcLmZvGBSBNsNuK3HqfaeknyvA==}
+    peerDependencies:
+      vitest: '>=0.16.0'
+
   vitest@2.1.9:
     resolution: {integrity: sha512-MSmPM9REYqDGBI8439mA4mWhV5sKmDlBKWIYbA3lRb2PTHACE0mgKwA8yQ2xq9vxDTuk4iPrECBAEW2aoFXY0Q==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -7059,6 +7082,11 @@ snapshots:
   '@aws-lite/s3@0.1.22': {}
 
   '@aws-lite/ssm@0.2.5': {}
+
+  '@axe-core/playwright@4.11.3(playwright-core@1.60.0)':
+    dependencies:
+      axe-core: 4.11.4
+      playwright-core: 1.60.0
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -10332,6 +10360,8 @@ snapshots:
       possible-typed-array-names: 1.1.0
 
   aws4@1.13.2: {}
+
+  axe-core@4.11.4: {}
 
   axe-core@4.12.0: {}
 
@@ -14537,6 +14567,16 @@ snapshots:
       jiti: 2.6.1
       lightningcss: 1.32.0
       yaml: 2.9.0
+
+  vitest-axe@0.1.0(vitest@2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0)):
+    dependencies:
+      aria-query: 5.3.2
+      axe-core: 4.12.0
+      chalk: 5.6.2
+      dom-accessibility-api: 0.5.16
+      lodash-es: 4.18.1
+      redent: 3.0.0
+      vitest: 2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0)
 
   vitest@2.1.9(@types/node@25.9.1)(happy-dom@20.9.0)(jsdom@25.0.1)(lightningcss@1.32.0):
     dependencies:

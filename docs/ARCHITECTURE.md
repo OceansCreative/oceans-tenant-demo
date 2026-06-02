@@ -232,10 +232,43 @@ erDiagram
 
 ## アクセシビリティ
 
-- Lighthouse Accessibility 95+ を目標
-- ランドマーク要素（`<header>`, `<main>`, `<nav>`, `<footer>`, `<section>`, `<search>`）
-- フォーム要素には `aria-label`、ボタン群には `aria-pressed`
-- skip link、focus-visible スタイル
+OSS リファレンス実装として「誰でも使える」最低限を v0.6.0 WS-3 で確立した。
+
+### 計測 / 自動化
+
+| レイヤ | ツール | 対象 | しきい値 |
+|---|---|---|---|
+| ユニット | `vitest-axe`（axe-core） | 主要 11 コンポーネント | 違反 0 |
+| E2E | `@axe-core/playwright` | `/`, `/search`, `/chat`, `/properties/[slug]` | 違反 0（wcag2a/2aa/21a/21aa + best-practice） |
+| ブラウザ計測 | Lighthouse CI | `/`, `/search`, `/chat` | Accessibility カテゴリ 0.95+ |
+
+実行コマンド:
+
+```bash
+# vitest 側（jsdom 上で `axe(container).toHaveNoViolations()`）
+pnpm --filter @oceans-tenant/web test -- tests/a11y
+
+# Playwright 側（実ブラウザでフル A11y チェック）
+pnpm --filter @oceans-tenant/web exec playwright test a11y.spec.ts
+```
+
+### 守っているガイドライン
+
+- ランドマーク: `<header>` / `<nav aria-label>` / `<main id="main-content">` / `<footer>` /
+  `<section aria-labelledby>` を構造化。`<aside>` は **トップレベル** に置く（`<article>` 配下では使わない）
+- 見出し階層: 各ページに `<h1>` が 1 つ、`<h2>` 以降は論理階層
+- フォーム: 全 input に `<label>` または `aria-label`、グルーピングは `<fieldset><legend>`
+- ボタン: アイコンのみのボタンに `aria-label`、トグルは `aria-pressed`
+- ナビゲーション: `<nav aria-label="ページネーション">`、現在ページに `aria-current="page"`
+- スキップリンク: `<a href="#main-content">` を sr-only + focus 時のみ可視で先頭に配置
+- カラーコントラスト: Tailwind の `brand-*` トークンは WCAG AA（4.5:1）を満たす組み合わせのみ採用
+- フォーカス: `focus-visible` で常にリングを表示（キーボードナビでも見える）
+
+### axe ルール除外方針
+
+現時点では axe ルールの除外は行わない（`exclude` は Sanity Studio などの埋め込み `<iframe>` のみ）。
+将来 WCAG AAA に引き上げる際は `withTags(["wcag2aaa"])` 相当のテストを **別ファイル** で追加し、
+段階的に通す方針。
 
 ## 観測性
 
