@@ -8,15 +8,79 @@
 ## [Unreleased]
 
 ### Added
-- i18n フェーズ 2: `/search` / `/chat` / `/agent` / `/properties/[slug]` 等の全コンポーネント文言を翻訳キー化
-- Sanity 文言（建物種別ラベル等）の locale 切替
+- Sanity 文言（建物種別ラベル等）の locale 切替（Sanity 多言語スキーマ案）
 - Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
 - Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
 - WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
 - Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
-- AI 抽出評価ハーネスの実 Claude 実行 + CI 統合（週次 cron / `eval` ラベル付与時）
+- Storybook の globalTypes による ja/en 切替（v0.9.1 候補）
+
+## [0.9.0] — 2026-06-03
+
+Phase 6 マイナー継続。`/ship` 並列実装の **8 サイクル目** で、i18n フェーズ 2（全画面翻訳化）（WS-1）/ eval CI 統合（WS-2）/ データ可視化ダッシュボード `/insights`（WS-3）の 3 ワークストリームを worktree 分離サブエージェントで投入し、OSS リファレンス実装としての "国際化完了 + 評価自動化 + データ可視化" を確立。
+
+### Added
+
+- **i18n フェーズ 2 — 全画面翻訳化 (#126)** — v0.8.0 で導入した next-intl 基盤の上に、残りの全 UI コンポーネントを翻訳キー化
+  - `messages/{ja,en}.json` を 76 行 → **299 行**（約 4 倍）に拡張。`search.*` (45 keys) / `chat.*` (13) / `agent.*` (24) / `property.*` (39) / `enum.*` (13) / `errors.*` (5) を追加
+  - 翻訳キー化したコンポーネント: SearchBar / SearchFilter / FilterChips / ViewModeToggle / SearchPagination / ChatPanel / IngestForm / PropertyCard / AvailabilityBadge / RelatedProperties / PropertyMap
+  - 翻訳キー化したページ: `/search` / `/chat` / `/agent` / `/agent/ingest` / `/agent/properties` / `/properties/[slug]`
+  - **enum 翻訳 helper** `lib/i18n/enum-labels.ts` 新設。`useEnumLabelLookup()` / `createEnumLabelLookupAsync()` で建物形態 / 物件状態 / availability ラベルを locale 切替
+  - **SearchPagination の API 変更（破壊的）**: 関数 prop `buildHref` → 配列 `hrefs: [page, href][]` に変更。Client Component 化に伴う移行
+  - `lib/pagination.ts` を新設し `computeVisiblePages` を server / client 双方から呼べる純粋関数に分離
+- **eval CI 統合 (#124)** — v0.8.0 WS-2 で導入した評価ハーネスを GitHub Actions に統合
+  - `.github/workflows/eval.yml` 新設。PR ラベル `eval` 付与時 / 週次 cron（毎週月曜 09:00 JST）/ `workflow_dispatch` の 3 起動条件
+  - `scripts/eval/ci-comment.mjs` 新設。評価結果 JSON を PR コメント Markdown に変換
+  - コスト管理の多層化: PR ラベル必須 / `concurrency` で同一 PR の重複実行を 1 本に抑止 / `timeout-minutes: 5` / `::notice::` でコスト見積もり表示
+  - `ANTHROPIC_API_KEY` 未設定時はモックモードに自動 fallback して workflow が常に通る
+  - 品質ゲート: 実 Claude 実行時のみ `aggregate.overallScore < 0.6` で fail（`EVAL_SCORE_THRESHOLD` env で調整可）
+  - README に eval バッジ追加
+- **`/insights` データ可視化ダッシュボード (#125)** — recharts による物件統計の見える化
+  - `KpiCards` — 総物件数 / 平均賃料 / 平均面積 / 公開中件数
+  - `BuildingTypeChart` — 業態別 PieChart（Donut）
+  - `PrefectureBarChart` — 都道府県別 BarChart（件数降順）
+  - `RentDistribution` — 賃料 50,000 円刻みヒストグラム
+  - `ConditionChart` — 物件状態（スケルトン / 居抜き / 造作譲渡）BarChart
+  - `lib/insights/aggregate.ts` — pure 集計関数群（mock / Sanity 実接続で同じ呼び出しが効く）
+  - `ChartsGrid` で recharts を `next/dynamic({ ssr: false })` 一括遅延ロード化し、`/insights` First Load JS を **249 KB → 116 KB（-53%）** に削減
+  - a11y 二段構え: SVG に `role="img"` + `aria-label`、加えて同じデータの `<table>` を `.sr-only` で併記
+  - `i18n` の `insights.*` 名前空間追加、`nav.insights` で Header にリンク
+  - `/insights` を `.lighthouserc.cjs` の計測対象に追加（5 URL 構成）
+  - axe E2E に `/insights` を追加し違反 0 を保証
+
+### Changed
+
+- `package.json` version を 0.9.0 に
+- **`/insights` の `<main>` ネスト解消 (#125)** — RootLayout 側で `<main id="main-content">` が既にあるため、ページ側の `<main>` を `<section aria-labelledby="insights-title">` に変更し axe `landmark-main-is-top-level`（moderate）違反を解消
+- Header / Footer / 各ページから `useTranslations()` 経由で文言取得（一部既存ハードコード文言を翻訳キーに切り替え）
+- 既存 RTL テストの日本語アサーション部分を `renderWithI18n` でラップする形に統一
+
+### Process
+
+- `/ship` 並列実装の **8 サイクル目**。WS-1 (i18n フェーズ 2) / WS-2 (eval CI) / WS-3 (insights) を worktree 分離サブエージェントで同時着手
+- v0.9.0 リリースノート生成は手動で実施（Workflow tool は deterministic 制約で過去にエラー）
+- 4 PR 連続マージで `pnpm-lock.yaml` / `messages/*.json` / `Header.tsx` 等で局所衝突が複数発生したが、`git checkout --theirs` + 手動マージで都度解消
+- /insights の axe 違反（120 件）を rebase 後の単発修正で 0 件に
+- v0.8.0 WS-1 で導入した Playwright `ja-JP` locale 強制設定により、i18n フェーズ 2 マージ後も E2E は安定 green を維持
+
+### Tests
+
+- apps/web vitest: 452 → **470** ケース pass（+18: i18n フェーズ 2 +10 / insights +13 - 重複 -5）
+- `oceans-tenant-eval` node:test: 21 → **29 件**（+8: ci-comment テスト）
+- Playwright: 21 → **22 件**（+1: `/insights` a11y E2E）
+- packages/shared 144 / Python pytest / CodeQL / Lighthouse / Codecov / Chromatic 全 green
+- Lighthouse: 5 URL × 3 ラン中央値で全 0.96+ を維持
+- a11y: 主要 5 ページ（`/`, `/search`, `/chat`, `/properties/[slug]`, `/insights`）で違反 0 を維持
+
+### Docs
+
+- `docs/ARCHITECTURE.md` に Insights セクションを追加（集計関数 / chart 構成 / a11y 二段構え）
+- `docs/AI_INTEGRATION.md` に CI 統合（eval workflow）の章を追加
+- `scripts/eval/README.md` を CI 起動条件 / コスト管理 / PR コメント例で拡充
+- README に eval バッジ追加、`/insights` への Header nav を追加
+- `messages/{ja,en}.json` で全画面の翻訳カバレッジを Header / Footer / Hero（v0.8.0 フェーズ 1）から全ページに拡張
 
 ## [0.8.0] — 2026-06-03
 
