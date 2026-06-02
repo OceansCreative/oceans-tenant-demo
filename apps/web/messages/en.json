@@ -24,6 +24,7 @@
     "search": "Browse properties",
     "chat": "Chat search",
     "agent": "For agents",
+    "insights": "Insights",
     "brandLabel": "Back to OceansTenant home",
     "registerCta": "List a property"
   },
@@ -72,5 +73,50 @@
   "seo": {
     "defaultTitle": "OceansTenant — Find and list retail spaces with AI",
     "titleTemplate": "%s | OceansTenant"
+  },
+  "insights": {
+    "title": "Property data insights",
+    "lead": "Aggregates the mock retail-property dataset along four axes (building type, prefecture, rent, condition) as a reference example of how to present structured data in this OSS implementation.",
+    "dataSource": "Data source: mock (5 records); switches to real GROQ when Sanity is connected.",
+    "kpi": {
+      "total": "Total properties",
+      "totalUnit": "records",
+      "avgRent": "Avg. rent",
+      "avgArea": "Avg. area",
+      "publishing": "Publishing"
+    },
+    "buildingType": {
+      "title": "Building type breakdown",
+      "caption": "Property count grouped by buildingType (pie chart).",
+      "tableLabel": "Table of property counts by building type",
+      "columnType": "Building type",
+      "columnCount": "Count",
+      "empty": "No properties have a building type set."
+    },
+    "prefecture": {
+      "title": "Properties by prefecture",
+      "caption": "Counts of address.prefecture sorted descending (bar chart).",
+      "tableLabel": "Table of property counts by prefecture",
+      "columnPrefecture": "Prefecture",
+      "columnCount": "Count",
+      "empty": "No prefecture data."
+    },
+    "rent": {
+      "title": "Rent distribution",
+      "caption": "Rent histogram with 50,000 JPY bins (bar chart).",
+      "tableLabel": "Table of the rent histogram",
+      "columnRange": "Rent range",
+      "columnCount": "Count",
+      "binLabel": "{min} – {max}",
+      "empty": "No rent data."
+    },
+    "condition": {
+      "title": "Condition breakdown",
+      "caption": "Counts of skeleton / second-hand / transferable fixtures (bar chart).",
+      "tableLabel": "Table of property counts by condition",
+      "columnCondition": "Condition",
+      "columnCount": "Count",
+      "empty": "No properties have a condition set."
+    }
   }
 }

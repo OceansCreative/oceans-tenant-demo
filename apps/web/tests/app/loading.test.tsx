@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import ChatLoading from "@/app/chat/loading";
+import InsightsLoading from "@/app/insights/loading";
 import RootLoading from "@/app/loading";
 import PropertyDetailLoading from "@/app/properties/[slug]/loading";
 import SearchLoading from "@/app/search/loading";
@@ -17,6 +18,7 @@ describe("route 別 loading.tsx", () => {
     { name: "search", Component: SearchLoading, expectText: "検索結果を読み込み中" },
     { name: "chat", Component: ChatLoading, expectText: "対話画面を準備中" },
     { name: "properties/[slug]", Component: PropertyDetailLoading, expectText: "物件詳細" },
+    { name: "insights", Component: InsightsLoading, expectText: "読み込み中" },
   ] as const;
 
   for (const { name, Component, expectText } of cases) {

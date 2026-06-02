@@ -24,6 +24,7 @@
     "search": "物件を探す",
     "chat": "対話で探す",
     "agent": "不動産会社",
+    "insights": "データで見る",
     "brandLabel": "OceansTenant トップへ",
     "registerCta": "物件を登録"
   },
@@ -72,5 +73,50 @@
   "seo": {
     "defaultTitle": "OceansTenant — AI で店舗物件を探す、登録する",
     "titleTemplate": "%s | OceansTenant"
+  },
+  "insights": {
+    "title": "物件データ可視化",
+    "lead": "公開中の店舗物件 mock データを業態 / 都道府県 / 賃料 / 物件状態の 4 軸で集計し、OSS リファレンス実装としての「データの見せ方」サンプルを示します。",
+    "dataSource": "データソース: mock（5 件）/ Sanity 接続時は実 GROQ",
+    "kpi": {
+      "total": "総物件数",
+      "totalUnit": "件",
+      "avgRent": "平均賃料",
+      "avgArea": "平均面積",
+      "publishing": "公開中件数"
+    },
+    "buildingType": {
+      "title": "建物形態の内訳",
+      "caption": "buildingType 別の物件件数（pie chart）。",
+      "tableLabel": "建物形態別件数の表",
+      "columnType": "建物形態",
+      "columnCount": "件数",
+      "empty": "建物形態が設定された物件がありません。"
+    },
+    "prefecture": {
+      "title": "都道府県別の件数",
+      "caption": "address.prefecture の出現件数を多い順に集計（bar chart）。",
+      "tableLabel": "都道府県別件数の表",
+      "columnPrefecture": "都道府県",
+      "columnCount": "件数",
+      "empty": "都道府県データがありません。"
+    },
+    "rent": {
+      "title": "賃料分布",
+      "caption": "賃料を 50,000 円刻みでヒストグラム化（bar chart）。",
+      "tableLabel": "賃料分布の表",
+      "columnRange": "賃料帯",
+      "columnCount": "件数",
+      "binLabel": "{min} – {max}",
+      "empty": "賃料データがありません。"
+    },
+    "condition": {
+      "title": "物件状態の内訳",
+      "caption": "スケルトン / 居抜き / 造作譲渡 の件数（bar chart）。",
+      "tableLabel": "物件状態別件数の表",
+      "columnCondition": "物件状態",
+      "columnCount": "件数",
+      "empty": "物件状態が設定された物件がありません。"
+    }
   }
 }

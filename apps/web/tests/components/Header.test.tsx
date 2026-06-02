@@ -21,6 +21,7 @@ describe("Header", () => {
       { href: "/", label: "ホーム" },
       { href: "/search", label: "物件を探す" },
       { href: "/chat", label: "対話で探す" },
+      { href: "/insights", label: "データで見る" },
       { href: "/agent", label: "不動産会社" },
     ];
     for (const item of items) {
