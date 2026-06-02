@@ -9,6 +9,13 @@ import {
 } from "@/lib/ai/prompts/extract-property";
 import { EXTRACT_PROPERTY_TOOL_NAME, extractPropertyTool } from "@/lib/ai/tools";
 import { FetchSafetyError, fetchHtmlSafe, SsrfDeniedError } from "@/lib/ai/url-safety";
+import { getClientIp } from "@/lib/get-client-ip";
+import {
+  buildRateLimitHeaders,
+  buildRateLimitKey,
+  consumeRateLimit,
+  getIngestUrlRateLimitConfig,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +71,24 @@ const findExtractPropertyToolUse = (
 export const POST = async (
   request: Request,
 ): Promise<NextResponse<IngestSuccessResponse | IngestErrorResponse>> => {
+  // レート制限はリクエスト形式検証より先に判定。形式不正でも DoS / AI コスト圧迫の
+  // 種になるため、まず IP 単位の流量を絞る。
+  const rateKey = buildRateLimitKey(getClientIp(request), "ingest-url");
+  const rateResult = consumeRateLimit(rateKey, getIngestUrlRateLimitConfig());
+  const rateHeaders = buildRateLimitHeaders(rateResult);
+  if (!rateResult.allowed) {
+    // 429 は IngestErrorResponse 形式に揃えず、仕様の `{ error, retryAfterSeconds }` を返す。
+    // ステータスコードと Retry-After ヘッダで識別できれば十分なため。
+    return NextResponse.json(
+      {
+        status: "error",
+        error: "rate_limited",
+        retryAfterSeconds: rateResult.retryAfterSeconds,
+      } as IngestErrorResponse & { readonly retryAfterSeconds: number },
+      { status: 429, headers: rateHeaders },
+    );
+  }
+
   let parsed: z.infer<typeof RequestSchema>;
   try {
     const body = (await request.json()) as unknown;
@@ -72,14 +97,14 @@ export const POST = async (
     console.error("[ingest-url] リクエスト形式不正", error);
     return NextResponse.json(
       { status: "error", error: "リクエスト形式が不正です" },
-      { status: 400 },
+      { status: 400, headers: rateHeaders },
     );
   }
 
   if (!isValidIngestUrl(parsed.url)) {
     return NextResponse.json(
       { status: "error", error: "url は http(s) スキームの URL である必要があります" },
-      { status: 400 },
+      { status: 400, headers: rateHeaders },
     );
   }
 
@@ -89,7 +114,7 @@ export const POST = async (
     if (fetched.status >= 400) {
       return NextResponse.json(
         { status: "error", error: `URL の取得に失敗しました: HTTP ${fetched.status}` },
-        { status: 422 },
+        { status: 422, headers: rateHeaders },
       );
     }
 
@@ -97,7 +122,7 @@ export const POST = async (
     if (extracted.textContent.length < 50) {
       return NextResponse.json(
         { status: "error", error: "本文を抽出できませんでした" },
-        { status: 422 },
+        { status: 422, headers: rateHeaders },
       );
     }
 
@@ -124,7 +149,7 @@ export const POST = async (
       console.error("[ingest-url] AI 応答に extract_property ツール呼び出しが含まれていません");
       return NextResponse.json(
         { status: "error", error: "AI 応答に構造化抽出結果が含まれていません" },
-        { status: 502 },
+        { status: 502, headers: rateHeaders },
       );
     }
 
@@ -156,23 +181,27 @@ export const POST = async (
         draft,
         confidence: property.aiMeta.aiConfidence ?? 0.7,
       },
-      { status: 200 },
+      { status: 200, headers: rateHeaders },
     );
   } catch (error) {
-    return handleIngestError(error);
+    return handleIngestError(error, rateHeaders);
   }
 };
 
 /**
  * クライアントには定型文のみ、詳細はサーバーログのみに残す。
  * SSRF / サイズ超過 / タイムアウト / API キー欠落 はそれぞれ専用のステータスコードで返す。
+ * 失敗レスポンスにも残量ヘッダを載せ、クライアントが連続失敗時に判断できるようにする。
  */
-const handleIngestError = (error: unknown): NextResponse<IngestErrorResponse> => {
+const handleIngestError = (
+  error: unknown,
+  rateHeaders: Record<string, string>,
+): NextResponse<IngestErrorResponse> => {
   if (error instanceof SsrfDeniedError) {
     console.error("[ingest-url] SSRF denied", error.message);
     return NextResponse.json(
       { status: "error", error: "指定された URL は内部レンジを指しているため拒否しました" },
-      { status: 400 },
+      { status: 400, headers: rateHeaders },
     );
   }
   if (error instanceof FetchSafetyError) {
@@ -185,20 +214,26 @@ const handleIngestError = (error: unknown): NextResponse<IngestErrorResponse> =>
       fetch_failed: { status: 502, message: "URL の取得に失敗しました" },
     };
     const { status, message } = map[error.code];
-    return NextResponse.json({ status: "error", error: message }, { status });
+    return NextResponse.json({ status: "error", error: message }, { status, headers: rateHeaders });
   }
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes("aborted") || error instanceof DOMException) {
     console.error("[ingest-url] timeout", message);
     return NextResponse.json(
       { status: "error", error: "URL の取得がタイムアウトしました" },
-      { status: 504 },
+      { status: 504, headers: rateHeaders },
     );
   }
   if (message.includes("ANTHROPIC_API_KEY")) {
     // 環境変数欠落はユーザーに伝える価値がある（運用者向け）
-    return NextResponse.json({ status: "error", error: message }, { status: 503 });
+    return NextResponse.json(
+      { status: "error", error: message },
+      { status: 503, headers: rateHeaders },
+    );
   }
   console.error("[ingest-url] unexpected", error);
-  return NextResponse.json({ status: "error", error: "抽出に失敗しました" }, { status: 500 });
+  return NextResponse.json(
+    { status: "error", error: "抽出に失敗しました" },
+    { status: 500, headers: rateHeaders },
+  );
 };

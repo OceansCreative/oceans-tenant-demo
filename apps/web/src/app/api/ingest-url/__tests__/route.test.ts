@@ -30,6 +30,7 @@ import { setAnthropicClientForTesting } from "@/lib/ai/anthropic-client";
 import { extractReadableContent } from "@/lib/ai/html-extraction";
 import { EXTRACT_PROPERTY_TOOL_NAME } from "@/lib/ai/tools";
 import { fetchHtmlSafe } from "@/lib/ai/url-safety";
+import { __resetRateLimitForTesting } from "@/lib/rate-limit";
 import { POST } from "../route";
 
 const buildRequest = (body: unknown): Request =>
@@ -67,6 +68,8 @@ const VALID_TOOL_INPUT = {
 describe("POST /api/ingest-url (Tool Use)", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    // 各テストで in-memory バケットを初期化（前テストの消費が残らないように）
+    __resetRateLimitForTesting();
     // Default mock: fetch returns OK HTML, extraction returns long text.
     vi.mocked(fetchHtmlSafe).mockResolvedValue({
       url: "https://example.com/listings/1",
@@ -194,5 +197,44 @@ describe("POST /api/ingest-url (Tool Use)", () => {
     });
     const response = await POST(buildRequest({ url: "https://example.com/x" }));
     expect(response.status).toBe(422);
+  });
+
+  // v0.5.0 WS-1: レート制限
+  it("レート制限を使い切ると 429 + Retry-After を返す", async () => {
+    process.env.RATE_LIMIT_INGEST_CAPACITY = "1";
+    process.env.RATE_LIMIT_INGEST_REFILL_INTERVAL_MS = "60000";
+    try {
+      const fake = createToolUseClient(VALID_TOOL_INPUT, EXTRACT_PROPERTY_TOOL_NAME);
+      setAnthropicClientForTesting(toAnthropicClient(fake));
+      const buildReq = (): Request =>
+        new Request("http://localhost/api/ingest-url", {
+          method: "POST",
+          body: JSON.stringify({ url: "https://example.com/x" }),
+          headers: { "Content-Type": "application/json", "x-forwarded-for": "203.0.113.50" },
+        });
+      const r1 = await POST(buildReq());
+      expect(r1.status).toBe(200);
+      const r2 = await POST(buildReq());
+      expect(r2.status).toBe(429);
+      expect(r2.headers.get("Retry-After")).not.toBeNull();
+      expect(r2.headers.get("X-RateLimit-Limit")).toBe("1");
+      const body = (await r2.json()) as { error: string; retryAfterSeconds: number };
+      expect(body.error).toBe("rate_limited");
+      expect(body.retryAfterSeconds).toBeGreaterThan(0);
+    } finally {
+      delete process.env.RATE_LIMIT_INGEST_CAPACITY;
+      delete process.env.RATE_LIMIT_INGEST_REFILL_INTERVAL_MS;
+    }
+  });
+
+  it("成功応答にも X-RateLimit-* ヘッダが付与される", async () => {
+    setAnthropicClientForTesting(
+      toAnthropicClient(createToolUseClient(VALID_TOOL_INPUT, EXTRACT_PROPERTY_TOOL_NAME)),
+    );
+    const response = await POST(buildRequest({ url: "https://example.com/x" }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-RateLimit-Limit")).not.toBeNull();
+    expect(response.headers.get("X-RateLimit-Remaining")).not.toBeNull();
+    expect(response.headers.get("X-RateLimit-Reset")).not.toBeNull();
   });
 });

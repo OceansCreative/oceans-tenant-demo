@@ -12,6 +12,13 @@ import {
 } from "@/lib/ai/prompts/chat-search";
 import { UPDATE_CRITERIA_TOOL_NAME, updateCriteriaTool } from "@/lib/ai/tools";
 import { filterProperties } from "@/lib/filter-properties";
+import { getClientIp } from "@/lib/get-client-ip";
+import {
+  buildRateLimitHeaders,
+  buildRateLimitKey,
+  consumeRateLimit,
+  getChatSearchRateLimitConfig,
+} from "@/lib/rate-limit";
 import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 
 export const runtime = "nodejs";
@@ -141,6 +148,25 @@ export const isAbortError = (error: unknown): boolean => {
 };
 
 export const POST = async (request: Request): Promise<Response> => {
+  // レート制限はリクエスト形式検証より先に判定する。
+  // 形式不正のリクエストでも DoS にはなり得るため、IP 単位の流量を最初に絞る。
+  // SSE エンドポイントだが、429 は stream 開始前に通常 JSON で返す。
+  const rateKey = buildRateLimitKey(getClientIp(request), "chat-search");
+  const rateResult = consumeRateLimit(rateKey, getChatSearchRateLimitConfig());
+  const rateHeaders = buildRateLimitHeaders(rateResult);
+  if (!rateResult.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: "rate_limited",
+        retryAfterSeconds: rateResult.retryAfterSeconds,
+      }),
+      {
+        status: 429,
+        headers: { ...rateHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
+
   let parsed: z.infer<typeof RequestSchema>;
   try {
     const body = (await request.json()) as unknown;
@@ -149,7 +175,7 @@ export const POST = async (request: Request): Promise<Response> => {
     console.error("[chat-search] リクエスト形式不正", error);
     return new Response(JSON.stringify({ error: "リクエスト形式が不正です" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...rateHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -255,6 +281,7 @@ export const POST = async (request: Request): Promise<Response> => {
 
   return new Response(stream, {
     headers: {
+      ...rateHeaders,
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",

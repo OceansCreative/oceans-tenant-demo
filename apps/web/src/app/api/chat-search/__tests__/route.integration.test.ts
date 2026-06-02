@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/__tests__/anthropic-test-helpers";
 import { setAnthropicClientForTesting } from "@/lib/ai/anthropic-client";
 import { UPDATE_CRITERIA_TOOL_NAME } from "@/lib/ai/tools";
+import { __resetRateLimitForTesting } from "@/lib/rate-limit";
 import { POST } from "../route";
 
 /**
@@ -57,6 +58,8 @@ const buildRequest = (body: unknown, signal?: AbortSignal): Request => {
 describe("POST /api/chat-search (Tool Use)", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    // 各テストで in-memory バケットを初期化
+    __resetRateLimitForTesting();
   });
   afterEach(() => {
     setAnthropicClientForTesting(null);
@@ -212,6 +215,56 @@ describe("POST /api/chat-search (Tool Use)", () => {
     expect(events).toEqual([]);
     // SDK は呼ばれていない
     expect(fake.capturedArgs).toHaveLength(0);
+  });
+
+  // v0.5.0 WS-1: レート制限
+  it("レート制限を使い切ると 429 + Retry-After を返す", async () => {
+    process.env.RATE_LIMIT_CHAT_CAPACITY = "2";
+    process.env.RATE_LIMIT_CHAT_REFILL_INTERVAL_MS = "60000";
+    try {
+      const fake = createToolUseClient({ message: "OK" }, UPDATE_CRITERIA_TOOL_NAME);
+      setAnthropicClientForTesting(toAnthropicClient(fake));
+      const headers = { "Content-Type": "application/json", "x-forwarded-for": "203.0.113.1" };
+      const buildReq = (): Request =>
+        new Request("http://localhost/api/chat-search", {
+          method: "POST",
+          body: JSON.stringify({
+            sessionId: SESSION_ID,
+            messages: [{ role: "user", content: "x" }],
+          }),
+          headers,
+        });
+      // 2 リクエストは通る
+      const r1 = await POST(buildReq());
+      expect(r1.status).toBe(200);
+      const r2 = await POST(buildReq());
+      expect(r2.status).toBe(200);
+      // 3 件目は 429
+      const r3 = await POST(buildReq());
+      expect(r3.status).toBe(429);
+      expect(r3.headers.get("Retry-After")).not.toBeNull();
+      expect(r3.headers.get("X-RateLimit-Limit")).toBe("2");
+      const body = (await r3.json()) as { error: string; retryAfterSeconds: number };
+      expect(body.error).toBe("rate_limited");
+      expect(body.retryAfterSeconds).toBeGreaterThan(0);
+    } finally {
+      delete process.env.RATE_LIMIT_CHAT_CAPACITY;
+      delete process.env.RATE_LIMIT_CHAT_REFILL_INTERVAL_MS;
+    }
+  });
+
+  it("X-RateLimit-* ヘッダが正常応答にも付与される", async () => {
+    const fake = createToolUseClient({ message: "OK" }, UPDATE_CRITERIA_TOOL_NAME);
+    setAnthropicClientForTesting(toAnthropicClient(fake));
+    const response = await POST(
+      buildRequest({
+        sessionId: SESSION_ID,
+        messages: [{ role: "user", content: "x" }],
+      }),
+    );
+    expect(response.headers.get("X-RateLimit-Limit")).not.toBeNull();
+    expect(response.headers.get("X-RateLimit-Remaining")).not.toBeNull();
+    expect(response.headers.get("X-RateLimit-Reset")).not.toBeNull();
   });
 
   it("SDK 呼び出し中に abort されたらストリームは静かに閉じる（error イベントを出さない）", async () => {
