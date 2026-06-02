@@ -43,11 +43,19 @@ const ROUTER_STUB: RouterStub = {
 
 export const useRouter = (): RouterStub => ROUTER_STUB;
 
-// `URLSearchParams` を実体として返す。Story 側で `parameters.nextjs.navigation.query`
-// を渡したい場合は preview.tsx 側の decorator で globals を介して上書きする想定。
-export const useSearchParams = (): URLSearchParams => new URLSearchParams();
+/**
+ * Story 側で `window.history.replaceState` を使ってクエリ文字列を差し込めるよう、
+ * `URLSearchParams` は `window.location.search` を読みに行く実装にする。
+ * クエリが未設定なら従来通り空の `URLSearchParams` と等価な値を返すため、
+ * 既存 Story の挙動には影響しない（FilterChips など URL 状態に依存するコンポーネント向け）。
+ */
+export const useSearchParams = (): URLSearchParams => {
+  if (typeof window === "undefined") return new URLSearchParams();
+  return new URLSearchParams(window.location.search);
+};
 
-export const usePathname = (): string => "/";
+export const usePathname = (): string =>
+  typeof window === "undefined" ? "/" : window.location.pathname;
 
 export const useParams = <T extends Record<string, string | string[]> = Record<string, string>>():
   | T

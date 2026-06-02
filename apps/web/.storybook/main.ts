@@ -23,9 +23,15 @@ import tailwindcss from "@tailwindcss/vite";
  * - addon-interactions（CSF3 の `play()` を Storybook UI から実行可能に）
  *
  * stories は `src/components/**\/*.stories.tsx` を一括収集する。
+ * Foundation 系の MDX ドキュメントは `src/stories/*.mdx` で別管理し、Introduction が
+ * 最初に表示されるよう先頭に並べる（Storybook はパターン順を保持する）。
  */
 const config: StorybookConfig = {
-  stories: ["../src/components/**/*.stories.@(ts|tsx)"],
+  stories: [
+    "../src/stories/Introduction.mdx",
+    "../src/stories/*.mdx",
+    "../src/components/**/*.stories.@(ts|tsx)",
+  ],
   addons: ["@storybook/addon-essentials", "@storybook/addon-a11y", "@storybook/addon-interactions"],
   framework: {
     name: "@storybook/react-vite",
