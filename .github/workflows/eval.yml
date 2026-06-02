@@ -1,0 +1,125 @@
+name: AI 抽出評価
+
+# extract_property の抽出精度評価ハーネス (`scripts/eval/`) を CI から起動する。
+#
+# 実 Claude を呼ぶためコストが発生するので、起動条件を厳格化する:
+# - pull_request: `eval` ラベルが付いている時のみ実行（lab付与 or 既に付いた PR の synchronize）
+# - schedule: 週次（毎週月曜 09:00 JST = 00:00 UTC）に main で常時実行
+# - workflow_dispatch: 手動起動（main 以外でも可、運用上の動作確認用）
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+  schedule:
+    - cron: "0 0 * * 1" # 毎週月曜 09:00 JST
+  workflow_dispatch:
+
+# 同一 PR 上で 2 重起動しないように concurrency を絞る（コスト管理）
+concurrency:
+  group: eval-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# `gh pr comment` のために pull-requests: write が必要
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  eval:
+    name: extract_property 評価ハーネス
+    # PR の場合は `eval` ラベルが付いている時のみ起動。schedule / workflow_dispatch は常に通す。
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'eval')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # 全体スコアがこれを下回ったら CI を fail させる（実 Claude の精度急落検知用）
+      EVAL_SCORE_THRESHOLD: "0.6"
+    steps:
+      - name: ソース取得
+        uses: actions/checkout@v6
+
+      - name: pnpm をセットアップ
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9.15.4
+          run_install: false
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: 依存関係をインストール
+        run: pnpm install --frozen-lockfile
+
+      - name: コスト見積もりを表示
+        run: |
+          echo "::notice::実 Claude 実行コスト見積もり: 5 fixtures × ~3000 tokens × Sonnet 4.5 ≒ ~\$0.05"
+          echo "::notice::全体スコア閾値: ${EVAL_SCORE_THRESHOLD} を下回ると CI を fail させます"
+
+      - name: API キー有無を確認
+        id: check-key
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::warning::ANTHROPIC_API_KEY 未設定のためモックモードで実行します（精度評価としては無意味な点に注意）"
+            echo "mode=mock" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=real" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 評価ハーネス実行
+        id: run-eval
+        run: |
+          if [ "${{ steps.check-key.outputs.mode }}" = "mock" ]; then
+            node scripts/eval/run.mjs --mock --output-json /tmp/eval-result.json
+          else
+            node scripts/eval/run.mjs --output-json /tmp/eval-result.json
+          fi
+
+      - name: PR コメント用 Markdown を生成
+        env:
+          EVAL_MODE: ${{ steps.check-key.outputs.mode }}
+          EVAL_COST_USD: ${{ steps.check-key.outputs.mode == 'real' && '0.05' || '0.00' }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          node scripts/eval/ci-comment.mjs /tmp/eval-result.json > /tmp/eval-comment.md
+          echo "--- 生成された PR コメント ---"
+          cat /tmp/eval-comment.md
+
+      - name: PR にコメント投稿
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/eval-comment.md
+
+      - name: 評価結果を artifact として保存
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-result-${{ github.run_id }}
+          path: |
+            /tmp/eval-result.json
+            /tmp/eval-comment.md
+          retention-days: 30
+
+      - name: 全体スコア閾値チェック
+        # mock モードでは閾値判定をしない（モックは構造確認用で精度評価ではない）
+        if: steps.check-key.outputs.mode == 'real'
+        run: |
+          SCORE=$(node -e "const r = require('/tmp/eval-result.json'); process.stdout.write(String(r.aggregate.overallScore));")
+          echo "全体スコア: ${SCORE} / 閾値: ${EVAL_SCORE_THRESHOLD}"
+          node -e "
+            const score = Number('${SCORE}');
+            const threshold = Number('${EVAL_SCORE_THRESHOLD}');
+            if (Number.isNaN(score)) { console.error('スコア解析失敗'); process.exit(1); }
+            if (score < threshold) {
+              console.error('::error::全体スコア ' + (score * 100).toFixed(1) + '% が閾値 ' + (threshold * 100).toFixed(1) + '% を下回りました');
+              process.exit(1);
+            }
+            console.log('閾値クリア (' + (score * 100).toFixed(1) + '%)');
+          "
