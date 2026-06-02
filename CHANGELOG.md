@@ -8,13 +8,25 @@
 ## [Unreleased]
 
 ### Added
+
+- **next-intl による i18n インフラ整備（v0.8.0 WS-1 / フェーズ 1）** — 日本語（ja）/ 英語（en）2 言語の足場を導入
+  - `next-intl@^4.13.0` を apps/web に追加し、`messages/{ja,en}.json` に `common.*` / `nav.*` / `footer.*` / `home.*` / `seo.*` の 5 名前空間で初期キーを定義
+  - `src/i18n/{config,request}.ts` で locale 定義（`ja` / `en`）と RSC 用 `getRequestConfig` を集約
+  - `src/middleware.ts` で `Accept-Language` → `NEXT_LOCALE` cookie 初期化（URL prefix 不使用 / `localStorage` 禁止規約遵守）
+  - `LocaleSwitcher` コンポーネントを Header に統合（`<label>` + `<select>` で a11y 適合、切替時に cookie 書き換え + reload）
+  - Header / Footer を Client Component に変更し `useTranslations()` 経由で翻訳キー化
+  - トップページ `/` の hero / showcase / 機能カードを `home.*` で翻訳キー化（実装サンプル）
+  - `RootLayout` を `NextIntlClientProvider` でラップし、`<html lang>` と OG locale を実際の locale に同期
+  - `generateMetadata` を locale 依存に変更し、`seo.*` から OG/Twitter メタデータを生成
+  - テスト helper `renderWithI18n` を新設し、ja / en 両方の表示検証を可能化
+  - vitest 件数 439 → 452（+13: LocaleSwitcher 6 / i18n-config 4 / Header en 1 / Footer en 1 / Header LocaleSwitcher 1）
+  - **v0.8.1 残作業**: `/search`, `/chat`, `/agent`, `/properties/[slug]` 等のコンポーネント文言の全翻訳化、Sanity 文言（建物種別ラベル等）の locale 切替
 - Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
 - TypeScript 6.x 対応
 - Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
 - WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
 - Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
-- i18n（日英スイッチ）足場の整備（next-intl 等）
 
 ## [0.7.0] — 2026-06-03
 

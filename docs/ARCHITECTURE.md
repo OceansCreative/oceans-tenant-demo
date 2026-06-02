@@ -247,7 +247,34 @@ erDiagram
 
 ## 国際化
 
-現状は日本語のみ。`<html lang="ja">` 固定。将来 `next-intl` を検討。
+v0.8.0 WS-1（フェーズ 1）で `next-intl` を導入し、日本語（`ja`）/ 英語（`en`）2 言語の足場を整えた。
+URL prefix は使わず、`NEXT_LOCALE` cookie で locale を保持する（CLAUDE.md の `localStorage` 禁止規約と整合）。
+
+### 構成
+
+| レイヤ | 役割 | ファイル |
+|---|---|---|
+| 設定 | locale 一覧 / cookie 名 / 型ガード | `apps/web/src/i18n/config.ts` |
+| RSC 設定 | `getRequestConfig` で locale → messages 解決 | `apps/web/src/i18n/request.ts` |
+| 翻訳辞書 | 名前空間 `common` / `nav` / `footer` / `home` / `seo` | `apps/web/messages/{ja,en}.json` |
+| Middleware | `Accept-Language` → cookie 初期化 | `apps/web/src/middleware.ts` |
+| Provider | RSC で locale / messages を Client に橋渡し | `apps/web/src/app/layout.tsx` |
+| 切替 UI | `<select>` + cookie 書き換え + reload | `apps/web/src/components/layout/LocaleSwitcher.tsx` |
+
+### locale 解決の優先順位
+
+1. `NEXT_LOCALE` cookie（ユーザーが明示的に切り替えた値）
+2. `Accept-Language` ヘッダの先頭マッチ
+3. デフォルト locale（`ja`）
+
+### MVP スコープ（フェーズ 1）
+
+翻訳キー化済み: Header / Footer / トップページ `/`（hero / 機能カード）/ RootLayout metadata。
+
+### v0.8.1 残作業（フェーズ 2）
+
+`/search`, `/chat`, `/agent`, `/properties/[slug]` 等のコンポーネント文言の全翻訳化と、
+Sanity 文言（建物種別ラベル等）の locale 切替は v0.8.1 で実装予定。
 
 ## アクセシビリティ
 

@@ -33,6 +33,7 @@ OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude A
 - 📦 **Sanity Headless CMS** — Property / RealEstateCompany / BusinessCategory / Area / SearchSession の 5 ドキュメントタイプを Zod スキーマと 1:1 で運用
 - ⚡ **Next.js 15 App Router** — Server Components / SSE ストリーミング / TypedRoutes
 - 🎨 **Tailwind CSS v4** — oklch カラートークン / Noto Sans JP / モバイルファースト / a11y 配慮
+- 🌐 **多言語対応（ja / en）** — `next-intl` + cookie ベースの locale 切替（v0.8.0 でフェーズ 1 として導入。Header / Footer / トップページが切替可能）
 - 🐍 **Python 補助** — pydantic + faker でダミー物件 50 件を生成し Sanity にシード
 
 ## 🎬 操作デモ
