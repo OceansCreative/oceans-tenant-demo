@@ -8,12 +8,50 @@
 ## [Unreleased]
 
 ### Added
-- スクリーンショット / GIF の正式撮影（docs/images）
 - Sanity 実プロジェクトへの GROQ 接続（mock 撤去）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開
-- 一覧のページネーション
 - TypeScript 6.x 対応
-- Lighthouse Performance 90+ を CI で計測
+- GIF 形式の操作デモ追加
+
+## [0.3.0] — 2026-06-02
+
+Phase 5 マイナー継続。可視性（README スクショ）/ 体感品質（ページネーション）/ 客観計測（Lighthouse CI）の 3 ワークストリームを `/ship` 並列実装で投入し、OSS リファレンス実装としての"見られる状態"を底上げ。
+
+### Added
+
+- **`/search` のページネーション (#101)** — Server Component で `?page=1&pageSize=20` を URL に同期。`searchCriteriaSchema` に `page` (1–10000) / `pageSize` (10–100) を追加し、GROQ projection を `[$offset...$offset + $limit]` に切替
+  - `parseSearchCriteria` / `serializeSearchCriteria` で URL ↔ criteria の双方向変換を保証。page=1 / pageSize=20 はデフォルトとして URL から省略（共有リンクを短く保つ）
+  - `filter-properties` の戻り値を `Property[]` から `{ items, totalCount }` に変更し、ページ数計算を pure に
+  - `SearchPagination` Server Component を新設。AI チャット由来の絞り込みでも URL が走るためページ遷移と整合
+  - DoS 防御として page <= 10000 / pageSize <= 100 を Zod で明示（GROQ の `$offset...$offset + $limit` に直接渡る）
+  - apps/web vitest +13 ケース（criteria parse / serialize / GROQ offset 導出 / SearchPagination 描画）
+- **README にスクリーンショット正式埋め込み (#100)** — `scripts/screenshots/capture.mjs` で Playwright + sharp による撮影パイプラインを整備
+  - デスクトップ 6 + モバイル 6 計 12 PNG を `docs/images/{desktop,mobile}/` に commit
+  - README の placeholder を Hero 5 セクション + モバイル 1 行に差し替え、初見訪問者が秒で価値を把握できる構成に
+- **Lighthouse CI ワークフロー (#99)** — `.github/workflows/lighthouse.yml` 新設。`/`, `/search`, `/chat` の 3 URL を各 3 ラン中央値で計測
+  - `@lhci/cli` を導入し `apps/web/.lighthouserc.cjs` で Performance / Accessibility / BestPractices / SEO の閾値を assertions として定義
+  - PR ごとにスコアが PR コメントに自動投稿され、ロードマップの "Lighthouse Performance 90+" を CI で機械的に担保
+  - 結果アーティファクトを GitHub Actions に保存し、リグレッションの過去比較を可能に
+
+### Changed
+
+- `package.json` version を 0.3.0 に
+- README から旧 placeholder を撤去し、撮影済みスクリーンショットの正規パスに差し替え
+
+### Process
+
+- `/ship` 並列実装の 2 サイクル目。WS-1 (pagination) / WS-2 (screenshots) / WS-3 (Lighthouse CI) を worktree 分離サブエージェントで同時着手し、PR #99 → #100 → #101 の順に CI green を確認しながらマージ
+- PR #100 で `pnpm-lock.yaml` の競合 (sharp vs @lhci/cli) が発生したが、`git checkout --theirs` + `pnpm install` 再生成で解消
+
+### Tests
+
+- apps/web: 192 → **205** ケース pass（+13: ページネーション関連）
+- shared / Python pytest / Playwright / CodeQL / Lighthouse 全 green
+
+### Docs
+
+- README の "Screenshots" セクションを placeholder から実画像 12 枚埋め込みに置換
+- CHANGELOG.md に v0.3.0 セクション追加
 
 ## [0.2.0] — 2026-06-02
 
