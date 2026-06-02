@@ -7,6 +7,7 @@ import {
   buildExtractPropertyUserPrompt,
   PROPERTY_EXTRACT_SYSTEM_PROMPT,
 } from "@/lib/ai/prompts/extract-property";
+import { EXTRACT_PROPERTY_TOOL_NAME, extractPropertyTool } from "@/lib/ai/tools";
 import { FetchSafetyError, fetchHtmlSafe, SsrfDeniedError } from "@/lib/ai/url-safety";
 
 export const runtime = "nodejs";
@@ -27,11 +28,37 @@ type IngestErrorResponse = {
   readonly error: string;
 };
 
-const parseClaudeJson = (text: string): unknown => {
-  // Claude が ```json ... ``` で囲んだ場合の救済
-  const trimmed = text.trim();
-  const fenceMatch = trimmed.match(/```(?:json)?\n([\s\S]*?)\n```/);
-  return JSON.parse(fenceMatch?.[1] ?? trimmed);
+/**
+ * AI 抽出時に Claude へ追加で渡したい補助フィールド。
+ *
+ * `propertySchema` には含まれないが、AI 出力経由で取りたい情報（信頼度自己申告）を
+ * 別ツール入力フィールドとして許容する。Tool Use 化に伴い、Claude が input に
+ * `aiConfidence` を含めた場合に拾えるようにする。
+ */
+const AiExtractedInputSchema = z
+  .object({
+    aiConfidence: z.number().min(0).max(1).optional(),
+  })
+  .passthrough();
+
+/**
+ * Claude の `tool_use` ブロックから `extract_property` の input を取り出す。
+ *
+ * 仕様で `tool_choice` を `extract_property` に固定しているため、必ず 1 件は
+ * 返ってくる前提だが、防御的に存在チェックする。
+ */
+const findExtractPropertyToolUse = (
+  blocks: ReadonlyArray<{ type: string }>,
+): { input: unknown } | null => {
+  for (const block of blocks) {
+    if (block.type === "tool_use") {
+      const tu = block as { type: "tool_use"; name: string; input: unknown };
+      if (tu.name === EXTRACT_PROPERTY_TOOL_NAME) {
+        return { input: tu.input };
+      }
+    }
+  }
+  return null;
 };
 
 export const POST = async (
@@ -79,6 +106,8 @@ export const POST = async (
       model: getAnthropicModel(),
       max_tokens: 2048,
       system: PROPERTY_EXTRACT_SYSTEM_PROMPT,
+      tools: [extractPropertyTool],
+      tool_choice: { type: "tool", name: EXTRACT_PROPERTY_TOOL_NAME },
       messages: [
         {
           role: "user",
@@ -90,23 +119,31 @@ export const POST = async (
       ],
     });
 
-    const textBlock = completion.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      console.error("[ingest-url] AI 応答にテキストブロックが含まれていません");
+    const toolUse = findExtractPropertyToolUse(completion.content);
+    if (!toolUse) {
+      console.error("[ingest-url] AI 応答に extract_property ツール呼び出しが含まれていません");
       return NextResponse.json(
-        { status: "error", error: "AI 応答にテキストが含まれていません" },
+        { status: "error", error: "AI 応答に構造化抽出結果が含まれていません" },
         { status: 502 },
       );
     }
 
-    const json = parseClaudeJson(textBlock.text);
-    // listedByRef は AI には不明なので、デモ用の既定値で埋める
+    // listedByRef は AI には不明なので、デモ用の既定値で埋める。
+    // aiConfidence は Claude 側で input に混ぜてくる可能性があるため受け取る。
+    const rawInput =
+      typeof toolUse.input === "object" && toolUse.input !== null
+        ? (toolUse.input as Record<string, unknown>)
+        : {};
+    const aiExtras = AiExtractedInputSchema.safeParse(rawInput);
+    const aiConfidence = aiExtras.success ? (aiExtras.data.aiConfidence ?? 0.7) : 0.7;
+    // AI が誤って aiConfidence をトップレベルに置いてしまった場合は除去
+    const { aiConfidence: _omitted, ...inputWithoutExtras } = rawInput;
     const draftWithDefaults = {
-      ...(typeof json === "object" && json !== null ? json : {}),
-      listedByRef: (json as { listedByRef?: string }).listedByRef ?? "company-001",
+      ...inputWithoutExtras,
+      listedByRef: (rawInput as { listedByRef?: string }).listedByRef ?? "company-001",
       aiMeta: {
         aiExtracted: true,
-        aiConfidence: (json as { aiConfidence?: number }).aiConfidence ?? 0.7,
+        aiConfidence,
         sourceUrl: fetched.url,
       },
     };

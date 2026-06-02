@@ -29,8 +29,9 @@ flowchart LR
 1. リクエスト検証（`url` のスキーマと http(s) チェック）
 2. `fetch(url)` で HTML 取得（タイムアウト 12 秒、Bot User-Agent）
 3. `extractReadableContent()` で Mozilla Readability + Cheerio fallback
-4. Claude `messages.create()` で JSON 抽出（システムプロンプトに厳守事項）
-5. 応答テキスト → `JSON.parse`（コードフェンス除去）→ `propertySchema.parse()` で Zod 検証
+4. Claude `messages.create()` を `tools: [extractPropertyTool]` と
+   `tool_choice: { type: "tool", name: "extract_property" }` で呼び出し
+5. 応答の `tool_use` ブロックの `input` を `propertySchema.parse()` で Zod 検証
 6. `derivePropertyTsubo()` で坪数を計算
 7. レスポンス: `{ status: "ok", draft, confidence }`
 
@@ -47,7 +48,7 @@ flowchart LR
 | 応答サイズ上限超過 (5MB) | 413 | `FetchSafetyError(size_exceeded)` |
 | リダイレクト 3 ホップ超過 | 421 | `FetchSafetyError(too_many_redirects)` |
 | リダイレクト Location 欠落 | 502 | `FetchSafetyError(invalid_redirect)` |
-| AI 応答にテキストなし | 502 | content blocks に text なし |
+| AI 応答に tool_use なし | 502 | content blocks に `extract_property` の tool_use なし |
 | Claude API 未設定 | 503 | "ANTHROPIC_API_KEY" を含むメッセージ |
 | Claude タイムアウト | 504 | abort signal |
 | Zod 検証失敗 / その他 | 500 | クライアントには定型文、詳細は `console.error` |
@@ -107,7 +108,11 @@ type SseEvent =
 
 ### Claude 出力の再バリデーション原則
 
-Claude が返した `extractedCriteria` は、`packages/shared/src/searchCriteria/schema.ts` の `searchCriteriaSchema.safeParse()` を **必ず** 通してから後続経路（`filterProperties` や将来の GROQ 生成）に流す。
+Claude が `update_criteria` ツールの `input.criteria` で返した検索条件は、
+`packages/shared/src/searchCriteria/schema.ts` の `searchCriteriaSchema.safeParse()`
+を **必ず** 通してから後続経路（`filterProperties` や将来の GROQ 生成）に流す。
+Tool Use を使うことで構造そのものは Anthropic 側で保証されるが、列挙値違反や
+`superRefine` のクロスフィールド検証は依然サーバー側で実施する必要がある。
 
 - 列挙値違反（未知の都道府県・建物形態・物件状態など）は拒否
 - 範囲違反（`minRent > maxRent`、`minArea > maxArea`）は superRefine で拒否
@@ -127,15 +132,68 @@ Claude が返した `extractedCriteria` は、`packages/shared/src/searchCriteri
 
 詳細はサーバー側 `console.error` のみに残し、SDK スタック断片等が SSE 経由で漏れないようにする。
 
-## Zod ⇄ Claude tool use の対応
+## Zod ⇄ Claude Tool Use の対応（v0.2.0 で本格採用）
 
-現状は Claude の通常の messages API で JSON を返させる方式を採用しています。
-将来的に Claude の Tool Use 機能で `propertySchema` を JSON Schema として渡すリファクタを検討します。
+`/api/ingest-url` と `/api/chat-search` のいずれも、Claude の **Tool Use 機能** を
+使って構造化応答を強制しています。Claude には自由記述テキストではなく必ず
+ツール呼び出し（`tool_use` ブロック）を返してもらい、サーバー側はその `input`
+を Zod スキーマで再バリデーションして後続処理に渡します。
 
-| Zod スキーマ | Tool Use の input_schema |
-|---|---|
-| `propertySchema` | `extract_property` ツールの `input_schema` |
-| `extractedSearchCriteriaSchema` | `update_criteria` ツールの `input_schema` |
+**実装**: [`apps/web/src/lib/ai/tools.ts`](../apps/web/src/lib/ai/tools.ts)
+
+```mermaid
+flowchart LR
+  zod[Zod スキーマ] -->|zod-to-json-schema| jsonschema[JSON Schema]
+  jsonschema --> tool[Anthropic Tool 定義]
+  tool -->|messages.create<br/>tools: [...]| claude[Claude]
+  claude -->|tool_use ブロック<br/>input: 構造化 object| server[Server]
+  server -->|safeParse| zod
+```
+
+| Zod スキーマ | ツール名 | 利用 API | 説明 |
+|---|---|---|---|
+| `propertySchema` | `extract_property` | `/api/ingest-url` | HTML 本文から物件情報を構造化抽出 |
+| `searchCriteriaSchema` | `update_criteria` | `/api/chat-search` | ユーザー発話から検索条件を抽出（`message` フィールドに対話応答も同梱） |
+
+**Tool Use のメリット**:
+
+- 自由記述出力（` ```json ` で囲まれた / 囲まれていない JSON が混在する）の
+  パースぶれを排除。Claude 側の API 仕様で構造化が保証される
+- `tool_choice: { type: "tool", name: ... }` で **必ず** そのツールを呼ばせるため、
+  「JSON 以外の出力をしないこと」とプロンプトで指示するより堅牢
+- `input_schema` を Anthropic 側にも渡せるため、Claude が事前にスキーマを
+  考慮した生成を行いやすい（列挙値・enum の遵守率が向上）
+- Zod → JSON Schema は [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema) で
+  単一真実から自動生成。**スキーマ二重管理を回避**できる
+
+**サーバー側の防御**:
+
+ツール経由でも列挙値違反や `superRefine` のクロスフィールド検証は起こり得るため、
+`tool_use.input` を必ず `safeParse` に通す。失敗時は fallback（現条件維持 + 定型文）。
+
+**`update_criteria` ツールの input 仕様**:
+
+```ts
+{
+  message: string;             // 必須。ユーザー向け 1〜2 文
+  criteria?: SearchCriteria;   // 任意。省略 / null は「条件は変えない」
+}
+```
+
+`criteria` を省略可能にしているのは、Claude が「もう少し詳しく教えてください」
+のように条件抽出を保留して質問だけ返すケースを許容するため。
+
+## クライアント切断時の Anthropic 呼び出し中断（Issue #82）
+
+`/api/chat-search` の `POST` ハンドラは、`request.signal` をそのまま
+`client.messages.create(args, { signal })` の第 2 引数に伝搬し、Anthropic SDK の
+リクエストを中断できるようにしています。さらに `ReadableStream` の `start`
+内で `signal` の `abort` イベントを購読し、発火時は `controller.close()` で
+SSE ストリームを閉じます。abort 由来の例外（`APIUserAbortError` / `AbortError` /
+メッセージに `abort` を含むエラー）は SSE `error` イベントを流さず静かに終了します。
+
+これにより、ユーザーがブラウザタブを閉じた / ページ遷移したケースで、
+無駄に Anthropic 課金トークンを消費し続けることを防ぎます。
 
 ## レート制限への対処
 
@@ -155,4 +213,6 @@ Claude API は 429 を返すことがあります。本実装では:
 
 - **秘密情報をプロンプト本文に含めないこと**。`extractedHtmlText` は最大 12,000 文字でトリム
 - **本物の URL を本リポジトリのドキュメント / テストに固定しないこと**（spec の禁止事項）
-- **ストリーミング応答の早期終了**を許容できる設計にする（ユーザーが画面を離れたら中止する未来想定）
+- **ストリーミング応答の早期終了**を許容できる設計にする（`/api/chat-search` は
+  `request.signal` を SDK に伝搬し、クライアント切断時に Anthropic 呼び出しを
+  中断する — Issue #82）

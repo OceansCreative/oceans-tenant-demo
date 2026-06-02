@@ -8,16 +8,18 @@ exports[`CHAT_SEARCH_SYSTEM_PROMPT > スナップショット 1`] = `
 1. 直近のメッセージから検索条件 (prefecture / city / rent 範囲 / area 範囲 / buildingTypes /
    conditions / businessCategoryRefs / freeText) を抽出する
 2. 条件がまだ揃わない場合は不足を 1 〜 2 つ質問で確認する
-3. 抽出した条件は extractedCriteria に常に full set で返す（差分ではない）
-4. 質問文は丁寧で簡潔（最長 2 文）
+3. 抽出した条件は \`criteria\` に常に full set で返す（差分ではない）
+4. ユーザー向けの応答文は \`message\` フィールドに丁寧で簡潔に書く（最長 2 文）
 
-JSON 以外の出力をしないこと。
+応答は必ず \`update_criteria\` ツール呼び出しで返すこと。条件が不足していて
+更新できない場合は \`criteria\` を省略し、\`message\` だけで質問してもよい。
 "
 `;
 
 exports[`PROPERTY_EXTRACT_SYSTEM_PROMPT > 厳守事項を含むスナップショット 1`] = `
 "あなたは日本の店舗物件情報を扱う構造化抽出エージェントです。
-HTML 本文から店舗物件の情報を抽出し、与えられた Zod スキーマ互換 JSON で返してください。
+HTML 本文から店舗物件の情報を抽出し、必ず \`extract_property\` ツール経由で
+構造化された入力として返してください。
 
 厳守事項:
 1. 抽出できないフィールドは省略する（null や "" で埋めない）
@@ -26,5 +28,6 @@ HTML 本文から店舗物件の情報を抽出し、与えられた Zod スキ�
 4. 都道府県は 47 都道府県のいずれかに正規化する
 5. slug は半角英数字とハイフンのみで構成し、最大 96 文字
 6. publishedAt は ISO 8601（タイムゾーン Z）に揃える
-7. JSON 以外の文字列を出力しない"
+7. 応答は必ず \`extract_property\` ツール呼び出しで返し、自由記述テキストを返さない
+8. listedByRef が分からない場合は省略してよい（サーバー側でデモ用既定値を補完する）"
 `;

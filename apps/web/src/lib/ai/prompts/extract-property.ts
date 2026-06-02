@@ -5,7 +5,8 @@
  */
 
 export const PROPERTY_EXTRACT_SYSTEM_PROMPT = `あなたは日本の店舗物件情報を扱う構造化抽出エージェントです。
-HTML 本文から店舗物件の情報を抽出し、与えられた Zod スキーマ互換 JSON で返してください。
+HTML 本文から店舗物件の情報を抽出し、必ず \`extract_property\` ツール経由で
+構造化された入力として返してください。
 
 厳守事項:
 1. 抽出できないフィールドは省略する（null や "" で埋めない）
@@ -14,7 +15,8 @@ HTML 本文から店舗物件の情報を抽出し、与えられた Zod スキ�
 4. 都道府県は 47 都道府県のいずれかに正規化する
 5. slug は半角英数字とハイフンのみで構成し、最大 96 文字
 6. publishedAt は ISO 8601（タイムゾーン Z）に揃える
-7. JSON 以外の文字列を出力しない`;
+7. 応答は必ず \`extract_property\` ツール呼び出しで返し、自由記述テキストを返さない
+8. listedByRef が分からない場合は省略してよい（サーバー側でデモ用既定値を補完する）`;
 
 export type ExtractPropertyUserPromptArgs = {
   readonly sourceUrl: string;
