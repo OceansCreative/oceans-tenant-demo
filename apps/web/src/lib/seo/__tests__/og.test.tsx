@@ -84,7 +84,17 @@ const fontNotFound = (): Response => new Response("404", { status: 404 });
 const buildFetchMock = (cssRes: FetchOutcome, fontRes?: FetchOutcome) => {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
-    if (url.includes("fonts.googleapis.com")) {
+    // CodeQL `js/incomplete-url-substring-sanitization` 対策: 部分文字列ではなく hostname を厳密に比較。
+    // テスト用の fetch スタブとは言え、`fonts.googleapis.com.attacker.com` のようなドメインを
+    // 誤ヒットさせないパターンをサンプル実装としても示しておく。
+    const hostname = (() => {
+      try {
+        return new URL(url).hostname;
+      } catch {
+        return "";
+      }
+    })();
+    if (hostname === "fonts.googleapis.com") {
       if (cssRes instanceof Error) throw cssRes;
       return cssRes();
     }
