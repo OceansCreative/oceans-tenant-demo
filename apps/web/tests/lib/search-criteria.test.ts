@@ -12,6 +12,8 @@ describe("parseSearchCriteria", () => {
     expect(criteria.conditions).toEqual([]);
     expect(criteria.businessCategoryRefs).toEqual([]);
     expect(criteria.prefecture).toBeUndefined();
+    expect(criteria.page).toBe(1);
+    expect(criteria.pageSize).toBe(20);
   });
 
   it("有効な都道府県を受け入れる", () => {
@@ -65,6 +67,39 @@ describe("parseSearchCriteria", () => {
     expect(criteria.minArea).toBeUndefined();
     expect(criteria.maxArea).toBe(50);
   });
+
+  describe("page / pageSize", () => {
+    it("page=3 / pageSize=50 を読み込む", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("page=3&pageSize=50"));
+      expect(criteria.page).toBe(3);
+      expect(criteria.pageSize).toBe(50);
+    });
+
+    it("page が 0 のときは default(1) にフォールバック", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("page=0"));
+      expect(criteria.page).toBe(1);
+    });
+
+    it("page が範囲外（10001）のときは default(1) にフォールバック", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("page=10001"));
+      expect(criteria.page).toBe(1);
+    });
+
+    it("page が文字列のときは default(1)", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("page=abc"));
+      expect(criteria.page).toBe(1);
+    });
+
+    it("pageSize が下限（10）未満なら default(20)", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("pageSize=5"));
+      expect(criteria.pageSize).toBe(20);
+    });
+
+    it("pageSize が上限（100）超なら default(20)", () => {
+      const criteria = parseSearchCriteria(new URLSearchParams("pageSize=200"));
+      expect(criteria.pageSize).toBe(20);
+    });
+  });
 });
 
 describe("serializeSearchCriteria", () => {
@@ -73,6 +108,8 @@ describe("serializeSearchCriteria", () => {
       buildingTypes: [],
       conditions: [],
       businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
     });
     expect(params.toString()).toBe("");
   });
@@ -82,14 +119,40 @@ describe("serializeSearchCriteria", () => {
       buildingTypes: ["street_level", "building_inline"],
       conditions: [],
       businessCategoryRefs: ["category-cafe"],
+      page: 1,
+      pageSize: 20,
     });
     expect(params.getAll("buildingType")).toEqual(["street_level", "building_inline"]);
     expect(params.getAll("biz")).toEqual(["category-cafe"]);
   });
 
+  it("page=1 / pageSize=20 はデフォルトなので URL から省く", () => {
+    const params = serializeSearchCriteria({
+      buildingTypes: [],
+      conditions: [],
+      businessCategoryRefs: [],
+      page: 1,
+      pageSize: 20,
+    });
+    expect(params.has("page")).toBe(false);
+    expect(params.has("pageSize")).toBe(false);
+  });
+
+  it("page=2 はクエリに含む / pageSize=50 もクエリに含む", () => {
+    const params = serializeSearchCriteria({
+      buildingTypes: [],
+      conditions: [],
+      businessCategoryRefs: [],
+      page: 2,
+      pageSize: 50,
+    });
+    expect(params.get("page")).toBe("2");
+    expect(params.get("pageSize")).toBe("50");
+  });
+
   it("round-trip: parse -> serialize -> parse が同じ", () => {
     const initial = new URLSearchParams(
-      "prefecture=東京都&minRent=100000&maxRent=500000&buildingType=street_level&buildingType=basement&biz=category-cafe&q=新宿",
+      "prefecture=東京都&minRent=100000&maxRent=500000&buildingType=street_level&buildingType=basement&biz=category-cafe&q=新宿&page=2&pageSize=50",
     );
     const first = parseSearchCriteria(initial);
     const reSerialized = serializeSearchCriteria(first);
@@ -100,9 +163,15 @@ describe("serializeSearchCriteria", () => {
 
 describe("isEmptyCriteria", () => {
   it("空 criteria は true", () => {
-    expect(isEmptyCriteria({ buildingTypes: [], conditions: [], businessCategoryRefs: [] })).toBe(
-      true,
-    );
+    expect(
+      isEmptyCriteria({
+        buildingTypes: [],
+        conditions: [],
+        businessCategoryRefs: [],
+        page: 1,
+        pageSize: 20,
+      }),
+    ).toBe(true);
   });
 
   it("1 つでも値があれば false", () => {
@@ -112,6 +181,20 @@ describe("isEmptyCriteria", () => {
         buildingTypes: [],
         conditions: [],
         businessCategoryRefs: [],
+        page: 1,
+        pageSize: 20,
+      }),
+    ).toBe(false);
+  });
+
+  it("page=2 でも isEmptyCriteria は false（URL に page=2 が乗るため）", () => {
+    expect(
+      isEmptyCriteria({
+        buildingTypes: [],
+        conditions: [],
+        businessCategoryRefs: [],
+        page: 2,
+        pageSize: 20,
       }),
     ).toBe(false);
   });

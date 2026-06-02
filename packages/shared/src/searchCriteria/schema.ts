@@ -32,6 +32,18 @@ export const searchCriteriaSchema = z
       .max(20)
       .default([]),
     q: z.string().min(1).max(200).optional(),
+    /**
+     * ページネーション: 1-indexed のページ番号。
+     * 上限 10000 は実用上ほぼ到達しない値だが、URL から壊れた巨大値が流入したときの
+     * DoS 防止として明示する（GROQ の `[$offset...]` に直接渡るため）。
+     */
+    page: z.number().int().min(1).max(10000).default(1),
+    /**
+     * ページネーション: 1 ページあたりの件数。
+     * 下限 10 は UI の見栄え（カード 2〜3 列でほぼ埋まる）、
+     * 上限 100 は GROQ の `[$offset...$offset + $limit]` で取りすぎないための安全弁。
+     */
+    pageSize: z.number().int().min(10).max(100).default(20),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -76,6 +88,8 @@ export const EMPTY_SEARCH_CRITERIA: SearchCriteria = {
   buildingTypes: [],
   conditions: [],
   businessCategoryRefs: [],
+  page: 1,
+  pageSize: 20,
 };
 
 export type SearchCriteriaInput = z.input<typeof searchCriteriaSchema>;
