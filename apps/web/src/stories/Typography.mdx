@@ -1,0 +1,82 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Foundation/Typography" />
+
+# タイポグラフィ
+
+OceansTenant の UI は **Noto Sans JP** を主役に、`next/font/google` で self-host しています。
+未定義時のフォールバックは `system-ui` → `-apple-system` → `Segoe UI` → `sans-serif` の順で、
+Storybook 環境では `next/font` の CSS 変数が注入されないため `system-ui` が描画されます。
+
+font 設定の単一ソースは `apps/web/src/styles/globals.css` の `@theme` ブロックです。
+
+```css
+--font-sans:
+  var(--font-noto-sans-jp), "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+```
+
+## 見出し（Tailwind 既定値）
+
+Tailwind v4 の `text-*` クラスをそのまま採用しています。Story 上ではフォールバックフォントで
+描画されるため、本番のレンダリングは `pnpm dev` で確認してください。
+
+<div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6">
+  <div>
+    <h1 className="text-4xl font-bold text-neutral-900">見出し H1 / text-4xl / font-bold</h1>
+    <p className="mt-1 text-xs text-neutral-500">36px · line-height 1.111 · weight 700</p>
+  </div>
+  <div>
+    <h2 className="text-3xl font-semibold text-neutral-900">見出し H2 / text-3xl / font-semibold</h2>
+    <p className="mt-1 text-xs text-neutral-500">30px · line-height 1.2 · weight 600</p>
+  </div>
+  <div>
+    <h3 className="text-2xl font-semibold text-neutral-900">見出し H3 / text-2xl / font-semibold</h3>
+    <p className="mt-1 text-xs text-neutral-500">24px · line-height 1.333 · weight 600</p>
+  </div>
+  <div>
+    <h4 className="text-xl font-semibold text-neutral-900">見出し H4 / text-xl / font-semibold</h4>
+    <p className="mt-1 text-xs text-neutral-500">20px · line-height 1.4 · weight 600</p>
+  </div>
+  <div>
+    <h5 className="text-lg font-semibold text-neutral-900">見出し H5 / text-lg / font-semibold</h5>
+    <p className="mt-1 text-xs text-neutral-500">18px · line-height 1.556 · weight 600</p>
+  </div>
+  <div>
+    <h6 className="text-base font-semibold text-neutral-900">見出し H6 / text-base / font-semibold</h6>
+    <p className="mt-1 text-xs text-neutral-500">16px · line-height 1.5 · weight 600</p>
+  </div>
+</div>
+
+## 本文 / 補助
+
+<div className="mt-6 space-y-4 rounded-2xl border border-neutral-200 bg-white p-6">
+  <div>
+    <p className="text-base text-neutral-900">
+      本文 / text-base · 16px。物件説明・チャット応答・フォーム入力など、ユーザが読む主要テキストはこのサイズを基本とします。
+    </p>
+    <p className="mt-1 text-xs text-neutral-500">16px · line-height 1.5 · weight 400</p>
+  </div>
+  <div>
+    <p className="text-sm text-neutral-700">
+      補助テキスト / text-sm · 14px。リスト項目内の説明や、メタ情報を補う用途に使います。
+    </p>
+    <p className="mt-1 text-xs text-neutral-500">14px · line-height 1.429 · weight 400</p>
+  </div>
+  <div>
+    <p className="text-xs text-neutral-500">
+      キャプション / text-xs · 12px。ヘルプテキスト・ステータス表示・ラベル補助などに使います。
+    </p>
+    <p className="mt-1 text-xs text-neutral-500">12px · line-height 1.333 · weight 400</p>
+  </div>
+  <div>
+    <p className="font-mono text-xs text-neutral-700">
+      monospace / セッション ID やデバッグ JSON の表示に使用（Tailwind の font-mono）。
+    </p>
+  </div>
+</div>
+
+## グローバル設定
+
+- `body` の `line-height: 1.7`（日本語可読性のためのややゆとりがあるベース）
+- `::selection` 背景は `var(--color-brand-100)`（後述 Colors を参照）
+- `:focus-visible` は brand-500 の 2px outline + offset 2px
