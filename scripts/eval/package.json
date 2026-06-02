@@ -1,0 +1,15 @@
+{
+  "name": "oceans-tenant-eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "extract_property の抽出精度を測る評価ハーネス（Gold Standard + メトリクス）",
+  "scripts": {
+    "eval": "node run.mjs",
+    "eval:mock": "node run.mjs --mock",
+    "test": "node --test __tests__/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
