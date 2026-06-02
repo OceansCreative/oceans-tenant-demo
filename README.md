@@ -164,7 +164,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt 'pydantic[ema
 ```bash
 pnpm lint            # Biome
 pnpm typecheck       # tsc --noEmit（全ワークスペース）
-pnpm test            # Vitest（全ワークスペース）
+pnpm test            # Vitest + scripts/eval の node:test（全ワークスペース）
 pnpm test:coverage   # カバレッジ付き（apps/web と packages/shared）
 
 # E2E（Playwright、Phase 2 で導入）
@@ -172,6 +172,10 @@ pnpm --filter @oceans-tenant/web exec playwright test
 
 # Python
 cd scripts/python && .venv/bin/pytest --cov
+
+# AI 抽出評価ハーネス（scripts/eval、v0.8.0 WS-2）
+pnpm --filter oceans-tenant-eval run eval:mock   # API キー不要のスモーク実行
+ANTHROPIC_API_KEY=sk-ant-... node scripts/eval/run.mjs  # 実 Claude で精度測定
 ```
 
 CI（GitHub Actions）で以下が常時走ります:
@@ -243,7 +247,8 @@ OSS リファレンス実装としての成熟度を段階で公開していま�
 |---|---|
 | [docs/spec.md](docs/spec.md) | 仕様書（要件 / データモデル / API 契約 / 受け入れ基準） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 全体構成 / レイヤ図 / データフロー 3 ユースケース / 主要ライブラリ表 / セキュリティ要点 |
-| [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md) | Claude Tool Use 設計 / プロンプト / SSE / SSRF 防御の詳細 |
+| [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md) | Claude Tool Use 設計 / プロンプト / SSE / SSRF 防御 / 抽出評価ハーネスの詳細 |
+| [scripts/eval/README.md](scripts/eval/README.md) | `extract_property` の Gold Standard 評価ハーネス（メトリクス / fixture 追加手順） |
 | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | コードレビュー入口 / 着眼点 / よくある質問 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（環境変数 / Region / Troubleshooting） |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有デプロイ運用 |
