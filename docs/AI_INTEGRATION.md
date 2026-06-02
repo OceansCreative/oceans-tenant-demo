@@ -195,9 +195,71 @@ SSE ストリームを閉じます。abort 由来の例外（`APIUserAbortError`
 これにより、ユーザーがブラウザタブを閉じた / ページ遷移したケースで、
 無駄に Anthropic 課金トークンを消費し続けることを防ぎます。
 
-## レート制限への対処
+## レート制限（in-memory token bucket、v0.5.0 WS-1）
 
-Claude API は 429 を返すことがあります。本実装では:
+OSS デモを公開した際の **DoS 緩和** と **Anthropic API コストの暴発予防** を目的に、
+`/api/chat-search` と `/api/ingest-url` に IP ベースの in-memory token bucket
+レート制限を導入しています。
+
+実装は [`apps/web/src/lib/rate-limit.ts`](../apps/web/src/lib/rate-limit.ts) と
+[`apps/web/src/lib/get-client-ip.ts`](../apps/web/src/lib/get-client-ip.ts) を参照。
+
+### 設計概要
+
+- **キー**: `${client_ip}::${endpoint}`（エンドポイント単位の独立バケット）
+- **クライアント IP**: `x-forwarded-for` の最左 → `x-real-ip` → `host` の順
+  にフォールバック。`node:net.isIP` で形式検証し不正値は `unknown` に倒す
+- **補充**: lazy refill（呼び出し時に経過時間から算出）。cron 不要
+- **メモリ上限**: 1000 エントリを超えたら挿入順 = 概ね LRU 順の先頭を削除
+
+### 既定値
+
+| エンドポイント | 容量 (burst) | 補充間隔 | 持続レート |
+|---|---|---|---|
+| `/api/chat-search` | 20 | 6 sec / 1 token | 10 req/min |
+| `/api/ingest-url` | 10 | 12 sec / 1 token | 5 req/min |
+
+`ingest-url` は AI コスト（HTML 抽出 + Tool Use）が高いため、`chat-search` よりも
+持続レートを半分程度に抑えています。
+
+### 環境変数による上書き
+
+| 変数 | 既定 |
+|---|---|
+| `RATE_LIMIT_CHAT_CAPACITY` | 20 |
+| `RATE_LIMIT_CHAT_REFILL_INTERVAL_MS` | 6000 |
+| `RATE_LIMIT_INGEST_CAPACITY` | 10 |
+| `RATE_LIMIT_INGEST_REFILL_INTERVAL_MS` | 12000 |
+
+不正値（数値変換失敗 / 0 以下）は無視され既定値に倒れます。
+
+### レスポンス仕様
+
+**許可時**: ヘッダ `X-RateLimit-Limit` / `X-RateLimit-Remaining` /
+`X-RateLimit-Reset`（バケットが満タンになる Unix 時刻、秒）を付与。
+SSE エンドポイントでもこれらは Response ヘッダに含まれます。
+
+**拒否時**: HTTP 429、ヘッダ `Retry-After: <seconds>`、JSON body
+`{ error: "rate_limited", retryAfterSeconds: N }`。SSE エンドポイントでも
+ストリーム開始前に判定し、通常 JSON で返します。
+
+### サーバレス環境での重要な制約
+
+**本実装は同一 Node プロセスのメモリ内にバケットを保持** します。
+Vercel のような serverless 環境では:
+
+- リージョン / インスタンスごとに独立したバケットを持つ
+- インスタンスがコールドスタートするたびにバケットがリセットされる
+- 結果として「実効レート > 設定値」になる可能性がある
+
+OSS デモ用としては十分な防御層ですが、本番運用で厳密な集中制御が必要な場合は
+Upstash Redis / Cloudflare KV / Vercel KV など共有ストアに置き換えてください。
+`consumeRateLimit` のインタフェースは集中ストアにも拡張しやすいシグネチャ
+にしてあります。
+
+### Claude API 自体の 429
+
+Claude API 側の 429（Anthropic のレート制限）への対処は別レイヤです:
 
 - フロント側: 「考えています…」表示中の重複送信を `pending` で抑制
 - API 側: 失敗時にエラー JSON を返し、UI でユーザーに通知
