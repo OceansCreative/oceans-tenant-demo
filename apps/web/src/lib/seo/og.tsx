@@ -45,7 +45,7 @@ const loadNotoSansJp = async (weight: 400 | 700): Promise<ArrayBuffer | null> =>
     if (!cssRes.ok) return null;
     const css = await cssRes.text();
     const match = css.match(/src:\s*url\((https:\/\/[^)]+\.(?:woff2|ttf|otf))\)/);
-    if (!match || !match[1]) return null;
+    if (!match?.[1]) return null;
     const fontRes = await fetch(match[1]);
     if (!fontRes.ok) return null;
     return await fontRes.arrayBuffer();

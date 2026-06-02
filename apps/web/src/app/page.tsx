@@ -1,4 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_CONFIG } from "@/lib/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: SITE_CONFIG.name,
+    description: SITE_CONFIG.description,
+    images: [{ url: "/og", width: 1200, height: 630, alt: SITE_CONFIG.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_CONFIG.name,
+    description: SITE_CONFIG.description,
+    images: ["/og"],
+  },
+};
 
 const HomePage = (): React.JSX.Element => {
   return (
