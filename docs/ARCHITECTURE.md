@@ -198,6 +198,7 @@ URL 入力
 | Lint | `@biomejs/biome` | 2.x | Lint + Format（ESLint / Prettier 不採用） |
 | Test | `vitest` + `@testing-library/react` | 最新 / 16.x | ユニット + コンポーネント |
 | E2E | `playwright` | 最新 | Chromium デスクトップ + iPhone 14 の 2 プロジェクト |
+| UI カタログ | `storybook` + `@storybook/react-vite` | 8.6 | 14 コンポーネント / 38 stories + Foundation MDX 4 ページ（Introduction / Typography / Colors / Tokens） |
 | Python | `pydantic` + `faker` + `pandas` | 最新 | ダミー物件生成 + Sanity シード + 検索ログ分析 |
 
 ## セキュリティ要点

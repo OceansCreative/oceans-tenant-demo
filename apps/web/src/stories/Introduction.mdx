@@ -1,0 +1,44 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Foundation/Introduction" />
+
+# OceansTenant デザインシステム
+
+OceansTenant は **店舗物件検索プラットフォーム** のリファレンス実装として公開されている OSS です。
+この Storybook は、リポジトリに含まれる UI コンポーネント / トークン / ドキュメントを単一の場所から
+参照できるようにまとめたものです。
+
+## このカタログの役割
+
+- **UI 単体の挙動検証**: 検索バー / フィルタ / 物件カード / 関連物件 / 地図 / 対話 UI を、
+  ページ遷移や API 連携の文脈から切り離して可視化する。
+- **Foundation（基礎）の可視化**: タイポグラフィ / カラー / トークン（角丸・影・余白）を
+  単一ソースとして本セクションに集約する。
+- **a11y チェックの一次フィルタ**: `@storybook/addon-a11y` により axe-core ベースの違反を
+  Story ごとに早期検出する（CI 側の axe テストとは独立）。
+
+## セクション構成
+
+- **Foundation/**: 基礎レイヤ。Introduction / Typography / Colors / Tokens。
+- **Property/**: 物件単体の表示要素。PropertyCard / AvailabilityBadge / RelatedProperties。
+- **Search/**: 検索画面の UI 群。SearchBar / SearchFilter / FilterChips / SearchPagination / ViewModeToggle。
+- **Map/**: 地図関連。PropertyMap / PropertyMapLazy。
+- **Chat/**: 対話型検索 UI。ChatPanel。
+- **Layout/**: 共通レイアウト。Header / Footer。
+- **Agent/**: AI 連携の入口 UI。IngestForm。
+
+## 技術スタック
+
+- Storybook 8.6 + `@storybook/react-vite`（Vite 6 builder）
+- Tailwind CSS v4（`@tailwindcss/vite` プラグイン）
+- React 19 / Next.js 15 App Router（`next/navigation` / `next/link` は薄いモックに差し替え）
+
+詳しい builder 選定理由は `apps/web/.storybook/main.ts` の冒頭コメントを参照してください。
+
+## 開発者向けメモ
+
+- **新規 Story を追加する場合**: `apps/web/src/components/<group>/<Component>.stories.tsx` に
+  CSF3 + args で記述してください。タイトルは `Group/ComponentName` 規約に揃えます。
+- **mock データ**: `apps/web/src/lib/sanity/mock-properties.ts` を再利用してください
+  （実在企業名 / 実在物件情報の混入は禁止です）。
+- **TypeScript strict / `any` 禁止**: Storybook 配下でも全プロジェクトと同じ規約を維持します。
