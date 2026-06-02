@@ -102,6 +102,9 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 - [ ] CI: `.github/workflows/e2e.yml` で `next build && next start` + Playwright
 - [ ] CodeQL: 週次 + PR で TypeScript / JavaScript を解析
 - [ ] Dependabot: 週次で pnpm / pip / github-actions を更新
+- [ ] **カバレッジ**: `pnpm test:coverage` でワークスペース毎に `coverage/lcov.info` が生成され、
+      CI から Codecov に `web` / `shared` / `python` の 3 フラグでアップロードされている
+      （詳細は下記「カバレッジ運用」を参照）
 
 ### 4. 型と Lint
 
@@ -129,6 +132,72 @@ docs/            spec.md / ARCHITECTURE.md / AI_INTEGRATION.md / DEPLOY.md /
 - [ ] [docs/DEPLOY.md](DEPLOY.md): カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有運用
 - [ ] [CHANGELOG.md](../CHANGELOG.md): v0.1.0 〜 v0.3.0 + Unreleased（v0.4.0 候補）まで網羅
 - [ ] CONTRIBUTING / SECURITY / CODE_OF_CONDUCT が揃っている
+
+## カバレッジ運用
+
+v0.5.0 WS-3 で Vitest + Codecov によるカバレッジ計測を導入しました。
+
+### 設定の所在
+
+| 場所 | 役割 |
+|---|---|
+| `apps/web/vitest.config.ts` | web ワークスペースの coverage 設定（provider: v8、Server Component 表面と sitemap/robots/og は exclude） |
+| `packages/shared/vitest.config.ts` | shared ワークスペースの coverage 設定（`index.ts` を exclude） |
+| `codecov.yml`（リポジトリ直下） | Codecov 側の閾値・コメントレイアウト・フラグ管理 |
+| `.github/workflows/ci.yml` | `pnpm test:coverage` 実行 → artifact upload → Codecov upload（web / shared / python の 3 フラグ） |
+
+### 目標値（warning レベル運用）
+
+CI を fail させない方針で、vitest 側には `thresholds` を設定していません。
+Codecov 側も `informational: true` で運用しているため、閾値割れでも `status` チェックは PASS します。
+**目標値は次の通りで、達成しなかった PR はレビュー時に「カバレッジ低下の妥当性」を確認**してください。
+
+| 指標 | 目標 |
+|---|---|
+| Lines / Statements | 70% |
+| Branches | 65% |
+| Functions | 70% |
+| Patch（新規・変更行） | 70% |
+
+### 初期値（v0.5.0 WS-3 導入時点）
+
+| ワークスペース | Lines | Branches | Functions | Statements |
+|---|---|---|---|---|
+| `apps/web` | 66.48% | 86.36% | 83.95% | 66.48% |
+| `packages/shared` | 99.57% | 97.05% | 100% | 99.57% |
+
+`apps/web` は Server Component の `page.tsx` 群を Playwright（`e2e.yml`）でカバーする方針のため、
+Vitest 単体での Lines は 70% 目標に届いていません（66.48%）。`SearchBar` / `SearchFilter` /
+`PropertyMap` / `IngestForm` 等のクライアントコンポーネントに対する RTL テストを追加すれば
+70% 到達が見込めます（v0.5.x 以降の改善候補）。
+
+### ローカルでの確認方法
+
+```bash
+pnpm test:coverage
+# → apps/web/coverage/lcov.info
+# → apps/web/coverage/coverage-summary.json
+# → packages/shared/coverage/lcov.info
+# → packages/shared/coverage/coverage-summary.json
+```
+
+text reporter のサマリが標準出力に出るほか、`coverage-summary.json` を `jq` で
+パースすればスクリプトから集計可能です。
+
+### Codecov 連携の前提
+
+- 公開リポジトリのため **tokenless で動作** します（GitHub Actions OIDC 経由）。
+- 万一 tokenless 連携が失敗するようになったら、GitHub Secrets に `CODECOV_TOKEN` を
+  追加すれば自動でそちらを使います（`.github/workflows/ci.yml` 側で両対応）。
+- バッジ URL: `https://codecov.io/gh/OceansCreative/oceans-tenant-demo/graph/badge.svg`
+  バッジは **初回アップロード完了後** に有効化されます（初 PR がマージされるまでは
+  グレー表示になる場合あり）。
+
+### 閾値の見直しタイミング
+
+1. `apps/web` の Lines が 70% を安定して超えた段階で、`codecov.yml` の `informational: true` を外す
+2. その後、目標値を `Lines 80% / Branches 75%` に引き上げる
+3. 最終的に vitest 側にも `thresholds` を設定して CI レベルでの強制に切替える
 
 ## 起動・検証手順
 
