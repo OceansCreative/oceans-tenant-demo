@@ -1,7 +1,18 @@
 import type { Preview } from "@storybook/react";
+import { NextIntlClientProvider } from "next-intl";
+import jaMessages from "../messages/ja.json";
 // Tailwind v4 + brand トークン + Noto Sans JP CSS 変数のフォールバックを取り込む。
 // `apps/web/src/styles/globals.css` 内の `@theme` / `@layer base` がそのまま preview に適用される。
 import "../src/styles/globals.css";
+
+/**
+ * Storybook 用の i18n provider。
+ *
+ * v0.8.0 で Header / Footer 等が `useTranslations()` を使うようになったため、
+ * グローバル decorator として ja messages を流し込む。
+ * 個別 story で en を試したい場合は `parameters.locale = "en"` の取り回しを後日追加する。
+ */
+const I18N_LOCALE = "ja" as const;
 
 /**
  * Storybook preview 設定。
@@ -56,6 +67,13 @@ const preview: Preview = {
     },
   },
   tags: ["autodocs"],
+  decorators: [
+    (Story) => (
+      <NextIntlClientProvider locale={I18N_LOCALE} messages={jaMessages}>
+        <Story />
+      </NextIntlClientProvider>
+    ),
+  ],
 };
 
 export default preview;
