@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/__tests__/anthropic-test-helpers";
 import { setAnthropicClientForTesting } from "@/lib/ai/anthropic-client";
 import { UPDATE_CRITERIA_TOOL_NAME } from "@/lib/ai/tools";
+import { __resetRateLimitForTesting } from "@/lib/rate-limit";
 import { POST } from "../route";
 
 /**
@@ -57,6 +58,8 @@ const buildRequest = (body: unknown, signal?: AbortSignal): Request => {
 describe("POST /api/chat-search (Tool Use)", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    // 各テストで in-memory バケットを初期化
+    __resetRateLimitForTesting();
   });
   afterEach(() => {
     setAnthropicClientForTesting(null);
