@@ -4,24 +4,66 @@ import { MOCK_PROPERTIES } from "@/lib/sanity/mock-properties";
 
 // @vis.gl/react-google-maps を軽量モックして API キーありの分岐に到達できるようにする。
 // 実 SDK は jsdom 環境で動かないため、必要な named export を最小限のスタブに置き換える。
+// `useMap` はクラスタリングの分岐到達確認のため、ダミーの map オブジェクトを返す。
+const mockMapInstance = { id: "mock-map" };
 vi.mock("@vis.gl/react-google-maps", () => {
   type RC = { readonly children?: React.ReactNode };
   const APIProvider = ({ children }: RC) => <div data-testid="api-provider">{children}</div>;
   const GoogleMapStub = ({ children }: RC) => <div data-testid="google-map">{children}</div>;
-  const AdvancedMarker = ({ children, onClick }: RC & { readonly onClick?: () => void }) => (
-    <button type="button" data-testid="marker" onClick={onClick}>
-      {children}
-    </button>
-  );
+  // AdvancedMarker は ref callback を介して MarkerClusterer に登録される。
+  // テストではダミー element を ref に渡して registerMarker の動作を確認する。
+  const AdvancedMarker = ({
+    children,
+    onClick,
+    ref,
+  }: RC & {
+    readonly onClick?: () => void;
+    readonly ref?: (el: object | null) => void;
+  }) => {
+    if (ref) {
+      // 即時に擬似 element を渡す（実 SDK の AdvancedMarkerElement の代替）
+      queueMicrotask(() => ref({ slug: "mock-marker-element" }));
+    }
+    return (
+      <button type="button" data-testid="marker" onClick={onClick}>
+        {children}
+      </button>
+    );
+  };
   const InfoWindow = ({ children }: RC) => <div data-testid="info-window">{children}</div>;
   const Pin = () => <span data-testid="pin" />;
-  return { APIProvider, Map: GoogleMapStub, AdvancedMarker, InfoWindow, Pin };
+  const useMap = () => mockMapInstance;
+  return { APIProvider, Map: GoogleMapStub, AdvancedMarker, InfoWindow, Pin, useMap };
+});
+
+// MarkerClusterer は実 google.maps API を要求するため、生成・破棄を spy で観測するだけのスタブに置き換える。
+const clustererCalls = vi.hoisted(() => ({
+  constructed: 0,
+  cleared: 0,
+  unmounted: 0,
+}));
+vi.mock("@googlemaps/markerclusterer", () => {
+  class MarkerClusterer {
+    constructor(_opts: unknown) {
+      clustererCalls.constructed += 1;
+    }
+    clearMarkers(): void {
+      clustererCalls.cleared += 1;
+    }
+    onRemove(): void {
+      clustererCalls.unmounted += 1;
+    }
+  }
+  return { MarkerClusterer };
 });
 
 const ORIGINAL_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = undefined;
+  clustererCalls.constructed = 0;
+  clustererCalls.cleared = 0;
+  clustererCalls.unmounted = 0;
 });
 
 afterEach(() => {
@@ -84,5 +126,47 @@ describe("PropertyMap", () => {
     const first = MOCK_PROPERTIES[0];
     if (!first) throw new Error("expected at least one property");
     expect(screen.getByText(first.title)).toBeInTheDocument();
+  });
+
+  it("CLUSTERING_THRESHOLD は 10 件以上で発動する閾値", async () => {
+    const { CLUSTERING_THRESHOLD } = await import("@/components/map/PropertyMap");
+    expect(CLUSTERING_THRESHOLD).toBe(10);
+  });
+
+  it("物件数が 10 件未満のときクラスタリングは無効化される（data-clustering=disabled）", async () => {
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "dummy-key";
+    const { PropertyMap } = await import("@/components/map/PropertyMap");
+    const { container } = render(<PropertyMap properties={MOCK_PROPERTIES.slice(0, 5)} />);
+    const wrapper = container.querySelector("[data-clustering]");
+    expect(wrapper?.getAttribute("data-clustering")).toBe("disabled");
+    // MarkerClusterer は 1 回も生成されない
+    expect(clustererCalls.constructed).toBe(0);
+  });
+
+  it("物件数が 10 件以上のときクラスタリングが有効化される（data-clustering=enabled）", async () => {
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "dummy-key";
+    const { PropertyMap } = await import("@/components/map/PropertyMap");
+    // mock 5 件を repeat して 10 件超の配列を作る
+    const many = [...MOCK_PROPERTIES, ...MOCK_PROPERTIES].map((p, i) => ({
+      ...p,
+      slug: `${p.slug}-${i}`,
+    }));
+    expect(many.length).toBeGreaterThanOrEqual(10);
+    const { container } = render(<PropertyMap properties={many} />);
+    const wrapper = container.querySelector("[data-clustering]");
+    expect(wrapper?.getAttribute("data-clustering")).toBe("enabled");
+    // MarkerClusterer が少なくとも 1 回生成される
+    expect(clustererCalls.constructed).toBeGreaterThanOrEqual(1);
+  });
+
+  it("クラスタリング有効時はマウント時 marker 数だけ DOM に存在する", async () => {
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "dummy-key";
+    const { PropertyMap } = await import("@/components/map/PropertyMap");
+    const many = [...MOCK_PROPERTIES, ...MOCK_PROPERTIES].map((p, i) => ({
+      ...p,
+      slug: `${p.slug}-${i}`,
+    }));
+    render(<PropertyMap properties={many} />);
+    expect(screen.getAllByTestId("marker").length).toBe(many.length);
   });
 });
