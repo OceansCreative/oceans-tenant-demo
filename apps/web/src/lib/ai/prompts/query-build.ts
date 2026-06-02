@@ -23,6 +23,16 @@ export type BuildGroqResult = {
   readonly params: Record<string, string | number | ReadonlyArray<string>>;
 };
 
+/**
+ * GROQ の `[...]` 内に入るフィルタ部分とその params。
+ * `buildPropertyGroq`（一覧取得用）と `buildPropertyCountGroq`（件数取得用）の双方が
+ * 同じフィルタロジックを共有するために抽出している。
+ */
+export type BuildGroqFilterResult = {
+  readonly filter: string;
+  readonly params: Record<string, string | number | ReadonlyArray<string>>;
+};
+
 const escapeString = (value: string): string => value.replace(/["'\\]/g, "");
 
 const sanitizeRef = (value: string): string => {
@@ -40,19 +50,15 @@ const sanitizeText = (value: string, maxLength = 80): string => {
 };
 
 /**
- * SearchCriteria から決定論的に GROQ を組み立てる。
+ * SearchCriteria から GROQ のフィルタ部分（`[...]` 内）だけを決定論的に組み立てる。
  *
- * 全フィールドをホワイトリストで検査し、不正な値は GroqInjectionError を投げる。
+ * `buildPropertyGroq` の冒頭ロジックを切り出したもの。
+ * `limit` / `offset` を含まないため、`count(*[<filter>])` 形式の件数クエリと
+ * `*[<filter>] | order(...) [...]` 形式の一覧クエリの両方から共有できる。
  *
- * `limit` を省略した場合は `criteria.pageSize` を、`offset` を省略した場合は
- * `(criteria.page - 1) * criteria.pageSize` を採用する。GROQ には `[$offset...$offset + $limit]`
- * で出力するため、Phase 3 で Sanity に切り替えても同じプロンプトで動く。
+ * 全フィールドをホワイトリストで検査し、不正な値は `GroqInjectionError` を投げる。
  */
-export const buildPropertyGroq = (
-  criteria: SearchCriteria,
-  limit?: number,
-  offset?: number,
-): BuildGroqResult => {
+export const buildPropertyGroqFilter = (criteria: SearchCriteria): BuildGroqFilterResult => {
   const filters: string[] = ['_type == "property"'];
   const params: Record<string, string | number | ReadonlyArray<string>> = {};
 
@@ -117,6 +123,26 @@ export const buildPropertyGroq = (
     params.q = sanitizeText(criteria.q, 100);
     filters.push("[title, description, pt::text(description)] match $q + '*'");
   }
+
+  return { filter: filters.join(" && "), params };
+};
+
+/**
+ * SearchCriteria から決定論的に GROQ を組み立てる。
+ *
+ * 全フィールドをホワイトリストで検査し、不正な値は GroqInjectionError を投げる。
+ *
+ * `limit` を省略した場合は `criteria.pageSize` を、`offset` を省略した場合は
+ * `(criteria.page - 1) * criteria.pageSize` を採用する。GROQ には `[$offset...$offset + $limit]`
+ * で出力するため、Phase 3 で Sanity に切り替えても同じプロンプトで動く。
+ */
+export const buildPropertyGroq = (
+  criteria: SearchCriteria,
+  limit?: number,
+  offset?: number,
+): BuildGroqResult => {
+  const { filter: filterString, params } = buildPropertyGroqFilter(criteria);
+
   const resolvedLimit = limit ?? criteria.pageSize;
   const resolvedOffset = offset ?? (criteria.page - 1) * criteria.pageSize;
   if (!Number.isInteger(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 200) {
@@ -128,7 +154,6 @@ export const buildPropertyGroq = (
   params.limit = resolvedLimit;
   params.offset = resolvedOffset;
 
-  const filterString = filters.join(" && ");
   // 注意: tsubo を GROQ で計算しない。坪数換算は packages/shared の squareMeterToTsubo を
   // 単一の真実とし、フロント側で derivePropertyTsubo(property) を通す（Issue #87）。
   // GROQ で `area * 0.3025` を直接出すと丸めが効かず JS 側の Math.round 結果と食い違う。
@@ -163,4 +188,17 @@ export const buildPropertyGroq = (
 }`;
 
   return { groq, params };
+};
+
+/**
+ * SearchCriteria から件数取得用 GROQ `count(*[...])` を組み立てる。
+ *
+ * `buildPropertyGroq` の filter ロジックを `buildPropertyGroqFilter` 経由で共有しているため、
+ * 一覧クエリと件数クエリで条件式がズレることはない。
+ * GROQ の slice `[$offset...$offset + $limit]` は filter 結果の総数を返さないため、
+ * ページネーション UI 用に別クエリで合計件数を取る必要がある。
+ */
+export const buildPropertyCountGroq = (criteria: SearchCriteria): BuildGroqResult => {
+  const { filter, params } = buildPropertyGroqFilter(criteria);
+  return { groq: `count(*[${filter}])`, params };
 };
