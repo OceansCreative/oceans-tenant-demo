@@ -249,11 +249,34 @@ erDiagram
 
 ## パフォーマンス
 
-- App Router + Server Components → 初回 HTML が軽量
-- 物件詳細は `revalidate = 60` の ISR
-- 画像は Sanity の CDN を `remotePatterns` で許可
-- Tailwind v4 + Noto Sans JP `display: swap`
-- Lighthouse Performance 90+（目標）
+v0.6.0 WS-2 で Lighthouse Performance 90+ を **CI で恒常的に達成する**構成に再整備した。
+変更の中心は「初期 JS の体積削減」「初回 paint 時の競合排除」「fonts / images の最適化」。
+
+| 観点 | 実装 |
+|---|---|
+| **Server Components 優先** | フィルタ / GROQ / Sanity fetch / SEO メタはすべて RSC で完結し、初回 HTML が軽量 |
+| **物件詳細の SSG + ISR** | `generateStaticParams` で mock 全件を build 時に静的化、`revalidate = 60` で ISR |
+| **`next/dynamic` で地図遅延ロード** | `PropertyMapLazy` が `@vis.gl/react-google-maps` を client only で遅延読み込み、initial bundle から外す（`/search` 140kB→127kB、物件詳細 121kB→107kB） |
+| **`optimizePackageImports`** | `@vis.gl/react-google-maps` のバレル import を Next 側で treeshake 最適化 |
+| **`next/font/google` self-host** | `Noto_Sans_JP` を `display: swap` で self-host、CSS 側 `--font-sans` は `var(--font-noto-sans-jp), system-ui, …` の順で参照（FOIT を抑える） |
+| **route 別 `loading.tsx`** | `/`, `/search`, `/chat`, `/properties/[slug]` に `aria-busy` 付き skeleton を配置し、Streaming で FCP を稼ぐ |
+| **`<Link prefetch={false}>` 調整** | Footer / SearchPagination / PropertyCard のリンクは初期 paint で RSC prefetch しない（CPU を奪う prefetch 競合を排除し TBT を下げる） |
+| **`images.formats: avif / webp`** | Sanity CDN 経由の画像を modern format 優先で配信 |
+| **`compress: true`** | self-host 起動時にも HTML / JS / CSS に gzip を明示適用（Vercel Edge では二重圧縮にはならない） |
+| **Lighthouse CI 閾値** | `apps/web/.lighthouserc.cjs` の `categories:performance` を `error` / 0.9 に引き上げ、4 URL × 3 ラン中央値で判定 |
+
+### 計測フロー
+
+```text
+.github/workflows/lighthouse.yml
+  ├─ Next.js を本番ビルド (`pnpm --filter @oceans-tenant/web build`)
+  ├─ `next start` を背景起動
+  ├─ curl で起動を 60s 待機
+  └─ `pnpm exec lhci autorun`
+       ├─ /、/search、/chat、/properties/[slug] を各 3 回計測
+       ├─ aggregationMethod: median-run で 0.9 を assert
+       └─ レポートを `.lighthouseci/` に保存し artifact アップロード
+```
 
 ## SEO ベースライン
 
