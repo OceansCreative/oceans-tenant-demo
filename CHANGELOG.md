@@ -7,15 +7,42 @@
 
 ## [Unreleased]
 
-### Added
-- Sanity 文言（建物種別ラベル等）の locale 切替（Sanity 多言語スキーマ案）
+v1.0.0 ターゲット。「公開リファレンス実装としての完成」を目標とし、
+v0.x 累積を初の安定リリースとしてタグ付けする位置付け。
+詳細は [docs/ROADMAP.md](docs/ROADMAP.md) と [docs/MIGRATION.md](docs/MIGRATION.md) を参照。
+
+### Added（v1.0.0 ターゲット）
+
+#### 必須（Must）
+
 - Sanity 実プロジェクトへの実 PROJECT_ID 投入と動作確認（接続レイヤは v0.4.0 で完成）
 - Vercel 実デプロイ + `demo.oceans-base.com/tenant-search` 公開（設定は v0.4.0 で完成）
+- v1.0.0 リリースノートと [docs/MIGRATION.md](docs/MIGRATION.md) への破壊的変更の確定記載
+
+#### 推奨（Should）
+
 - TypeScript 6.x 対応
 - Upstash Redis 等への in-memory レート制限の置換（本番運用前提）
 - WCAG 2.1 AAA（コントラスト 7:1 等）の段階的引き上げ
 - Sanity Studio など iframe 埋め込みコンテンツの a11y 保証
 - Storybook の globalTypes による ja/en 切替（v0.9.1 候補）
+
+#### 任意（Nice to have）
+
+- Sanity 文言（建物種別ラベル等）の locale 切替（Sanity 多言語スキーマ案）
+- Web Vitals store の永続化（Vercel KV 等）
+- `good first issue` ラベル整備（初学者向け Issue 5〜10 件）
+
+### Docs
+
+- `docs/ROADMAP.md` を新設（v1.0.0 マイルストーン / Done / v1.x スコープ境界）
+- `docs/MIGRATION.md` を新設（バージョン間互換性ガイド / 環境変数履歴 / API スキーマ変更）
+- `SECURITY.md` を更新（SLA 短縮 / 過去の対応事例 v0.7.0 CodeQL 解消を反映）
+- `CONTRIBUTING.md` を更新（`/ship` パターン / 翻訳キー追加手順 / 品質ゲート / commitlint ルール）
+- `.github/PULL_REQUEST_TEMPLATE.md` に a11y / Lighthouse / 翻訳キー / 互換性のチェック追加
+- `.github/ISSUE_TEMPLATE/bug_report.yml` に locale / Sanity 接続 / admin flag のドロップダウン追加
+- `.github/ISSUE_TEMPLATE/feature_request.yml` に OSS スコープ確認チェックボックス追加
+- README に v0.9.0 までの累積成果サマリと Phase 7（v1.0.0 リリース）を追加、ドキュメント索引に ROADMAP / MIGRATION を追加
 
 ## [0.9.0] — 2026-06-03
 

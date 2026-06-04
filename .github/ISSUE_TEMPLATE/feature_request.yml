@@ -8,6 +8,7 @@ body:
     attributes:
       value: |
         提案ありがとうございます。背景と価値を明確に書くと採否判断がスムーズです。
+        本リポジトリは OSS リファレンス実装のため、認証 / 課金 / 営業文脈はスコープ外です（[docs/ROADMAP.md](../../docs/ROADMAP.md) 参照）。
 
   - type: textarea
     id: problem
@@ -42,8 +43,11 @@ body:
         - studio (apps/studio)
         - shared (packages/shared)
         - scripts/python
+        - scripts/eval（AI 抽出評価ハーネス）
         - infra / CI
         - docs
+    validations:
+      required: true
 
   - type: textarea
     id: acceptance
@@ -53,8 +57,23 @@ body:
       placeholder: |
         - [ ] /agent にマイソクアップロード UI が出ている
         - [ ] AI 抽出結果がドラフトとして保存される
+        - [ ] axe 違反 0 / Lighthouse 90+ を維持
+        - [ ] 翻訳キー（ja / en）追加済み
     validations:
       required: true
+
+  - type: checkboxes
+    id: oss_scope
+    attributes:
+      label: OSS スコープ確認
+      description: 本リポジトリはリファレンス実装です。スコープ外の機能（[docs/ROADMAP.md](../../docs/ROADMAP.md) の v1.x 構想を参照）に該当しないことを確認してください。
+      options:
+        - label: 認証実装（NextAuth 等）を要求しない
+          required: true
+        - label: 課金実装（Stripe 等）を要求しない
+          required: true
+        - label: クライアント情報・営業文脈・実在企業名・実在物件情報を含まない
+          required: true
 
   - type: textarea
     id: references
