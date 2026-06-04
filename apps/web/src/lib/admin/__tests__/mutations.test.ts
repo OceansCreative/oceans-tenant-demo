@@ -68,10 +68,14 @@ describe("upsertProperty", () => {
     const result = await upsertProperty(buildValidProperty());
     expect(result.mode).toBe("sanity");
     expect(createOrReplaceMock).toHaveBeenCalledTimes(1);
-    // vi.fn() の `mock.calls` は `unknown[][]` 相当のため、unknown 経由で具体型に絞る
-    const lastCall = createOrReplaceMock.mock.calls.at(-1);
+    // vi.fn() を引数型なしで宣言しているため `mock.calls` は `[]` Tuple として扱われる。
+    // calls 全体を unknown 経由で具体的な引数 Tuple 配列にキャストして取り出す。
+    const calls = createOrReplaceMock.mock.calls as unknown as Array<
+      [{ _id: string; _type: string }]
+    >;
+    const lastCall = calls.at(-1);
     if (!lastCall) throw new Error("createOrReplace が呼ばれていない");
-    const arg = lastCall[0] as unknown as { _id: string; _type: string };
+    const arg = lastCall[0];
     expect(arg._id).toBe("property-test-mutation");
     expect(arg._type).toBe("property");
   });
