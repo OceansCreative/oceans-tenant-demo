@@ -33,16 +33,62 @@ v0.x 累積を初の安定リリースとしてタグ付けする位置付け。
 - Web Vitals store の永続化（Vercel KV 等）
 - `good first issue` ラベル整備（初学者向け Issue 5〜10 件）
 
-### Docs
+## [0.10.0] — 2026-06-05
 
-- `docs/ROADMAP.md` を新設（v1.0.0 マイルストーン / Done / v1.x スコープ境界）
-- `docs/MIGRATION.md` を新設（バージョン間互換性ガイド / 環境変数履歴 / API スキーマ変更）
-- `SECURITY.md` を更新（SLA 短縮 / 過去の対応事例 v0.7.0 CodeQL 解消を反映）
-- `CONTRIBUTING.md` を更新（`/ship` パターン / 翻訳キー追加手順 / 品質ゲート / commitlint ルール）
-- `.github/PULL_REQUEST_TEMPLATE.md` に a11y / Lighthouse / 翻訳キー / 互換性のチェック追加
-- `.github/ISSUE_TEMPLATE/bug_report.yml` に locale / Sanity 接続 / admin flag のドロップダウン追加
-- `.github/ISSUE_TEMPLATE/feature_request.yml` に OSS スコープ確認チェックボックス追加
-- README に v0.9.0 までの累積成果サマリと Phase 7（v1.0.0 リリース）を追加、ドキュメント索引に ROADMAP / MIGRATION を追加
+Phase 7「v1.0.0 リリース準備」の幕開け。`/ship` 並列実装の **9 サイクル目**で 4 ワークストリームを worktree 分離サブエージェントに投入。WS-3（v1.0.0 リリース準備ドキュメント）と WS-4（Sanity Studio Desk Structure）は完成、WS-1（Admin UI）と WS-2（Web Vitals）はサブエージェントが Anthropic API ハングで停止したため **foundation 層のみを救出して merge**、UI / 統合は v0.11.0 へ持ち越し。
+
+### Added
+
+- **Sanity Studio に availability 別 Desk Structure を新設 (#128)** — エディタ体験を向上
+  - `apps/studio/structure/index.ts` を新設し `structureTool({ structure })` で sanity.config に配線
+  - 物件をサブナビ「公開中 / 交渉中 / 成約済 + 全物件」でグルーピング、`availabilityValues` を `@oceans-tenant/shared` から動的取得して enum 追加時の三重管理を回避
+  - 不動産会社 / 業態カテゴリ / エリア / 検索セッションをトップレベルに整理
+  - `apps/studio/tsconfig.json` の `include` に `structure/**/*` を追加
+- **v1.0.0 リリース準備ドキュメントを整備 (#129)** — OSS 公開水準のリリース運用基盤を確立
+  - `docs/ROADMAP.md` を新設（v1.0.0 マイルストーン / Done v0.1.0→v0.9.0 / 残作業 Must/Should/Nice / v1.x スコープ境界）
+  - `docs/MIGRATION.md` を新設（バージョン間互換性ガイド / 環境変数履歴 / API スキーマ変更 / 既知の制約）
+  - `SECURITY.md` を更新（SLA 短縮 / 過去の対応事例 v0.7.0 CodeQL 解消を反映）
+  - `CONTRIBUTING.md` を更新（`/ship` パターン / 翻訳キー追加手順 / 品質ゲート / commitlint ルール）
+  - `.github/PULL_REQUEST_TEMPLATE.md` に a11y / Lighthouse / 翻訳キー / 互換性のチェック追加
+  - `.github/ISSUE_TEMPLATE/bug_report.yml` に locale / Sanity 接続 / admin flag のドロップダウン追加
+  - `.github/ISSUE_TEMPLATE/feature_request.yml` に OSS スコープ確認チェックボックス追加
+  - README に v0.9.0 までの累積成果サマリと Phase 7（v1.0.0 リリース）を追加、ドキュメント索引に ROADMAP / MIGRATION を追加
+- **Admin UI foundation 層を導入 (#130 / 部分)** — UI / API route / 統合は v0.11.0 へ
+  - `apps/web/src/lib/admin/feature-flag.ts` — `NEXT_PUBLIC_ADMIN_ENABLED` env 解釈
+  - `apps/web/src/lib/admin/sanity-write.ts` — `getSanityWriteClient()`（env 無しなら null）
+  - `apps/web/src/lib/admin/mutations.ts` — `upsertProperty(input)` / `deleteProperty(id)`、Zod 検証 + mock fallback
+  - `apps/web/src/lib/admin/mock-store.ts` — in-memory ストア
+  - ユニットテスト追加（mock fallback 経路 + Sanity 経路の両方）
+- **Web Vitals foundation 層を導入 (#131 / 部分)** — API / Reporter / Insights 統合は v0.11.0 へ
+  - `web-vitals@^5` 依存追加
+  - `apps/web/src/lib/vitals/types.ts` — メトリクス型定義
+  - `apps/web/src/lib/vitals/store.ts` — in-memory store（LRU evict）
+  - `apps/web/src/lib/vitals/aggregate.ts` — pure 集計関数（median / p75 / sampleCount）
+  - `apps/web/src/lib/vitals/__tests__/store.test.ts`, `aggregate.test.ts`
+
+### Process
+
+- `/ship` 並列実装の **9 サイクル目**。WS-1 (Admin) / WS-2 (Vitals) / WS-3 (release prep) / WS-4 (Studio Desk) を worktree 分離サブエージェントで同時着手
+- **インシデント**: WS-1 / WS-2 / WS-3 の 3 サブエージェントが起動後 46 時間ほど Anthropic API ハングで完了通知を返さず停止していたことが発覚。WS-3 は 6 コミット完成済み・push 寸前だったため手動 push + PR 化、WS-1 / WS-2 は foundation 層のみを救出して draft PR から merge。残作業を [Unreleased] と ROADMAP に明記
+- **WS-1 救出時の typecheck 修正**: `vi.fn` の `mock.calls` Tuple 推論を `Array<[T]>` への unknown キャスト経由に修正
+- WS-4 は最小スコープ（Desk Structure のみ、Preview Pane / テスト / 依存追加なし）で再起動し完了
+- v0.10.0 リリースノート生成は手動で実施
+
+### Tests
+
+- apps/web vitest: 470 → **480** ケース pass（+10: admin lib テスト + vitals lib テスト）
+- packages/shared 144 / Python pytest / Playwright / CodeQL / Lighthouse / Codecov / Chromatic 全 green
+- 既存 a11y 違反 0 / Lighthouse 90+ を維持
+
+### Changed
+
+- `package.json` version を 0.10.0 に
+- `apps/studio/sanity.config.ts` に `structureTool({ structure })` を配線
+- README が v0.9.0 累積成果サマリ + Phase 7 構成に刷新
+
+### Process メモ（再発防止）
+
+- サブエージェントが API ハングしても task list から消えるが、worktree は残るため commit を salvage 可能。**今後は WS 起動から 60 分経過しても commit が増えない場合は手動で worktree 内の進捗を確認 → salvage する運用** を CONTRIBUTING.md に追記する候補（v0.10.1 で対応）
 
 ## [0.9.0] — 2026-06-03
 
