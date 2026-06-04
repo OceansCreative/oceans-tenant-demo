@@ -79,7 +79,8 @@ oceans-tenant-demo/
 │  │  ├─ tests/          # Vitest + Testing Library
 │  │  └─ playwright.config.ts
 │  └─ studio/            # Sanity Studio v3
-│     └─ schemas/        # property / realEstateCompany / businessCategory / area / searchSession
+│     ├─ schemas/        # property / realEstateCompany / businessCategory / area / searchSession
+│     └─ structure/      # Desk Structure（物件を availability 別にグルーピング）
 ├─ packages/
 │  └─ shared/            # 共有 Zod スキーマ + 型（apps/web と apps/studio 両方で使用）
 │     └─ src/
@@ -190,7 +191,7 @@ URL 入力
 | AI | `zod-to-json-schema` | 最新 | Zod → Tool Use `input_schema` を自動変換（二重管理回避） |
 | CMS | `@sanity/client` | 最新 | 実 GROQ 実行（`apps/web/src/lib/sanity/client.ts`） |
 | CMS | `next-sanity` | ^9.12 | `/studio` への `NextStudio` 埋め込み |
-| Studio | `sanity` | 3.x | スキーマ（property / realEstateCompany / businessCategory / area / searchSession） |
+| Studio | `sanity` | 3.x | スキーマ（property / realEstateCompany / businessCategory / area / searchSession）+ カスタム Desk Structure |
 | 検証 | `zod` | 3.x | 全境界（URL / API 入力 / Claude 出力 / Sanity → Web） |
 | HTML 抽出 | `@mozilla/readability` + `cheerio` | 最新 | 掲載元ページの本文抽出（JSDOM 経由） |
 | ネット | `undici` | ^6 | SSRF 防御の dispatcher pinning（DNS リバインディング遮断） |
@@ -426,6 +427,24 @@ apps/web/
 - mock は 5 件しかなく分布が偏るため、本番データに切り替えるとカテゴリ数 / bin 数が増える
 - `histogramRent` の `binSize` はデフォルト 50,000 円。本番では物件価格帯に応じて調整余地あり
 - 大量データ時は Server 側で aggregate を実行する前に「集計用の絞り込みクエリ」を導入する余地がある（現状はページ全件を Server で集計）
+
+## Sanity Studio の Desk Structure
+
+`/studio` のサイドナビは、v0.10.0 WS-4 で **カスタム Desk Structure** に差し替えた
+（`apps/studio/structure/index.ts`）。
+
+- 物件は `availability`（`public` / `negotiating` / `closed`）ごとに 3 つのサブリストに
+  グルーピングし、それぞれ GROQ フィルタと `defaultOrdering`（公開中は `publishedAt desc`）を
+  適用する。最下段に「全物件」（標準ドキュメントリスト）も残し、フィルタ無しで横断確認できる。
+- availability の値・ラベルは `@oceans-tenant/shared` の `availabilityValues` /
+  `availabilityLabel` を単一の真実として読み込み、enum を増減した際に Studio 表示が
+  自動追随する（Studio スキーマ・Web 側 UI・Desk 構造の三重管理を排除）。
+- 物件以外（不動産会社 / 業態カテゴリ / エリア / 検索セッション）は通常の
+  `documentTypeListItem` で並べる。検索セッションは「履歴」ニュアンスを明示するため
+  divider で物件マスタと視覚的に分離している。
+- Preview Pane（iframe で `/property/[slug]` をプレビュー）は別 PR で扱う。
+  Studio が `/studio` 配下で動くため Next.js 側との CORS / iframe ヘッダ整合が必要で、
+  Desk 改善とはレビュー観点が異なるためスコープを切った。
 
 ## 拡張ポイント
 
