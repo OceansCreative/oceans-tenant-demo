@@ -68,7 +68,10 @@ describe("upsertProperty", () => {
     const result = await upsertProperty(buildValidProperty());
     expect(result.mode).toBe("sanity");
     expect(createOrReplaceMock).toHaveBeenCalledTimes(1);
-    const arg = createOrReplaceMock.mock.calls.at(-1)?.[0] as { _id: string; _type: string };
+    // vi.fn() の `mock.calls` は `unknown[][]` 相当のため、unknown 経由で具体型に絞る
+    const lastCall = createOrReplaceMock.mock.calls.at(-1);
+    if (!lastCall) throw new Error("createOrReplace が呼ばれていない");
+    const arg = lastCall[0] as unknown as { _id: string; _type: string };
     expect(arg._id).toBe("property-test-mutation");
     expect(arg._type).toBe("property");
   });
