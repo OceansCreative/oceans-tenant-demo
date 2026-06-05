@@ -17,12 +17,12 @@ import { expect, test } from "@playwright/test";
  */
 
 // build 時に admin flag が有効化されていない環境では admin UI が描画されないため
-// 全テストを自動スキップする。
+// 全テストを自動スキップする。test.skip() を describe スコープで呼んでも
+// Playwright は親 describe をスキップしないため、`test.describe.skip` を条件分岐で切替。
 const ADMIN_ENABLED = process.env.NEXT_PUBLIC_ADMIN_ENABLED === "true";
+const describeAdmin = ADMIN_ENABLED ? test.describe : test.describe.skip;
 
-test.describe("Admin UI 主要動線（feature flag 有効時）", () => {
-  test.skip(!ADMIN_ENABLED, "NEXT_PUBLIC_ADMIN_ENABLED=true が build 時に設定されていない");
-
+describeAdmin("Admin UI 主要動線（feature flag 有効時）", () => {
   test("/admin に物件一覧が表示される", async ({ page }) => {
     await page.goto("/admin");
     await expect(page.getByRole("heading", { level: 1, name: "物件管理" })).toBeVisible();
