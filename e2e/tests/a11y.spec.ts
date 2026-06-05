@@ -62,4 +62,16 @@ test.describe("a11y: 主要ページに axe-core 違反が無い", () => {
     await expect(page.getByRole("heading", { level: 1, name: "物件データ可視化" })).toBeVisible();
     await runAxe(page, "/insights");
   });
+
+  test("/admin (物件管理 / feature flag 有効時)", async ({ page }) => {
+    await page.goto("/admin");
+    await expect(page.getByRole("heading", { level: 1, name: "物件管理" })).toBeVisible();
+    await runAxe(page, "/admin");
+  });
+
+  test("/admin/properties/new (物件新規作成)", async ({ page }) => {
+    await page.goto("/admin/properties/new");
+    await expect(page.getByRole("heading", { level: 1, name: "物件を新規作成" })).toBeVisible();
+    await runAxe(page, "/admin/properties/new");
+  });
 });
