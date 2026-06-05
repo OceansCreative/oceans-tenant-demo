@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { isAdminEnabled } from "@/lib/admin/feature-flag";
 import { cn } from "@/lib/cn";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 
@@ -13,14 +14,24 @@ type HeaderProps = {
  * 主要ナビゲーションの href と翻訳キーのペア定義。
  * v0.8.1 で `/properties` や `/agent/dashboard` を追加する余地を残し、
  * 文言は `messages/*.json` の `nav.*` 名前空間から引く。
+ *
+ * v0.11.0 (WS-1): admin が feature flag 有効時のみ末尾に追加される。
+ * `NEXT_PUBLIC_*` 接頭辞なのでクライアント側でも参照可能。
  */
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/", key: "home" },
   { href: "/search", key: "search" },
   { href: "/chat", key: "chat" },
   { href: "/insights", key: "insights" },
   { href: "/agent", key: "agent" },
 ] as const;
+
+const ADMIN_NAV_ITEM = { href: "/admin", key: "admin" } as const;
+
+type NavItem = { readonly href: string; readonly key: string };
+
+const buildNavItems = (): ReadonlyArray<NavItem> =>
+  isAdminEnabled() ? [...BASE_NAV_ITEMS, ADMIN_NAV_ITEM] : [...BASE_NAV_ITEMS];
 
 /**
  * グローバルヘッダー（Client Component）。
@@ -32,6 +43,7 @@ const NAV_ITEMS = [
 export const Header = ({ className }: HeaderProps): React.JSX.Element => {
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
+  const navItems = buildNavItems();
   return (
     <header
       className={cn(
@@ -56,7 +68,7 @@ export const Header = ({ className }: HeaderProps): React.JSX.Element => {
 
         <nav aria-label={tNav("home")} className="hidden md:block">
           <ul className="flex items-center gap-6 text-sm text-neutral-700">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}

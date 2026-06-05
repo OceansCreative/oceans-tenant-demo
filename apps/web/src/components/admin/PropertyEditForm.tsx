@@ -191,24 +191,26 @@ export const PropertyEditForm = ({ initial }: PropertyEditFormProps): React.JSX.
             />
           </label>
 
-          <label className="space-y-1 text-sm" htmlFor={fieldId("slug")}>
-            <span className="font-medium text-neutral-800">{tFields("slug")}</span>
-            <input
-              id={fieldId("slug")}
-              type="text"
-              required
-              pattern="[a-z0-9-]+"
-              value={slug}
-              disabled={isEdit}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder={tPlaceholders("slug")}
-              aria-describedby={fieldId("slug-hint")}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-neutral-100"
-            />
-            <span id={fieldId("slug-hint")} className="block text-xs text-neutral-500">
+          <div className="space-y-1 text-sm">
+            <label className="block space-y-1" htmlFor={fieldId("slug")}>
+              <span className="font-medium text-neutral-800">{tFields("slug")}</span>
+              <input
+                id={fieldId("slug")}
+                type="text"
+                required
+                pattern="[a-z0-9-]+"
+                value={slug}
+                disabled={isEdit}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder={tPlaceholders("slug")}
+                aria-describedby={fieldId("slug-hint")}
+                className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-neutral-100"
+              />
+            </label>
+            <p id={fieldId("slug-hint")} className="text-xs text-neutral-500">
               {tFields("slugHint")}
-            </span>
-          </label>
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
