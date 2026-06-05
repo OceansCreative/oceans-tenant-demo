@@ -439,6 +439,82 @@ apps/web/
 - `histogramRent` の `binSize` はデフォルト 50,000 円。本番では物件価格帯に応じて調整余地あり
 - 大量データ時は Server 側で aggregate を実行する前に「集計用の絞り込みクエリ」を導入する余地がある（現状はページ全件を Server で集計）
 
+## Web Vitals 計測パイプライン（v0.11.0 WS-2）
+
+実ブラウザ上で計測した Core Web Vitals（LCP / INP / CLS / FCP / TTFB）を
+in-memory store に集約し、`/insights` ページ下部に median / p75 / sampleCount を
+表示するフィードバックループ。
+
+```
+ブラウザ
+  ├─ web-vitals v5 が onLCP / onINP / onCLS / onFCP / onTTFB を fire
+  ├─ VitalsReporter（Client Component, RootLayout でマウント）
+  │   ├─ requestIdleCallback で web-vitals を dynamic import
+  │   └─ メトリクス取得時に navigator.sendBeacon('/api/vitals', JSON)
+  │      └─ fallback: fetch(..., { keepalive: true })
+  └─ pathname のみ送信（query / hash / user agent は送らない）
+
+サーバ
+  ├─ /api/vitals (POST)
+  │   ├─ 既存 token-bucket レート制限を再利用（60 req/min/IP）
+  │   ├─ Zod 検証（pathname のみ、metric ごとの value 範囲、navigationType 列挙）
+  │   └─ recordVitalsSample() で in-memory store に push（key=`${metric}:${path}`）
+  ├─ in-memory store（lib/vitals/store.ts）
+  │   ├─ 1 (metric, path) あたり最大 1000 件、超過は FIFO で evict
+  │   └─ 並行アクセスは Node.js シングルスレッド前提で同期 push
+  ├─ /api/vitals/summary (GET)
+  │   └─ getAllVitalsSummary() を JSON で返す（デバッグ / refetch 用途）
+  └─ /insights/page.tsx（Server Component）
+      └─ getAllVitalsSummary() を直接呼び VitalsPanel に props で渡す
+```
+
+### 設計判断
+
+- **pathname のみ送る**: 個人情報の混入経路を最初から閉じる。query は実装者の意図とは
+  別に PII を含むことがあり（メール認証トークンの URL 等）、ペイロード設計の段階で除外する。
+  サーバ側でも `sanitizePathname()` で防御的に切り落としつつ、Zod の `refine` で
+  `?` / `#` 入りリクエストは 400 として弾く。
+- **sendBeacon 優先 + fetch keepalive フォールバック**: `sendBeacon` はページ離脱時にも
+  確実に飛ばせるが、`Blob({ type: "application/json" })` を弾く環境が一部あるため、
+  false 返却時は `fetch(..., { keepalive: true })` に流す。失敗しても UI 側で握りつぶす。
+- **閾値は Google 公式の Core Web Vitals 2024 版**:
+  LCP 2500/4000ms、INP 200/500ms、CLS 0.1/0.25、FCP 1800/3000ms、TTFB 800/1800ms。
+  値 → rating の関数は `lib/vitals/types.ts` の `rateVitalsValue()` に切り出して
+  UI と無関係にテスト可能。
+- **rating の視覚は色だけに依存しない**: 緑/琥珀/赤の背景色に加えて、●/◐/◯ の
+  記号と「良好 / 改善の余地 / 要改善」の文字を併用し、`role="img"` + `aria-label`
+  でフルメトリクス名入りの読み上げ文も付与する。
+
+### サーバレス前提の制約
+
+`/api/vitals` 含めて in-memory store は **同一 Node プロセス内** にしか存在しない。
+Vercel / 一般的な serverless 環境では各インスタンスが独立しているため、
+
+- 別インスタンスで受けた POST は別 store にしか積まれない
+- `/insights` の SSR 時に読む store と、`/api/vitals` で書く store がインスタンス違いで
+  食い違う可能性がある
+
+本実装は OSS リファレンス実装として「フィールド計測の最小サンプル」を示すことが目的で、
+本番運用時は以下のいずれかへ送信先を差し替える前提:
+
+- **集中ストア**: Upstash Redis / Cloudflare KV / Sentry / Datadog
+- **集計基盤**: ClickHouse / BigQuery（生サンプルを stream し、quantile 関数で p75 を計算）
+- **Vercel Speed Insights / Sentry Performance**: マネージドの Web Vitals 収集サービス
+
+差し替え時に触る境界は次の 2 箇所だけになるよう抽象化してある:
+
+1. `apps/web/src/app/api/vitals/route.ts` 内の `recordVitalsSample()` 呼び出し
+2. `apps/web/src/app/insights/page.tsx` 内の `getAllVitalsSummary()` 呼び出し
+
+### レート制限
+
+`/api/vitals` は既存の token bucket（`lib/rate-limit.ts`）を再利用し、`getVitalsRateLimitConfig()`
+で **60 req/min/IP（capacity 60 / refill 1s）** を既定値にしている。1 ページあたり 5 メトリクス
+を送るため、多数ページを連続巡回する E2E でも余裕を持って通過する設計。
+
+環境変数 `RATE_LIMIT_VITALS_CAPACITY` / `RATE_LIMIT_VITALS_REFILL_INTERVAL_MS` で
+本番では更に緩めることもできる（または逆に締めることも可能）。
+
 ## Sanity Studio の Desk Structure
 
 `/studio` のサイドナビは、v0.10.0 WS-4 で **カスタム Desk Structure** に差し替えた

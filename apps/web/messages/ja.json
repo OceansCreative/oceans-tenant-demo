@@ -341,5 +341,45 @@
       "columnCount": "件数",
       "empty": "物件状態が設定された物件がありません。"
     }
+  },
+  "vitals": {
+    "title": "Web Vitals（フィールド実測）",
+    "lead": "実ブラウザの計測値を /api/vitals に集約しています。サンプル数が少ない初期は揺れる点と、サーバレス前提のため本番運用では Redis 等への集約先差し替えが必要な点に注意してください。",
+    "tableLabel": "ページ別 Web Vitals サマリの表",
+    "columnMetric": "メトリクス",
+    "columnPath": "ページ",
+    "columnMedian": "中央値",
+    "columnP75": "p75",
+    "columnSampleCount": "サンプル数",
+    "columnRating": "評価",
+    "metric": {
+      "lcp": "LCP",
+      "inp": "INP",
+      "cls": "CLS",
+      "fcp": "FCP",
+      "ttfb": "TTFB"
+    },
+    "metricFullName": {
+      "lcp": "Largest Contentful Paint",
+      "inp": "Interaction to Next Paint",
+      "cls": "Cumulative Layout Shift",
+      "fcp": "First Contentful Paint",
+      "ttfb": "Time to First Byte"
+    },
+    "threshold": {
+      "good": "良好",
+      "needsImprovement": "改善の余地",
+      "poor": "要改善"
+    },
+    "thresholdSr": {
+      "good": "{metric} は良好の範囲です",
+      "needsImprovement": "{metric} は改善の余地があります",
+      "poor": "{metric} は要改善です"
+    },
+    "empty": "まだサンプルが集まっていません。複数ページを巡回すると数値が表示されます。",
+    "unit": {
+      "ms": "ms",
+      "score": "（無次元）"
+    }
   }
 }

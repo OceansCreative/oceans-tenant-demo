@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { VitalsReporter } from "@/components/vitals/VitalsReporter";
 import "@/styles/globals.css";
 
 const notoSansJp = Noto_Sans_JP({
@@ -87,6 +88,8 @@ const RootLayout = async ({ children }: RootLayoutProps): Promise<React.JSX.Elem
             {children}
           </main>
           <Footer />
+          {/* Web Vitals 計測クライアント。視覚的には何もレンダリングしない。 */}
+          <VitalsReporter />
         </NextIntlClientProvider>
       </body>
     </html>

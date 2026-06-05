@@ -104,6 +104,22 @@ export const getIngestUrlRateLimitConfig = (): RateLimitConfig =>
   );
 
 /**
+ * `/api/vitals` 用設定。
+ * 容量 60 / 補充 1 token per 1 秒 → 持続 60 req/min、短時間 burst も 60 まで許容。
+ *
+ * 1 ページあたり LCP / INP / CLS / FCP / TTFB の 5 メトリクスを送るため、
+ * 多数ページを連続巡回するシナリオを正常通過させるために緩めにする。
+ * AI 系と異なりコストはほぼゼロ（in-memory push のみ）なので burst にも寛容。
+ * 環境変数: `RATE_LIMIT_VITALS_CAPACITY`, `RATE_LIMIT_VITALS_REFILL_INTERVAL_MS`
+ */
+export const getVitalsRateLimitConfig = (): RateLimitConfig =>
+  readConfigFromEnv(
+    process.env.RATE_LIMIT_VITALS_CAPACITY,
+    process.env.RATE_LIMIT_VITALS_REFILL_INTERVAL_MS,
+    { capacity: 60, refillIntervalMs: 1_000 },
+  );
+
+/**
  * バケットエントリ数が `MAX_ENTRIES` を超えていたら、最も古い `lastSeenMs` を
  * 持つエントリから 1 件削除する（簡易 LRU）。Map の反復順は挿入順なので、
  * `lastSeenMs` 更新時に `delete` → `set` で末尾に移動する `touch` も併用する。

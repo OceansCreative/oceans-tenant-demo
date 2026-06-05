@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ChartsGrid } from "@/components/insights/ChartsGrid";
 import { KpiCards } from "@/components/insights/KpiCards";
+import { VitalsPanel } from "@/components/insights/VitalsPanel";
 import {
   aggregateByCondition,
   aggregateByPrefecture,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/insights/aggregate";
 import { fetchProperties } from "@/lib/properties";
 import { EMPTY_CRITERIA } from "@/lib/search-criteria";
+import { getAllVitalsSummary } from "@/lib/vitals/store";
 
 export const metadata: Metadata = {
   title: "物件データ可視化",
@@ -54,6 +56,10 @@ const InsightsPage = async (): Promise<React.JSX.Element> => {
   const rentBins = histogramRent(items);
   const conditionBuckets = aggregateByCondition(items);
 
+  // Web Vitals は in-memory store 直読み（同一プロセスなので fetch を経由しない）。
+  // サーバレスでは各インスタンス独立サンプルになる前提（docs/ARCHITECTURE.md 参照）。
+  const vitalsSummaries = getAllVitalsSummary();
+
   return (
     // RootLayout 側で <main id="main-content"> が既にあるため、ここはネスト禁止。
     // axe `landmark-main-is-top-level` 違反回避のため <section aria-labelledby> に変更。
@@ -77,6 +83,8 @@ const InsightsPage = async (): Promise<React.JSX.Element> => {
           rentBins={rentBins}
           conditionBuckets={conditionBuckets}
         />
+
+        <VitalsPanel summaries={vitalsSummaries} />
       </div>
     </section>
   );

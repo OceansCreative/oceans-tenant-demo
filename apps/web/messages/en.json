@@ -341,5 +341,45 @@
       "columnCount": "Count",
       "empty": "No properties have a condition set."
     }
+  },
+  "vitals": {
+    "title": "Web Vitals (field measurements)",
+    "lead": "Real-browser metrics are aggregated via /api/vitals. Numbers will jitter when sample counts are small, and because this OSS reference runs serverless you should replace the in-memory store (e.g. Redis) for production.",
+    "tableLabel": "Per-path Web Vitals summary table",
+    "columnMetric": "Metric",
+    "columnPath": "Path",
+    "columnMedian": "Median",
+    "columnP75": "p75",
+    "columnSampleCount": "Samples",
+    "columnRating": "Rating",
+    "metric": {
+      "lcp": "LCP",
+      "inp": "INP",
+      "cls": "CLS",
+      "fcp": "FCP",
+      "ttfb": "TTFB"
+    },
+    "metricFullName": {
+      "lcp": "Largest Contentful Paint",
+      "inp": "Interaction to Next Paint",
+      "cls": "Cumulative Layout Shift",
+      "fcp": "First Contentful Paint",
+      "ttfb": "Time to First Byte"
+    },
+    "threshold": {
+      "good": "Good",
+      "needsImprovement": "Needs improvement",
+      "poor": "Poor"
+    },
+    "thresholdSr": {
+      "good": "{metric} is in the good range",
+      "needsImprovement": "{metric} needs improvement",
+      "poor": "{metric} is poor"
+    },
+    "empty": "No samples yet. Visit a few pages and numbers will start to appear.",
+    "unit": {
+      "ms": "ms",
+      "score": "(unitless)"
+    }
   }
 }
