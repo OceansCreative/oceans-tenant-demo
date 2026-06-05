@@ -169,6 +169,7 @@ pnpm screenshots:gif                              # 🎬 操作デモ GIF 再生
 | `ANTHROPIC_MODEL` | — | 既定 `claude-sonnet-4-5` |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | — | 未設定時は地図ビューを無効化 |
 | `NEXT_PUBLIC_APP_URL` | — | OGP / canonical 用 |
+| `NEXT_PUBLIC_ADMIN_ENABLED` | — | `true` 完全一致時のみ `/admin`（demo / 認証なし）を有効化 |
 
 ### ダミーデータの投入
 

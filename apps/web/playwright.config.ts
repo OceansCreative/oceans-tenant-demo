@@ -49,5 +49,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     cwd: "../../",
+    // v0.11.0 WS-1: admin E2E のために feature flag を有効化する。
+    // `NEXT_PUBLIC_ADMIN_ENABLED=true` を Next.js のビルド時に埋め込み、
+    // middleware の 404 rewrite を回避して `/admin` 配下を walking 可能にする。
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_ADMIN_ENABLED: "true",
+    },
   },
 });

@@ -533,6 +533,17 @@ Vercel / 一般的な serverless 環境では各インスタンスが独立し�
   Studio が `/studio` 配下で動くため Next.js 側との CORS / iframe ヘッダ整合が必要で、
   Desk 改善とはレビュー観点が異なるためスコープを切った。
 
+## Admin UI（v0.11.0 / `/admin` 配下）
+
+- 物件の手動 upsert / 削除を行う **認証なし demo** モジュール（CLAUDE.md の禁止事項に従い NextAuth 等は実装しない）
+- 公開条件: `NEXT_PUBLIC_ADMIN_ENABLED=true` の **文字列完全一致** 時のみ有効。それ以外では
+  - middleware 層で `/admin/**` を `/admin/__disabled` に rewrite して `not-found.tsx` を 404 として返す
+  - 二重防御として `app/admin/layout.tsx` も `isAdminEnabled()` を再検証し `notFound()` を呼ぶ
+- データ書き込み経路: `/api/admin/property`（POST upsert / DELETE）
+  - `getSanityWriteClient()` が `null`（`SANITY_API_TOKEN` 未設定）なら in-memory mock store に保存
+  - 既存 `propertySchema` で server-side 検証し、`ZodError` は 400 / fieldErrors にマップ
+- 将来の認証統合は本 PR の範囲外（最小権限の Clerk / WorkOS を別 PR で）
+
 ## 拡張ポイント
 
 - Sanity Studio 埋め込み: `next-sanity` の `NextStudio` を `/studio` に統合
