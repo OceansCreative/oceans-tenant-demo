@@ -25,6 +25,7 @@
     "chat": "対話で探す",
     "agent": "不動産会社",
     "insights": "データで見る",
+    "admin": "管理",
     "brandLabel": "OceansTenant トップへ",
     "registerCta": "物件を登録"
   },
@@ -296,6 +297,72 @@
   "seo": {
     "defaultTitle": "OceansTenant — AI で店舗物件を探す、登録する",
     "titleTemplate": "%s | OceansTenant"
+  },
+  "admin": {
+    "title": "物件管理",
+    "pageDescription": "OceansTenant 物件管理画面（demo / 認証なし）",
+    "lead": "登録済みの物件を一覧・編集・削除できます。`NEXT_PUBLIC_ADMIN_ENABLED=true` のときのみ表示されます。",
+    "disabledNotice": "Admin UI は無効化されています。`NEXT_PUBLIC_ADMIN_ENABLED=true` を設定してください。",
+    "navAriaLabel": "管理メニュー",
+    "list": "物件一覧",
+    "create": "新規作成",
+    "edit": "編集",
+    "delete": "削除",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "back": "一覧に戻る",
+    "newProperty": "+ 物件を新規作成",
+    "editTitle": "物件を編集",
+    "createTitle": "物件を新規作成",
+    "listEmpty": "まだ物件がありません。新規作成から始めてください。",
+    "listCount": "{count} 件",
+    "confirmDelete": "「{title}」を削除します。よろしいですか？",
+    "saveSuccess": "保存しました（mode: {mode}）。",
+    "deleteSuccess": "削除しました（mode: {mode}）。",
+    "saveFailed": "保存に失敗しました",
+    "deleteFailed": "削除に失敗しました",
+    "modeSanity": "Sanity に書き込みました",
+    "modeMock": "mock store に保存しました（プロセス再起動で初期化）",
+    "tableColumns": {
+      "title": "タイトル",
+      "slug": "slug",
+      "prefecture": "都道府県",
+      "city": "市区町村",
+      "rent": "賃料",
+      "availability": "公開状態",
+      "actions": "操作"
+    },
+    "fields": {
+      "title": "物件名",
+      "slug": "slug",
+      "slugHint": "半角英小文字 / 数字 / ハイフンのみ。URL の一部になります（例: shinjuku-cafe-001）。",
+      "prefecture": "都道府県",
+      "city": "市区町村",
+      "streetAddress": "番地",
+      "geoLat": "緯度",
+      "geoLng": "経度",
+      "rent": "月額賃料（円）",
+      "area": "専有面積（㎡）",
+      "buildingType": "建物形態",
+      "condition": "物件状態",
+      "availability": "公開状態",
+      "description": "物件の特徴",
+      "listedByRef": "掲載会社 ref",
+      "publishedAt": "掲載日（ISO 8601）"
+    },
+    "placeholders": {
+      "any": "—",
+      "title": "新宿三丁目 路面店（サンプル）",
+      "slug": "sample-shinjuku-sanchome-street",
+      "city": "新宿区",
+      "streetAddress": "新宿 3-1-1",
+      "description": "明治通り沿い、視認性の高いコーナー立地。"
+    },
+    "errors": {
+      "required": "必須項目です",
+      "invalid": "入力値が不正です",
+      "submitFailed": "送信に失敗しました"
+    }
   },
   "insights": {
     "title": "物件データ可視化",
