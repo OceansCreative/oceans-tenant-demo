@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { IngestForm } from "@/components/agent/IngestForm";
 import { KpiCards } from "@/components/insights/KpiCards";
+import { VitalsPanel } from "@/components/insights/VitalsPanel";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { PropertyMap } from "@/components/map/PropertyMap";
@@ -124,6 +125,24 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
   it("KpiCards (/insights): 全 0 件でも a11y 適合", async () => {
     const { container } = renderWithI18n(
       <KpiCards kpis={{ total: 0, avgRent: 0, avgArea: 0, publishingCount: 0 }} />,
+    );
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("VitalsPanel (/insights): サンプル無しのときも a11y 適合", async () => {
+    const { container } = renderWithI18n(<VitalsPanel summaries={[]} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("VitalsPanel (/insights): メトリクス入りテーブルも a11y 適合", async () => {
+    const { container } = renderWithI18n(
+      <VitalsPanel
+        summaries={[
+          { metric: "LCP", path: "/", median: 2000, p75: 2400, sampleCount: 5 },
+          { metric: "INP", path: "/search", median: 80, p75: 120, sampleCount: 3 },
+          { metric: "CLS", path: "/", median: 0.05, p75: 0.08, sampleCount: 4 },
+        ]}
+      />,
     );
     expect(await axe(container)).toHaveNoViolations();
   });

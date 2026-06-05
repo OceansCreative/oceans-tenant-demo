@@ -36,6 +36,8 @@ const InsightsLoading = (): React.JSX.Element => {
           />
         ))}
       </div>
+      {/* Web Vitals 表用の skeleton。実 UI の高さ（テーブル＋見出し）に合わせる。 */}
+      <div className="mt-6 h-48 animate-pulse rounded-2xl border border-neutral-200 bg-neutral-100" />
       <p className="sr-only">読み込み中です…</p>
     </div>
   );
