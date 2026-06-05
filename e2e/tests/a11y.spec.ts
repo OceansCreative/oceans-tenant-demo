@@ -63,13 +63,18 @@ test.describe("a11y: 主要ページに axe-core 違反が無い", () => {
     await runAxe(page, "/insights");
   });
 
+  // admin は build 時 `NEXT_PUBLIC_ADMIN_ENABLED=true` でのみ存在。flag 未設定環境では skip。
+  const ADMIN_ENABLED = process.env.NEXT_PUBLIC_ADMIN_ENABLED === "true";
+
   test("/admin (物件管理 / feature flag 有効時)", async ({ page }) => {
+    test.skip(!ADMIN_ENABLED, "NEXT_PUBLIC_ADMIN_ENABLED=true が build 時に設定されていない");
     await page.goto("/admin");
     await expect(page.getByRole("heading", { level: 1, name: "物件管理" })).toBeVisible();
     await runAxe(page, "/admin");
   });
 
   test("/admin/properties/new (物件新規作成)", async ({ page }) => {
+    test.skip(!ADMIN_ENABLED, "NEXT_PUBLIC_ADMIN_ENABLED=true が build 時に設定されていない");
     await page.goto("/admin/properties/new");
     await expect(page.getByRole("heading", { level: 1, name: "物件を新規作成" })).toBeVisible();
     await runAxe(page, "/admin/properties/new");

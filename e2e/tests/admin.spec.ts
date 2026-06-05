@@ -4,8 +4,11 @@ import { expect, test } from "@playwright/test";
  * Admin UI の主要動線を E2E で検証する。
  *
  * 前提:
- * - `playwright.config.ts` の `webServer.env` で `NEXT_PUBLIC_ADMIN_ENABLED=true` を渡している
- * - 物件データは mock store（初期状態は MOCK_PROPERTIES）から取り回している
+ * - `NEXT_PUBLIC_ADMIN_ENABLED=true` が **build 時** に設定されている
+ *   （Next.js の `NEXT_PUBLIC_*` は build 時に client bundle に inline されるため、runtime のみの env 注入では Header の admin リンクが表示されない）
+ * - 既定の CI ワークフローでは flag は未設定（admin はオプション機能）。本 spec は flag 未設定時は自動でスキップする
+ * - ローカル / 手動で確認する場合: `NEXT_PUBLIC_ADMIN_ENABLED=true pnpm --filter @oceans-tenant/web build`
+ *   → `NEXT_PUBLIC_ADMIN_ENABLED=true pnpm --filter @oceans-tenant/web exec playwright test admin.spec.ts`
  *
  * カバレッジ:
  * - `/admin` 一覧が表示される（feature flag 有効時のみ）
@@ -13,7 +16,13 @@ import { expect, test } from "@playwright/test";
  * - 新規作成動線（フォーム入力 → 保存 → 一覧に新規物件が反映）
  */
 
+// build 時に admin flag が有効化されていない環境では admin UI が描画されないため
+// 全テストを自動スキップする。
+const ADMIN_ENABLED = process.env.NEXT_PUBLIC_ADMIN_ENABLED === "true";
+
 test.describe("Admin UI 主要動線（feature flag 有効時）", () => {
+  test.skip(!ADMIN_ENABLED, "NEXT_PUBLIC_ADMIN_ENABLED=true が build 時に設定されていない");
+
   test("/admin に物件一覧が表示される", async ({ page }) => {
     await page.goto("/admin");
     await expect(page.getByRole("heading", { level: 1, name: "物件管理" })).toBeVisible();
