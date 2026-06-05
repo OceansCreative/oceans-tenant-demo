@@ -125,7 +125,10 @@ export const VitalsPanel = ({ summaries }: VitalsPanelProps): React.JSX.Element 
       <p id={captionId} className="text-sm leading-relaxed text-neutral-600">
         {t("lead")}
       </p>
-      <div className="overflow-x-auto">
+      {/* axe `scrollable-region-focusable`: 横スクロール領域はキーボード focus 可能にする。
+          親 <section> が既に region なので role/aria-labelledby は付けず tabIndex のみ付与。 */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: スクロール領域へのキーボード到達のため意図的に付与（axe scrollable-region-focusable 対応） */}
+      <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{t("tableLabel")}</caption>
           <thead>
