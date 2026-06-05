@@ -277,6 +277,17 @@ URL prefix は使わず、`NEXT_LOCALE` cookie で locale を保持する（CLAU
 `/search`, `/chat`, `/agent`, `/properties/[slug]` 等のコンポーネント文言の全翻訳化と、
 Sanity 文言（建物種別ラベル等）の locale 切替は v0.8.1 で実装予定。
 
+### Storybook 上の locale 切替
+
+v0.11.0 WS-3 で Storybook の preview に `globalTypes.locale` を追加し、
+ツールバー右側の「Locale」セレクタで `日本語 (ja)` / `English (en)` を切り替えられるようにした。
+
+- 実装: `apps/web/.storybook/preview.tsx` の `globalTypes.locale` + decorator。
+  `context.globals.locale` を `NextIntlClientProvider` の `locale` / `messages` に渡す。
+- v0.8.0 時点ではグローバル `ja` 固定の暫定実装だったが、v0.9.0 で en messages が
+  揃ったため動的切替へ昇格。`useTranslations()` を呼ぶ全 Story（Header / Footer /
+  RelatedProperties 等）で文言が切り替わることを確認できる。
+
 ## アクセシビリティ
 
 OSS リファレンス実装として「誰でも使える」最低限を v0.6.0 WS-3 で確立した。
