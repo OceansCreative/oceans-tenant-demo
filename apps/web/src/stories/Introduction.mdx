@@ -35,6 +35,18 @@ OceansTenant は **店舗物件検索プラットフォーム** のリファレ�
 
 詳しい builder 選定理由は `apps/web/.storybook/main.ts` の冒頭コメントを参照してください。
 
+## Locale 切替（ja / en）
+
+ツールバー右側の **Locale セレクタ** で `日本語 (ja)` / `English (en)` を切り替えられます。
+
+- 全 Story はグローバル decorator として `NextIntlClientProvider` でラップされており、
+  toolbar の選択に応じて `messages/ja.json` / `messages/en.json` が動的に差し替わります。
+- 翻訳キーを使用しているコンポーネント（Header / Footer / RelatedProperties など）は
+  この切替で文言が変化することを確認できます。
+- 翻訳キーをハードコードしていない純粋な静的 Story は表示が変わりません。これは仕様です。
+
+実装は `apps/web/.storybook/preview.tsx` の `globalTypes.locale` を参照してください。
+
 ## 開発者向けメモ
 
 - **新規 Story を追加する場合**: `apps/web/src/components/<group>/<Component>.stories.tsx` に

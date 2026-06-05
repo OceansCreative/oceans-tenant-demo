@@ -1,5 +1,6 @@
 import type { Preview } from "@storybook/react";
 import { NextIntlClientProvider } from "next-intl";
+import enMessages from "../messages/en.json";
 import jaMessages from "../messages/ja.json";
 // Tailwind v4 + brand トークン + Noto Sans JP CSS 変数のフォールバックを取り込む。
 // `apps/web/src/styles/globals.css` 内の `@theme` / `@layer base` がそのまま preview に適用される。
@@ -9,10 +10,16 @@ import "../src/styles/globals.css";
  * Storybook 用の i18n provider。
  *
  * v0.8.0 で Header / Footer 等が `useTranslations()` を使うようになったため、
- * グローバル decorator として ja messages を流し込む。
- * 個別 story で en を試したい場合は `parameters.locale = "en"` の取り回しを後日追加する。
+ * グローバル decorator として messages を流し込む。
+ * v0.11.0 WS-3 で globalTypes による locale 切替 toolbar を導入し、
+ * 個別 story を ja / en で切り替えてプレビューできるようにした。
  */
-const I18N_LOCALE = "ja" as const;
+type Locale = "ja" | "en";
+
+const messagesByLocale = {
+  ja: jaMessages,
+  en: enMessages,
+} as const satisfies Record<Locale, unknown>;
 
 /**
  * Storybook preview 設定。
@@ -24,6 +31,11 @@ const I18N_LOCALE = "ja" as const;
  *
  * `next/navigation` / `next/link` / `next/font/google` は `.storybook/main.ts` の
  * `viteFinal.resolve.alias` で薄いモックに差し替えている（`.storybook/mocks/` 配下）。
+ *
+ * globalTypes.locale:
+ *   - Storybook toolbar に「Locale」セレクタを追加（ja / en）。
+ *   - decorator 側で `context.globals.locale` を読み、対応する messages を
+ *     `NextIntlClientProvider` に渡す。各 story の文言が toolbar 切替で動的に変わる。
  */
 const preview: Preview = {
   parameters: {
@@ -66,13 +78,32 @@ const preview: Preview = {
       },
     },
   },
+  globalTypes: {
+    locale: {
+      description: "UI 表示言語（next-intl messages を切り替える）",
+      defaultValue: "ja",
+      toolbar: {
+        title: "Locale",
+        icon: "globe",
+        items: [
+          { value: "ja", title: "日本語" },
+          { value: "en", title: "English" },
+        ],
+        dynamicTitle: true,
+      },
+    },
+  },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
-      <NextIntlClientProvider locale={I18N_LOCALE} messages={jaMessages}>
-        <Story />
-      </NextIntlClientProvider>
-    ),
+    (Story, context) => {
+      const rawLocale = context.globals.locale;
+      const locale: Locale = rawLocale === "en" ? "en" : "ja";
+      return (
+        <NextIntlClientProvider locale={locale} messages={messagesByLocale[locale]}>
+          <Story />
+        </NextIntlClientProvider>
+      );
+    },
   ],
 };
 
