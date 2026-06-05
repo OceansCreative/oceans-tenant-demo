@@ -73,6 +73,30 @@ describe("toBeaconPayload", () => {
     );
     expect(payload).toBeNull();
   });
+
+  it("web-vitals v5 の back-forward は back_forward に正規化される", () => {
+    const payload = toBeaconPayload(
+      {
+        name: "LCP",
+        value: 1500,
+        navigationType: "back-forward",
+      } as unknown as Parameters<typeof toBeaconPayload>[0],
+      "/",
+    );
+    expect(payload?.navigationType).toBe("back_forward");
+  });
+
+  it("web-vitals v5 の back-forward-cache も back_forward に正規化される", () => {
+    const payload = toBeaconPayload(
+      {
+        name: "LCP",
+        value: 1500,
+        navigationType: "back-forward-cache",
+      } as unknown as Parameters<typeof toBeaconPayload>[0],
+      "/",
+    );
+    expect(payload?.navigationType).toBe("back_forward");
+  });
 });
 
 describe("VitalsReporter", () => {

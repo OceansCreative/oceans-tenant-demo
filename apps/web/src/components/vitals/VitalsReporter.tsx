@@ -75,16 +75,29 @@ const sendPayload = (payload: VitalsBeaconPayload): void => {
  * - path は `window.location.pathname` を採用（next-intl の prefix `/en` も
  *   そのまま path として送る。Insights 側で集計するときに有用な粒度）
  */
+/**
+ * web-vitals v5 の `navigationType` は `back-forward` / `back-forward-cache` を返すが、
+ * サーバ側 Zod は `back_forward` を受け付ける（Web Performance API 旧表記に合わせている）。
+ * クライアント側で snake_case へ正規化することで、サーバ Zod を 1 つの真実に揃える。
+ */
+const normalizeNavigationType = (
+  raw: Metric["navigationType"] | undefined,
+): VitalsBeaconPayload["navigationType"] => {
+  if (raw === "back-forward" || raw === "back-forward-cache") return "back_forward";
+  if (raw === "navigate" || raw === "reload" || raw === "prerender" || raw === "restore") {
+    return raw;
+  }
+  // 未知 / undefined は安全側に navigate にフォールバック
+  return "navigate";
+};
+
 export const toBeaconPayload = (metric: Metric, pathname: string): VitalsBeaconPayload | null => {
   if (!isSupportedMetric(metric.name)) return null;
-  // `navigationType` は `web-vitals` の型と zod スキーマで完全一致しているのでそのまま流せる。
-  // 古いブラウザで undefined になるケースは "navigate" にフォールバック。
-  const navigationType: VitalsBeaconPayload["navigationType"] = metric.navigationType ?? "navigate";
   return {
     metric: metric.name,
     value: metric.value,
     path: pathname,
-    navigationType,
+    navigationType: normalizeNavigationType(metric.navigationType),
   };
 };
 
