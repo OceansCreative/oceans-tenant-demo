@@ -52,12 +52,16 @@ jobs:
         run: pnpm --filter @oceans-tenant/web build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+          # NEXT_PUBLIC_* は build 時に inline されるため、admin E2E が
+          # Header の「管理」リンクを見つけられるように build 段階で flag を有効化する。
+          NEXT_PUBLIC_ADMIN_ENABLED: "true"
 
       - name: Playwright テスト
         run: pnpm --filter @oceans-tenant/web exec playwright test
         env:
           CI: "true"
           NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_ADMIN_ENABLED: "true"
 
       - name: テスト結果をアップロード
         if: always() && hashFiles('apps/web/playwright-report/**') != ''

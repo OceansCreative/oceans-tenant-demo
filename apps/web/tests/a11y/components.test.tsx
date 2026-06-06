@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
+import { AdminNav } from "@/components/admin/AdminNav";
+import { PropertyEditForm } from "@/components/admin/PropertyEditForm";
 import { IngestForm } from "@/components/agent/IngestForm";
 import { KpiCards } from "@/components/insights/KpiCards";
 import { VitalsPanel } from "@/components/insights/VitalsPanel";
@@ -144,6 +146,25 @@ describe("a11y: 主要コンポーネントは axe 違反を出さない", () =>
         ]}
       />,
     );
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("AdminNav: 管理ナビが a11y 適合", async () => {
+    const { container } = renderWithI18n(<AdminNav />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("PropertyEditForm (新規モード): フォームが a11y 適合", async () => {
+    const { container } = renderWithI18n(<PropertyEditForm />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("PropertyEditForm (編集モード): initial が反映された状態でも a11y 適合", async () => {
+    const initial = MOCK_PROPERTIES[0];
+    if (!initial) throw new Error("MOCK_PROPERTIES が空です");
+    // `MOCK_PROPERTIES` は派生型 `PropertyWithTsubo` だが、`tsubo` は派生値なので Property に変換する。
+    const { tsubo: _tsubo, ...property } = initial;
+    const { container } = renderWithI18n(<PropertyEditForm initial={property} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

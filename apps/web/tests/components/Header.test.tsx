@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Header } from "@/components/layout/Header";
 import { renderWithI18n } from "../test-utils";
 
@@ -59,5 +59,33 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "List a property" })).toBeInTheDocument();
     expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+  });
+
+  describe("admin リンク（v0.11.0 WS-1）", () => {
+    const originalEnv = process.env.NEXT_PUBLIC_ADMIN_ENABLED;
+
+    beforeEach(() => {
+      delete process.env.NEXT_PUBLIC_ADMIN_ENABLED;
+    });
+
+    afterEach(() => {
+      if (originalEnv === undefined) {
+        delete process.env.NEXT_PUBLIC_ADMIN_ENABLED;
+      } else {
+        process.env.NEXT_PUBLIC_ADMIN_ENABLED = originalEnv;
+      }
+    });
+
+    it("feature flag 無効時は管理リンクが表示されない", () => {
+      renderWithI18n(<Header />);
+      expect(screen.queryByRole("link", { name: "管理" })).toBeNull();
+    });
+
+    it('NEXT_PUBLIC_ADMIN_ENABLED="true" のとき管理リンクが表示される', () => {
+      process.env.NEXT_PUBLIC_ADMIN_ENABLED = "true";
+      renderWithI18n(<Header />);
+      const adminLink = screen.getByRole("link", { name: "管理" });
+      expect(adminLink).toHaveAttribute("href", "/admin");
+    });
   });
 });

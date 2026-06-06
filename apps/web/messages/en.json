@@ -25,6 +25,7 @@
     "chat": "Chat search",
     "agent": "For agents",
     "insights": "Insights",
+    "admin": "Admin",
     "brandLabel": "Back to OceansTenant home",
     "registerCta": "List a property"
   },
@@ -296,6 +297,72 @@
   "seo": {
     "defaultTitle": "OceansTenant — Find and list retail spaces with AI",
     "titleTemplate": "%s | OceansTenant"
+  },
+  "admin": {
+    "title": "Property admin",
+    "pageDescription": "OceansTenant property admin (demo / no authentication)",
+    "lead": "List, edit, and delete registered properties. Visible only when `NEXT_PUBLIC_ADMIN_ENABLED=true`.",
+    "disabledNotice": "The admin UI is disabled. Set `NEXT_PUBLIC_ADMIN_ENABLED=true` to enable it.",
+    "navAriaLabel": "Admin navigation",
+    "list": "Property list",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back to list",
+    "newProperty": "+ Create property",
+    "editTitle": "Edit property",
+    "createTitle": "Create property",
+    "listEmpty": "No properties yet. Start from Create.",
+    "listCount": "{count} record(s)",
+    "confirmDelete": "Delete \"{title}\"? This cannot be undone.",
+    "saveSuccess": "Saved (mode: {mode}).",
+    "deleteSuccess": "Deleted (mode: {mode}).",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete",
+    "modeSanity": "Wrote to Sanity",
+    "modeMock": "Stored in the in-memory mock (resets on restart)",
+    "tableColumns": {
+      "title": "Title",
+      "slug": "Slug",
+      "prefecture": "Prefecture",
+      "city": "City",
+      "rent": "Rent",
+      "availability": "Availability",
+      "actions": "Actions"
+    },
+    "fields": {
+      "title": "Title",
+      "slug": "Slug",
+      "slugHint": "Lowercase letters, digits, and hyphens only. Becomes part of the URL (e.g., shinjuku-cafe-001).",
+      "prefecture": "Prefecture",
+      "city": "City",
+      "streetAddress": "Street address",
+      "geoLat": "Latitude",
+      "geoLng": "Longitude",
+      "rent": "Monthly rent (JPY)",
+      "area": "Floor area (sqm)",
+      "buildingType": "Building type",
+      "condition": "Condition",
+      "availability": "Availability",
+      "description": "Description",
+      "listedByRef": "Listed-by ref",
+      "publishedAt": "Published at (ISO 8601)"
+    },
+    "placeholders": {
+      "any": "—",
+      "title": "Shinjuku Sanchome street-level (sample)",
+      "slug": "sample-shinjuku-sanchome-street",
+      "city": "Shinjuku-ku",
+      "streetAddress": "3-1-1 Shinjuku",
+      "description": "Corner location on Meiji-dori with high visibility."
+    },
+    "errors": {
+      "required": "Required",
+      "invalid": "Invalid value",
+      "submitFailed": "Submit failed"
+    }
   },
   "insights": {
     "title": "Property data insights",
