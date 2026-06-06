@@ -284,3 +284,22 @@ Vercel に登録しているか確認。
 `vercel.json` で `apps/web/src/app/api/**/route.ts` の `maxDuration` を 60 秒に
 設定済み。これを超えるリクエストは Vercel プランの上限に達している可能性が
 あるため、AI 呼び出し側のタイムアウトを見直す。
+
+## 本番運用注意点（必読）
+
+`demo.oceans-base.com/tenant-search` のような **公開 OSS デモ** として運用する場合、
+認証なし・admin 非公開・書き込み無効を含む運用ガードを必ず守ること。
+
+- 本番デモ向け env テンプレート: [`/.env.production.example`](../.env.production.example)
+- 本番運用ガイド: [`docs/PRODUCTION_SAFETY.md`](./PRODUCTION_SAFETY.md)
+  - デモ運用の前提（認証なし / `/admin` 非公開 / 書き込み無効推奨）
+  - コスト管理（Anthropic 月次アラート / レート制限 / Sanity 無料枠）
+  - `NEXT_PUBLIC_*` の inline 仕様と機密 env の分離
+  - 既知の制約（in-memory rate limit / vitals store）
+  - インシデント対応（脆弱性報告 / 緊急時ロールバック）
+  - Vercel Production 反映前のチェックリスト
+
+Security Headers（`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
+`Permissions-Policy`）は [`apps/web/next.config.ts`](../apps/web/next.config.ts) で
+全パスに付与する構成。CSP は next-intl / 動的 chart / OG 画像との相性検証が必要なため
+別 PR で慎重に導入する。
