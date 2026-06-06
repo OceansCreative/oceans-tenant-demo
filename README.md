@@ -17,12 +17,12 @@
 [![Node](https://img.shields.io/badge/node-20.x-brightgreen?logo=nodedotjs&logoColor=white)](.nvmrc)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript&logoColor=white)](tsconfig.json)
 
+🌐 **Live Demo**: [demo.oceans-base.com/tenant-search](https://demo.oceans-base.com/tenant-search) — **v1.0.0 公開予定**（公開後はこの行を実 URL のみに更新）
+
 </div>
 
 物件 URL をペーストするだけで AI が情報を構造化抽出し、自然言語での対話型検索を可能にする
 OSS リファレンス実装です。Next.js 15 / Sanity v3 / Anthropic Claude API / Tailwind CSS 4 で構成されています。
-
-🔗 **デモ**: [demo.oceans-base.com/tenant-search](https://demo.oceans-base.com/tenant-search)
 
 ### 累積成果サマリ（v0.9.0 時点）
 
@@ -276,8 +276,10 @@ OSS リファレンス実装としての成熟度を段階で公開していま�
 | [docs/MIGRATION.md](docs/MIGRATION.md) | バージョン間互換性ガイド / 環境変数履歴 / API スキーマ変更 / 既知の制約 |
 | [scripts/eval/README.md](scripts/eval/README.md) | `extract_property` の Gold Standard 評価ハーネス（メトリクス / fixture 追加手順） |
 | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | コードレビュー入口 / 着眼点 / よくある質問 |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（環境変数 / Region / Troubleshooting） |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（ユーザー作業 30 分セットアップ / 環境変数 / Region / Troubleshooting） |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有デプロイ運用 |
+| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) | v1.0.0 公開前 最終チェックリスト（環境変数 / ja-en / モバイル / SEO / a11y / Lighthouse / CI / セキュリティ） |
+| [docs/SHOWCASE_BLURB.md](docs/SHOWCASE_BLURB.md) | `oceans-base.com` 親ページ向け紹介テキスト草案（短文 / 標準 / 詳細の 3 トーン） |
 | [CHANGELOG.md](CHANGELOG.md) | 全リリース履歴（Keep a Changelog 準拠、v0.1.0〜v0.9.0 + Unreleased） |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発フロー / `/ship` パターン / 翻訳キー追加手順 / 品質ゲート |
 | [SECURITY.md](SECURITY.md) | 脆弱性報告手順 / SLA / 過去の対応事例 |
