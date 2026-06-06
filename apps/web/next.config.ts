@@ -29,12 +29,40 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * Next.js 16 で Turbopack が build 既定化された際は、Issue #82945 解決後に
  * `turbopack.resolveAlias` などで正式対応を追加し、webpack 側設定を削除する想定。
  */
+/**
+ * 本番デモ運用のための共通 Security Headers（v0.12.0 WS-C）。
+ *
+ * `vercel.json` 側にも nosniff / Referrer-Policy / Permissions-Policy を定義していたが、
+ * Next.js / self-host / preview を同じヘッダで覆えるよう Next.js 側に統一する。
+ * CSP は next-intl / dynamic chart / OG 画像 等との相性検証が必要なため本 PR では入れず、
+ * 別 PR で慎重に導入する方針（詳細: docs/PRODUCTION_SAFETY.md）。
+ */
+const securityHeaders = [
+  // Clickjacking 対策。Sanity Studio の埋め込み等は同一オリジン配下のため SAMEORIGIN で運用。
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  // MIME sniffing 抑止（CSS/JS の Content-Type 厳格化）。
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  // 外部遷移時の Referrer 漏れを最小化（cross-origin 時はオリジンのみ送出）。
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // 不要 API のブラウザ機能を明示無効化。`/insights` 等で将来 geolocation を使う場合は緩める。
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // gzip 圧縮を明示有効化（v0.6.0 WS-2 / Lighthouse Performance 改善）。
   // Vercel では Edge が brotli/gzip を自動付与するため二重圧縮にはならず、
   // `next start` での self-host 計測時にも HTML / JS / CSS に gzip が適用される。
   compress: true,
+  // 全パスに共通 Security Headers を付与する。`source: "/(.*)"` は静的ファイルも含む。
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
+  },
   ...(isBasePathEnabled ? { basePath: "/tenant-search", assetPrefix: "/tenant-search" } : {}),
   experimental: {
     typedRoutes: true,
