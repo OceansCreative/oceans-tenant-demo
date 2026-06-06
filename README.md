@@ -278,6 +278,7 @@ OSS リファレンス実装としての成熟度を段階で公開していま�
 | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | コードレビュー入口 / 着眼点 / よくある質問 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel への初回接続手順（環境変数 / Region / Troubleshooting） |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | カスタムドメイン / `OCEANS_BASEPATH` 等のアプリ固有デプロイ運用 |
+| [docs/PRODUCTION_SAFETY.md](docs/PRODUCTION_SAFETY.md) | 本番デモ運用ガイド（コスト管理 / Security Headers / `NEXT_PUBLIC_*` inline / 既知制約 / インシデント対応） |
 | [CHANGELOG.md](CHANGELOG.md) | 全リリース履歴（Keep a Changelog 準拠、v0.1.0〜v0.9.0 + Unreleased） |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発フロー / `/ship` パターン / 翻訳キー追加手順 / 品質ゲート |
 | [SECURITY.md](SECURITY.md) | 脆弱性報告手順 / SLA / 過去の対応事例 |
