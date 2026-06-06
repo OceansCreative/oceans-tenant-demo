@@ -11,6 +11,12 @@
  * @remarks
  *   この feature flag は **認証ではなく可視性制御** であり、env が有効になっていれば
  *   誰でも `/admin` にアクセスできる前提。本番運用での認証統合は別 PR で扱う。
+ *
+ *   本番デモ（demo.oceans-base.com/tenant-search 等）では `false` を強く推奨する。
+ *   どうしても enable する場合は、まず `SANITY_API_TOKEN`（書き込み）を Vercel から
+ *   外し、`SANITY_API_READ_TOKEN`（Viewer）のみで動かす read-only 構成を検討する。
+ *   そうすれば admin UI から書き込み API を叩いても Sanity 側で 403 となり、
+ *   公開デモへ意図しない変更が反映されない。詳細は docs/PRODUCTION_SAFETY.md 参照。
  */
 
 const ADMIN_ENABLED_ENV_VALUE = "true";
