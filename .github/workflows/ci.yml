@@ -97,7 +97,7 @@ jobs:
 
       - name: カバレッジを Codecov にアップロード（web ワークスペース）
         if: hashFiles('apps/web/coverage/lcov.info') != ''
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           # public repo のため tokenless で動作する想定。
           # token を Secrets に登録した場合は自動で使われ、未登録でも `fail_ci_if_error: false` で CI を落とさない。
@@ -110,7 +110,7 @@ jobs:
 
       - name: カバレッジを Codecov にアップロード（shared ワークスペース）
         if: hashFiles('packages/shared/coverage/lcov.info') != ''
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
@@ -147,7 +147,7 @@ jobs:
 
       - name: カバレッジを Codecov にアップロード（python）
         if: hashFiles('scripts/python/coverage.xml') != ''
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           # public repo のため tokenless で動作する想定。
           token: ${{ secrets.CODECOV_TOKEN }}
