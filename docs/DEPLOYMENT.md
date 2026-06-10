@@ -8,6 +8,148 @@ preview / production デプロイが通る状態になることを目標とし�
 [`docs/DEPLOY.md`](./DEPLOY.md) を参照してください。本ドキュメントは「初回接続」
 にスコープを絞ります。
 
+---
+
+## ⏱ ユーザー作業 30 分セットアップ（最短経路）
+
+「fork して Vercel に接続するだけで `demo.oceans-base.com/tenant-search` 相当が動く」
+状態に 30〜40 分で到達するための **作業順序のサマリ**です。詳細は各セクションへの
+リンクを参照してください。
+
+| ステップ | 所要 | 内容 |
+|---|---|---|
+| 1 | 5 分 | [Sanity プロジェクト作成](#step-1) |
+| 2 | 5 分 | [Anthropic API キー取得 or 確認](#step-2) |
+| 3 | 5 分 | [Vercel に repo を import](#step-3) |
+| 4 | 5 分 | [Vercel に環境変数を投入](#step-4)（コピペ用テンプレートあり） |
+| 5 | 5 分 | [ダミーデータを Sanity に投入](#step-5)（Python ワンライナー） |
+| 6 | 5 分 | [カスタムドメインを Vercel に紐付け](#step-6) |
+| 7 | 2 分 | [`NEXT_PUBLIC_APP_URL` を実 URL に更新して再デプロイ](#step-7) |
+| 8 | 2 分 | [README の Live Demo を実 URL に更新](#step-8) |
+
+合計目安: **30〜40 分**（既に GitHub アカウント / Vercel アカウント / Sanity アカウント /
+Anthropic アカウントが揃っていることが前提）。
+
+### Step 1. Sanity プロジェクト作成 <a id="step-1"></a>
+
+1. <https://www.sanity.io/manage> にログインし、**Create project** を押下
+2. プロジェクト名: 任意（例: `oceans-tenant-demo`）
+3. データセット: `production`（Public で OK）
+4. **API → Project ID** をメモ（`NEXT_PUBLIC_SANITY_PROJECT_ID`）
+5. **API → Tokens → Add API token** で `Editor` 権限のトークンを発行し、メモ
+   （`SANITY_API_TOKEN` — Python シード時に使用）
+6. **API → CORS origins** に `http://localhost:3000` と本番予定 URL を追加
+
+### Step 2. Anthropic API キー取得 or 確認 <a id="step-2"></a>
+
+1. <https://console.anthropic.com/> にログイン
+2. **Settings → API Keys → Create Key** で新しいキーを発行（または既存を確認）
+3. `sk-ant-...` のキーをメモ（`ANTHROPIC_API_KEY`）
+4. **Settings → Billing** で残クレジットを確認（評価ハーネスを動かす場合は 1〜2 USD 程度）
+
+### Step 3. Vercel に repo を import <a id="step-3"></a>
+
+1. リポジトリを GitHub で fork（公開リファレンス実装なので fork で OK）
+2. <https://vercel.com/new> を開き **Import Git Repository** で fork した repo を選択
+3. Framework Preset: **Next.js**（自動検出）
+4. **Root Directory はそのまま（`./`）** — `apps/web` に変えると monorepo 解決が壊れます
+5. Build / Install / Output 設定は **すべて空欄のまま**（`vercel.json` で指定済み）
+6. **Deploy ボタンはまだ押さない**（環境変数を先に入れる）
+
+### Step 4. Vercel に環境変数を投入 <a id="step-4"></a>
+
+Vercel ダッシュボードの **Settings → Environment Variables** で、以下を
+Production / Preview の両方に登録します。
+
+```env
+# 必須
+NEXT_PUBLIC_SANITY_PROJECT_ID=<Step 1 でメモした Project ID>
+NEXT_PUBLIC_SANITY_DATASET=production
+ANTHROPIC_API_KEY=<Step 2 でメモしたキー>
+
+# 推奨
+ANTHROPIC_MODEL=claude-sonnet-4-5
+NEXT_PUBLIC_APP_URL=https://<vercel が払い出す preview URL（後で実 URL に上書き）>
+
+# 任意
+SANITY_API_TOKEN=<Step 1 で発行した Editor トークン>
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=<取得済みなら>
+OCEANS_BASEPATH=/tenant-search   # /tenant-search 配下にホストする場合のみ
+```
+
+⚠ `ANTHROPIC_API_KEY` / `SANITY_API_TOKEN` には **絶対に `NEXT_PUBLIC_` を付けない**
+（公開バンドルに混入します）。詳細な変数解説は [Step 4 詳細セクション](#4-環境変数の設定)
+を参照。
+
+登録後に **Deployments → 最新を Redeploy**。初回ビルドが通れば、Vercel が払い出す
+preview URL でトップページが見えます（Sanity に物件が 0 件の状態なので `/search` は
+空表示でも OK）。
+
+### Step 5. ダミーデータを Sanity に投入 <a id="step-5"></a>
+
+ローカルから Sanity に 50 件の架空物件をシードします。
+
+```bash
+cd scripts/python
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt 'pydantic[email]'
+
+# 確認のみ（標準出力に JSON を流す）
+SANITY_PROJECT_ID=<Project ID> \
+SANITY_DATASET=production \
+SANITY_API_TOKEN=<Editor Token> \
+.venv/bin/python seed_properties.py --count 50 --dry-run
+
+# 実投入（Sanity に書き込み）
+SANITY_PROJECT_ID=<Project ID> \
+SANITY_DATASET=production \
+SANITY_API_TOKEN=<Editor Token> \
+.venv/bin/python seed_properties.py --count 50
+```
+
+投入後、Vercel デプロイ URL の `/search` に 50 件が表示されることを確認。
+
+### Step 6. カスタムドメイン `demo.oceans-base.com` を Vercel に紐付け <a id="step-6"></a>
+
+1. Vercel プロジェクトの **Settings → Domains** で `demo.oceans-base.com` を追加
+2. DNS プロバイダ（例: Cloudflare / Route 53）で Vercel が提示する CNAME を設定
+   - 例: `demo` → `cname.vercel-dns.com`
+3. SSL は Let's Encrypt で自動取得（通常 1〜2 分）
+
+`/tenant-search` basePath で公開する場合、Vercel 環境変数 `OCEANS_BASEPATH=/tenant-search`
+が登録されていれば、`https://demo.oceans-base.com/tenant-search/` でアクセス可能に
+なります（詳細は [`docs/DEPLOY.md`](./DEPLOY.md)）。
+
+### Step 7. `NEXT_PUBLIC_APP_URL` を実 URL に更新して再デプロイ <a id="step-7"></a>
+
+Vercel ダッシュボードの **Settings → Environment Variables** で Production スコープの
+`NEXT_PUBLIC_APP_URL` を実 URL に更新します。
+
+```env
+NEXT_PUBLIC_APP_URL=https://demo.oceans-base.com/tenant-search
+```
+
+更新後、**Deployments → 最新を Redeploy** で OG 画像 / canonical / sitemap.xml に
+実 URL が反映されます。
+
+### Step 8. README の Live Demo を実 URL に更新 <a id="step-8"></a>
+
+リポジトリ ルートの `README.md` 冒頭バッジ群直下にある:
+
+```markdown
+🌐 **Live Demo**: [demo.oceans-base.com/tenant-search](https://demo.oceans-base.com/tenant-search) — **v1.0.0 公開予定**
+```
+
+を、公開後は **「— v1.0.0 公開予定」を削除して実 URL のみに**します。プレースホルダ文言
+を外すだけの 1 行修正で済む構造になっています。
+
+### 仕上げ
+
+公開直前の確認は [docs/RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) を上から順に消化
+してください。すべて green になった時点で `v1.0.0` タグを切り、GitHub Release を作成
+します。
+
+---
+
 ## 前提
 
 - Vercel アカウントが作成済みであること（個人プランで可）

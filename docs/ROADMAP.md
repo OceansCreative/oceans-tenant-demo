@@ -24,7 +24,7 @@ v1.0.0 は **「公開リファレンス実装としての完成」** を意味�
 
 ---
 
-## 2. Done — v0.1.0 → v0.9.0
+## 2. Done — v0.1.0 → v0.12.0
 
 各バージョンのハイライトを 1 行ずつ列挙します。詳細は [CHANGELOG.md](../CHANGELOG.md) を参照。
 
@@ -40,43 +40,63 @@ v1.0.0 は **「公開リファレンス実装としての完成」** を意味�
 | v0.7.0 | 2026-06-03 | Storybook 8 + Chromatic 視覚回帰 / 関連物件 / FilterChips / マーカークラスタリング / AI 連携 100% カバレッジ |
 | v0.8.0 | 2026-06-03 | `next-intl` フェーズ 1（Header / Footer / Hero）/ AI 抽出評価ハーネス / Storybook Foundation MDX |
 | v0.9.0 | 2026-06-03 | i18n フェーズ 2（全画面翻訳化）/ eval CI 統合（PR ラベル + 週次 cron）/ `/insights` 物件統計ダッシュボード |
+| v0.10.0 | 2026-06-05 | Phase 7 開幕。Sanity Studio Desk Structure / v1.0.0 リリース準備ドキュメント / Admin foundation / Vitals foundation |
+| v0.11.0 | 2026-06-06 | Web Vitals 統合（`/api/vitals` + `VitalsReporter` + `/insights` 連携）/ Storybook locale globalTypes（ja / en 切替） |
+| v0.12.0 | 2026-06-06 | v1.0.0 公開直前の総仕上げ。RELEASE_CHECKLIST / SHOWCASE_BLURB 新設 / DEPLOYMENT 30 分セットアップ / README Live Demo プレースホルダ |
 
-**累積成果（v0.9.0 時点）**:
+**累積成果（v0.12.0 時点）**:
 
-- apps/web vitest: **470 ケース**、packages/shared **144 ケース**、`oceans-tenant-eval` node:test **29 ケース**
+- apps/web vitest: **480+ ケース**、packages/shared **144 ケース**、`oceans-tenant-eval` node:test **29 ケース**
 - Playwright E2E: **22 ケース**（locale 強制 + `/insights` a11y）
 - apps/web カバレッジ Lines: **95.84%**
 - Lighthouse: 5 URL × 3 ラン中央値で全 **0.96+**
 - a11y: 主要 5 ページで違反 **0**
-- `/ship` 並列実装: **8 サイクル**実施
+- `/ship` 並列実装: **10 サイクル以上**実施
 - Workflow（リリースノート生成）: **3 サイクル**実施
 
 ---
 
 ## 3. v1.0.0 までの残作業
 
-[CHANGELOG.md](../CHANGELOG.md) の `[Unreleased]` から、v1.0.0 で完了させたい項目を抽出します。
-各項目は Issue → ブランチ → PR で進める予定です。
+v0.12.0 までで OSS リファレンス実装としての基盤・ドキュメント・公開準備は完了しました。
+v1.0.0 は **「実 URL での公開」** をもって達成とします。残作業は以下のみです。
 
-### 必須（Must）
+### 必須（Must）— v1.0.0 ブロッカー
 
-- **Sanity 実 PROJECT_ID 投入** — 接続レイヤは v0.4.0 で完成済み。実プロジェクト ID と `production` データセットを env に投入し、ダミー 50 件を seed して end-to-end で動作確認する
-- **Vercel 実デプロイ** — `demo.oceans-base.com/tenant-search` を公開し、`OCEANS_BASEPATH` 切替を本番で検証する。デプロイ手順は [docs/DEPLOYMENT.md](./DEPLOYMENT.md) / [docs/DEPLOY.md](./DEPLOY.md) に従う
-- **v1.0.0 リリースノート** — `[Unreleased]` から該当項目を移し、Migration の影響を [docs/MIGRATION.md](./MIGRATION.md) に追記
+- **Sanity 実 PROJECT_ID 投入** — 接続レイヤは v0.4.0 で完成済み。実プロジェクト ID と
+  `production` データセットを env に投入し、拡充した 15〜20 件以上のダミー物件を seed
+  して end-to-end で動作確認する（手順は [docs/DEPLOYMENT.md](./DEPLOYMENT.md) Step 5）
+- **Vercel 実デプロイ** — `demo.oceans-base.com/tenant-search` を公開し、`OCEANS_BASEPATH`
+  切替を本番で検証する（手順は [docs/DEPLOYMENT.md](./DEPLOYMENT.md) Step 3〜7 /
+  [docs/DEPLOY.md](./DEPLOY.md)）
+- **公開前最終チェック** — [docs/RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) を上から順に
+  消化（11 セクション、所要 30〜60 分）
+- **v1.0.0 リリースノート** — `[Unreleased]` から該当項目を `[1.0.0]` セクションに確定し、
+  Migration の影響を [docs/MIGRATION.md](./MIGRATION.md) に追記、`package.json` の
+  `version` を `1.0.0` に
+- **README の Live Demo を実 URL に更新** — `（v1.0.0 公開予定）` プレースホルダを外す
+  （[docs/DEPLOYMENT.md](./DEPLOYMENT.md) Step 8）
 
-### 推奨（Should）
+### 推奨（Should）— v1.x マイナーで対応
 
-- **TypeScript 6.x 対応** — Next.js 15 / Sanity v3 / vitest の 6.x 互換確認、`tsconfig.json` の `moduleResolution: "bundler"` の挙動確認
-- **Upstash Redis 等への in-memory レート制限の置換** — 本番運用前提では in-memory ではサーバレス各インスタンスで独立してしまうため
+- **TypeScript 6.x 対応** — Next.js 15 / Sanity v3 / vitest の 6.x 互換確認、
+  `tsconfig.json` の `moduleResolution: "bundler"` の挙動確認
+- **Upstash Redis 等への in-memory レート制限の置換** — 本番運用前提では in-memory では
+  サーバレス各インスタンスで独立してしまうため
 - **WCAG 2.1 AAA**（コントラスト 7:1 等）の段階的引き上げ
-- **Sanity Studio など iframe 埋め込みコンテンツの a11y 保証** — `/studio` 配下は現状 axe 対象外
-- **Storybook の `globalTypes` による ja / en 切替**（v0.9.1 候補）
+- **Sanity Studio など iframe 埋め込みコンテンツの a11y 保証** — `/studio` 配下は現状
+  axe 対象外
+- **Admin UI 統合** — v0.10.0 で foundation 層は導入済（`feature-flag` / `sanity-write` /
+  `mutations` / `mock-store`）。UI / API Route / 統合は未着手
 
 ### 任意（Nice to have）
 
-- **Sanity 多言語スキーマ案** — 建物種別ラベル等の locale 切替を Sanity 側でも完結させる（現状は client 側 enum helper で代替）
-- **Web Vitals 永続化** — 現状は in-memory store でサーバレス各インスタンスに散る。Vercel KV 等への置換
-- **Issue / PR の `good first issue` ラベル整備** — 初学者が手をつけやすい単位の Issue を 5〜10 件常時用意
+- **Sanity 多言語スキーマ案** — 建物種別ラベル等の locale 切替を Sanity 側でも完結させる
+  （現状は client 側 enum helper で代替）
+- **Web Vitals 永続化** — v0.11.0 で `/api/vitals` + `VitalsReporter` + `/insights` 統合が
+  完了し in-memory store で動作中。本番運用前提では Vercel KV 等への置換が望ましい
+- **Issue / PR の `good first issue` ラベル整備** — 初学者が手をつけやすい単位の Issue を
+  5〜10 件常時用意
 
 ---
 
@@ -132,3 +152,6 @@ OceansTenant は OSS リファレンス実装であり、Issue / Pull Request �
 - 仕様書: [docs/spec.md](./spec.md)
 - アーキテクチャ: [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - AI 連携詳細: [docs/AI_INTEGRATION.md](./AI_INTEGRATION.md)
+- v1.0.0 公開前チェックリスト: [docs/RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)
+- 親サイト掲載用紹介テキスト: [docs/SHOWCASE_BLURB.md](./SHOWCASE_BLURB.md)
+- デプロイ手順（30 分セットアップ含む）: [docs/DEPLOYMENT.md](./DEPLOYMENT.md)
