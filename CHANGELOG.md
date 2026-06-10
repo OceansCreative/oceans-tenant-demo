@@ -33,6 +33,48 @@ v0.x 累積を初の安定リリースとしてタグ付けする位置付け。
 - Web Vitals store の永続化（Vercel KV 等）
 - `good first issue` ラベル整備（初学者向け Issue 5〜10 件）
 
+## [0.12.0] — 2026-06-06
+
+Phase 7 仕上げ。`demo.oceans-base.com/tenant-search` 公開を **ユーザー作業 30 分** で完了させるための公開準備パッケージ。WS-B（公開準備ドキュメント）と WS-C（本番安全設定）を投入。WS-A（mock データ拡充）は既存テストへの破壊が大きく、Sanity の Python seed generator が同等のことを提供するため deferred。
+
+### Added
+
+- **公開準備ドキュメント (#148)** — ユーザー作業 30 分でデモを稼働させる手順を整備
+  - `docs/RELEASE_CHECKLIST.md` 新設 — v1.0.0 公開前最終チェックリスト（環境変数 / ja-en / モバイル / SEO / a11y / Lighthouse / CI / セキュリティ）
+  - `docs/SHOWCASE_BLURB.md` 新設 — `oceans-base.com` 親ページ向け紹介テキスト草案（短文 / 標準 / 詳細の 3 トーン）
+  - `docs/DEPLOYMENT.md` 更新 — ユーザー作業 30 分セットアップ手順を冒頭に追加（Sanity 作成 → Anthropic key → Vercel import → env 投入 → seed → カスタムドメイン → 再デプロイ → README 更新）
+  - `README.md` 更新 — Live Demo プレースホルダ + 索引に新規ドキュメント追加
+  - `docs/ROADMAP.md` 更新 — v0.10.0 / v0.11.0 / v0.12.0 達成項目を Done に反映
+- **本番安全設定 (#149)** — 公開デモを安全に動かす運用ガード
+  - `.env.production.example` 新設 — Vercel ダッシュボード貼付け用テンプレート、admin デフォルト false
+  - `apps/web/next.config.ts` に共通 Security Headers（X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy）
+  - `docs/PRODUCTION_SAFETY.md` 新設 — デモ運用の前提 / コスト管理 / `NEXT_PUBLIC_*` inline 注意 / 既知の制約 / インシデント対応
+  - `apps/web/src/lib/admin/feature-flag.ts` コメント強化 — 本番 read-only 推奨を明文化
+
+### Changed
+
+- `package.json` version を 0.12.0 に
+- 既存 README / DEPLOYMENT に v0.10.0〜v0.12.0 の Phase 7 達成項目を反映
+
+### Process
+
+- `/ship` 並列実装の **11 サイクル目**。3 サブエージェントを worktree 分離で起動した
+- **インシデント**: 3 サブエージェントが Anthropic API ハングで 4.5 日停止していたことが発覚。WS-B / WS-C は最終コミット直前で停止していたため manual push + PR 化で救出。WS-A は **ゼロ進捗** だったため deferred（既存 Python seed generator が同等の役割を担う）
+- mock-properties.ts の 15 件拡充は既存 9 テストへの破壊が発生したため revert、tests 595 件を全 green で維持
+- Dependabot から 11 件の依存更新 PR (#137-#147) が自動生成された（v0.12.0 では取り込まず、v0.12.1 以降で順次対応予定）
+
+### Tests
+
+- apps/web vitest **595** ケース pass を維持
+- packages/shared 144 / Python pytest / Playwright / CodeQL / Lighthouse / Codecov / Chromatic 全 green
+- a11y 違反 0 / Lighthouse 90+ を維持
+
+### Docs
+
+- README に Live Demo プレースホルダ + 公開準備ドキュメント 3 件を索引に追加
+- DEPLOYMENT に 30 分セットアップフローを明文化
+- ROADMAP に v0.10.0〜v0.12.0 を反映
+
 ## [0.11.0] — 2026-06-06
 
 Phase 7 継続。v0.10.0 で foundation のみ救出した **Admin UI** と **Web Vitals** を完成させ、Storybook に **ja/en globalTypes 切替** を追加。`/ship` 並列実装の **10 サイクル目** で 3 ワークストリームを worktree 分離サブエージェントで投入し、全 PR を CI green で merge。
