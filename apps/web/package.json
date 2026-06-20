@@ -47,7 +47,7 @@
     "@storybook/addon-interactions": "^8.6.18",
     "@storybook/blocks": "^8.6.18",
     "@storybook/react": "^8.6.18",
-    "@storybook/react-vite": "^8.6.18",
+    "@storybook/react-vite": "^10.4.6",
     "@storybook/test": "^8.6.18",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/vite": "^4",
