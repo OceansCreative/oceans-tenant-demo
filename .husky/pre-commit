@@ -1,2 +1,0 @@
-# ステージ済みファイルに対して Biome check + auto-fix を実行する
-pnpm exec lint-staged

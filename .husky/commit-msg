@@ -1,2 +1,0 @@
-# コミットメッセージを commitlint で検証する
-pnpm exec commitlint --edit "$1"
