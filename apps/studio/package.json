@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@oceans-tenant/shared": "workspace:*",
-    "@sanity/types": "^3",
+    "@sanity/types": "^6",
     "react": "^19",
     "react-dom": "^19",
     "sanity": "^3",
