@@ -39,7 +39,7 @@ jobs:
       EVAL_SCORE_THRESHOLD: "0.6"
     steps:
       - name: ソース取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: pnpm をセットアップ
         uses: pnpm/action-setup@v6

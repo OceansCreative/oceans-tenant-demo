@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: ソース取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: pnpm をセットアップ
         uses: pnpm/action-setup@v6
