@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ソース取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Chromatic の baseline 比較用に履歴を全部取る（onlyChanged の判定に必要）
           fetch-depth: 0
@@ -68,7 +68,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: ソース取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
