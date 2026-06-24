@@ -20,7 +20,7 @@
     "@sanity/types": "^3",
     "react": "^19",
     "react-dom": "^19",
-    "sanity": "^3",
+    "sanity": "^6",
     "styled-components": "^6"
   },
   "devDependencies": {
