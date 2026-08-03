@@ -102,7 +102,7 @@ jobs:
 
       - name: Chromatic を実行
         if: steps.token-check.outputs.skip == 'false'
-        uses: chromaui/action@v11
+        uses: chromaui/action@v17
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: apps/web
